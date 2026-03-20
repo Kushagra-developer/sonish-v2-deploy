@@ -6,7 +6,7 @@ const Footer = () => {
     <footer className="bg-charcoal text-sand py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-          
+
           {/* Brand & Mission */}
           <div className="col-span-1 md:col-span-1">
             <h3 className="font-serif text-2xl mb-4 tracking-wider text-white">SONISH</h3>
@@ -24,21 +24,21 @@ const Footer = () => {
           <div>
             <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold text-white">Shop</h4>
             <ul className="space-y-3 text-sm font-light opacity-80">
-              <li><Link to="/new" className="hover:text-gold hover:opacity-100 transition">New Arrivals</Link></li>
-              <li><Link to="/women" className="hover:text-gold hover:opacity-100 transition">Women's Collection</Link></li>
-              <li><Link to="/men" className="hover:text-gold hover:opacity-100 transition">Men's Collection</Link></li>
-              <li><Link to="/accessories" className="hover:text-gold hover:opacity-100 transition">Accessories</Link></li>
+              <li><Link to="/collections" className="hover:text-gold hover:opacity-100 transition">All Collections</Link></li>
+              <li><Link to="/collections?category=Women" className="hover:text-gold hover:opacity-100 transition">Women's Collection</Link></li>
+              <li><Link to="/collections?category=Men" className="hover:text-gold hover:opacity-100 transition">Men's Collection</Link></li>
+              <li><Link to="/collections?category=Accessories" className="hover:text-gold hover:opacity-100 transition">Accessories</Link></li>
             </ul>
           </div>
 
-          {/* Links: Support */}
+          {/* Links: Support & Company */}
           <div>
-            <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold text-white">Support</h4>
+            <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold text-white">Company</h4>
             <ul className="space-y-3 text-sm font-light opacity-80">
+              <li><Link to="/about" className="hover:text-gold hover:opacity-100 transition">About Us</Link></li>
               <li><Link to="/contact" className="hover:text-gold hover:opacity-100 transition">Contact Us</Link></li>
-              <li><Link to="/shipping" className="hover:text-gold hover:opacity-100 transition">Shipping & Returns</Link></li>
-              <li><Link to="/faq" className="hover:text-gold hover:opacity-100 transition">FAQ</Link></li>
-              <li><Link to="/care" className="hover:text-gold hover:opacity-100 transition">Garment Care</Link></li>
+              <li><Link to="/returns" className="hover:text-gold hover:opacity-100 transition">Returns + Exchanges</Link></li>
+              <li><Link to="/shipping" className="hover:text-gold hover:opacity-100 transition">Shipping Policy</Link></li>
             </ul>
           </div>
 

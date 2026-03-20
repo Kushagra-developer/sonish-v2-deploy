@@ -4,21 +4,21 @@ import { useRef } from 'react';
 
 const Hero = () => {
   const ref = useRef(null);
-  
+
   // Track scroll position for parallax
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"]
   });
-  
+
   // Translate the background image downwards slightly as we scroll down
   const yParallax = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
 
   return (
     <div ref={ref} className="relative h-screen w-full flex items-center justify-center overflow-hidden">
       {/* Background Image with Parallax effect */}
-      <motion.div 
-        style={{ y: yParallax }} 
+      <motion.div
+        style={{ y: yParallax }}
         className="absolute inset-0 w-full h-full transform-gpu"
       >
         <div className="absolute inset-0 bg-charcoal/30 z-10" /> {/* Subtle overlay */}
@@ -42,7 +42,7 @@ const Hero = () => {
         >
           Autumn / Winter 2026
         </motion.span>
-        
+
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -69,12 +69,13 @@ const Hero = () => {
         </motion.div>
       </div>
 
-      {/* Scroll indicator */}
-      <motion.div
+      {/* Scroll indicator - NOW A FUNCTIONAL BUTTON */}
+      <motion.button
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 1.5 }}
-        className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center"
+        onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+        className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center cursor-pointer bg-transparent border-none"
       >
         <span className="text-white/70 text-xs tracking-widest uppercase mb-2">Scroll</span>
         <motion.div
@@ -82,7 +83,7 @@ const Hero = () => {
           transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
           className="w-[1px] h-10 bg-white/50"
         />
-      </motion.div>
+      </motion.button>
     </div>
   );
 };
