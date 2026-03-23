@@ -4,6 +4,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import razorpayRoutes from './routes/razorpayRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
@@ -12,7 +14,10 @@ import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import userRoutes from './routes/userRoutes.js';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ──────────────────────────────────────────────
 // Security middleware
@@ -28,6 +33,10 @@ app.use(helmet({
 const allowedOrigins = [
   'http://localhost:5173',
   'https://sonish-v2.vercel.app',
+  'https://sonish.co.in',
+  'http://sonish.co.in',
+  'https://www.sonish.co.in',
+  'http://www.sonish.co.in',
 ];
 
 app.use(
@@ -72,6 +81,24 @@ app.use('/api/razorpay', razorpayRoutes);
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// ──────────────────────────────────────────────
+// Serve Static Frontend (Production Option B)
+// ──────────────────────────────────────────────
+
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the backend's "public" directory
+  app.use(express.static(path.join(__dirname, 'public')));
+
+  // Any route that is not matched by an API route will send the React index.html
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('API is running....');
+  });
+}
 
 // ──────────────────────────────────────────────
 // Error handling middleware
