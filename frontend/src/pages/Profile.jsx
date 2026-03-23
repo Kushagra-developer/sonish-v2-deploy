@@ -257,7 +257,7 @@ const Profile = () => {
                                     <h2 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-6">Shipping Address</h2>
                                     
                                     {/* Current Saved Address Display */}
-                                    {userInfo.shippingAddress?.address && (
+                                    {userInfo.shippingAddress?.address?.trim().length > 0 && (
                                         <div className="mb-8 p-6 bg-charcoal/[0.02] dark:bg-offwhite/[0.02] border border-charcoal/10 dark:border-offwhite/10">
                                             <h3 className="text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-3 font-bold">Current Address</h3>
                                             <p className="text-sm text-charcoal/80 dark:text-offwhite/80 leading-relaxed">

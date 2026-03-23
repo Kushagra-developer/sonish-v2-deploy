@@ -71,7 +71,10 @@ const CartDrawer = ({ isOpen, onClose }) => {
     }
   };
 
-  const hasAddress = userInfo?.shippingAddress?.address && userInfo?.shippingAddress?.city && userInfo?.shippingAddress?.postalCode && userInfo?.shippingAddress?.country;
+  const hasAddress = 
+    userInfo?.shippingAddress?.address?.trim().length > 0 && 
+    userInfo?.shippingAddress?.city?.trim().length > 0 && 
+    userInfo?.shippingAddress?.postalCode?.trim().length > 0;
 
   return (
     <AnimatePresence>

@@ -95,12 +95,16 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     user.email = req.body.email || user.email;
 
     if (req.body.shippingAddress) {
-      user.shippingAddress = {
-        address: req.body.shippingAddress.address || user.shippingAddress?.address || '',
-        city: req.body.shippingAddress.city || user.shippingAddress?.city || '',
-        postalCode: req.body.shippingAddress.postalCode || user.shippingAddress?.postalCode || '',
-        country: req.body.shippingAddress.country || user.shippingAddress?.country || ''
-      };
+      if (!user.shippingAddress) user.shippingAddress = {};
+      
+      // Update individual fields to ensure Mongoose tracks the changes to the nested object
+      user.shippingAddress.address = req.body.shippingAddress.address || user.shippingAddress.address || '';
+      user.shippingAddress.city = req.body.shippingAddress.city || user.shippingAddress.city || '';
+      user.shippingAddress.postalCode = req.body.shippingAddress.postalCode || user.shippingAddress.postalCode || '';
+      user.shippingAddress.country = req.body.shippingAddress.country || user.shippingAddress.country || '';
+      
+      // Explicitly tell Mongoose that this nested object has changed
+      user.markModified('shippingAddress');
     }
 
     if (req.body.password) {
