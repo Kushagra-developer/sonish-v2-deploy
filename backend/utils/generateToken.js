@@ -5,11 +5,13 @@ const generateToken = (res, userId) => {
     expiresIn: '30d',
   });
 
+  const isProduction = process.env.NODE_ENV !== 'development';
+
   // Set JWT as HTTP-only cookie
   res.cookie('jwt', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV !== 'development', // Use secure cookies in production
-    sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'strict', // Allow localhost cross-port
+    secure: isProduction,       // HTTPS only in production
+    sameSite: isProduction ? 'none' : 'lax',  // 'none' required for cross-domain (Vercel↔Render)
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 };

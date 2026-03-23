@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Package, MapPin, Settings, LogOut, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { User, Package, MapPin, Settings, LogOut, ChevronRight, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import API from '../utils/api';
 
 const Profile = () => {
@@ -9,6 +9,9 @@ const Profile = () => {
     const [userInfo, setUserInfo] = useState(null);
     const [orders, setOrders] = useState([]);
     const [expandedOrder, setExpandedOrder] = useState(null);
+    const [addressForm, setAddressForm] = useState({ address: '', city: '', postalCode: '', country: 'India' });
+    const [isSavingAddress, setIsSavingAddress] = useState(false);
+    const [addressSaved, setAddressSaved] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -28,14 +31,22 @@ const Profile = () => {
 
         const savedUser = localStorage.getItem('userInfo');
         if (savedUser) {
-            setUserInfo(JSON.parse(savedUser));
+            const parsed = JSON.parse(savedUser);
+            setUserInfo(parsed);
+            if (parsed.shippingAddress) {
+                setAddressForm({
+                    address: parsed.shippingAddress.address || '',
+                    city: parsed.shippingAddress.city || '',
+                    postalCode: parsed.shippingAddress.postalCode || '',
+                    country: parsed.shippingAddress.country || 'India',
+                });
+            }
             fetchOrders();
         } else {
             navigate('/login');
         }
     }, [navigate]);
 
-    // Handle Logout
     const handleLogout = async () => {
         try {
             await fetch(`${API}/api/users/logout`, {
@@ -44,10 +55,33 @@ const Profile = () => {
             });
         } catch (e) {}
         localStorage.removeItem('userInfo');
-        // Dispatch events so Navbar resets counters and shows Login
         window.dispatchEvent(new Event('cartUpdated'));
         window.dispatchEvent(new Event('wishlistUpdated'));
         navigate('/login');
+    };
+
+    const handleAddressSave = async (e) => {
+        e.preventDefault();
+        setIsSavingAddress(true);
+        setAddressSaved(false);
+        try {
+            const res = await fetch(`${API}/api/users/profile`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ shippingAddress: addressForm }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                localStorage.setItem('userInfo', JSON.stringify(data));
+                setUserInfo(data);
+                setAddressSaved(true);
+                setTimeout(() => setAddressSaved(false), 3000);
+            }
+        } catch (err) {
+            console.error('Failed to save address:', err);
+        }
+        setIsSavingAddress(false);
     };
 
     const tabs = [
@@ -57,7 +91,7 @@ const Profile = () => {
         { id: 'account', label: 'Account Details', icon: <Settings className="w-5 h-5" /> },
     ];
 
-    if (!userInfo) return null; // Prevent flickering before redirect
+    if (!userInfo) return null;
 
     return (
         <motion.div
@@ -73,7 +107,6 @@ const Profile = () => {
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-12">
-
                     {/* Sidebar Navigation */}
                     <div className="w-full md:w-64 shrink-0">
                         <nav className="flex flex-col space-y-2">
@@ -215,6 +248,85 @@ const Profile = () => {
                                             ))}
                                         </div>
                                     )}
+                                </motion.div>
+                            )}
+
+                            {/* ADDRESSES TAB */}
+                            {activeTab === 'addresses' && (
+                                <motion.div key="addresses" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                                    <h2 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-6">Shipping Address</h2>
+                                    
+                                    {/* Current Saved Address Display */}
+                                    {userInfo.shippingAddress?.address && (
+                                        <div className="mb-8 p-6 bg-charcoal/[0.02] dark:bg-offwhite/[0.02] border border-charcoal/10 dark:border-offwhite/10">
+                                            <h3 className="text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-3 font-bold">Current Address</h3>
+                                            <p className="text-sm text-charcoal/80 dark:text-offwhite/80 leading-relaxed">
+                                                {userInfo.shippingAddress.address}<br />
+                                                {userInfo.shippingAddress.city}, {userInfo.shippingAddress.postalCode}<br />
+                                                {userInfo.shippingAddress.country}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Address Form */}
+                                    <form onSubmit={handleAddressSave} className="space-y-5 max-w-lg">
+                                        <div>
+                                            <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Street Address</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={addressForm.address}
+                                                onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
+                                                placeholder="123 Main Street, Apt 4B"
+                                                className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/30 dark:placeholder:text-offwhite/30"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">City</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={addressForm.city}
+                                                    onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                                                    placeholder="Mumbai"
+                                                    className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/30 dark:placeholder:text-offwhite/30"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Postal Code</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={addressForm.postalCode}
+                                                    onChange={(e) => setAddressForm({ ...addressForm, postalCode: e.target.value })}
+                                                    placeholder="400001"
+                                                    className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/30 dark:placeholder:text-offwhite/30"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Country</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={addressForm.country}
+                                                onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
+                                                className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite"
+                                            />
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={isSavingAddress}
+                                            className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-8 py-3 text-xs uppercase tracking-widest hover:bg-black transition-colors mt-4 disabled:opacity-50 flex items-center gap-2"
+                                        >
+                                            {isSavingAddress ? 'Saving...' : addressSaved ? (
+                                                <><Check className="w-4 h-4" /> Address Saved</>
+                                            ) : (
+                                                'Save Address'
+                                            )}
+                                        </button>
+                                    </form>
                                 </motion.div>
                             )}
 

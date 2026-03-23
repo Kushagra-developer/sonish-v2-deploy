@@ -128,8 +128,11 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 // @route   POST /api/users/logout
 // @access  Private
 const logoutUser = asyncHandler(async (req, res) => {
+  const isProduction = process.env.NODE_ENV !== 'development';
   res.cookie('jwt', '', {
     httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     expires: new Date(0),
   });
 
