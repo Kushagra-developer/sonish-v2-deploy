@@ -31,6 +31,7 @@ const productSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    images: [String], // Array to hold multiple gallery images
     brand: {
       type: String,
       required: true,
@@ -59,11 +60,22 @@ const productSchema = mongoose.Schema(
       required: true,
       default: 0,
     },
+    originalPrice: {
+      type: Number,
+      required: true,
+      default: 0, // Used to calculate the discount percentage
+    },
     countInStock: {
       type: Number,
       required: true,
       default: 0,
     },
+    sizes: [
+      {
+        size: { type: String, required: true },
+        stock: { type: Number, required: true, default: 0 },
+      }
+    ],
   },
   {
     timestamps: true,

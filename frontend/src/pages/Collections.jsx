@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ProductCard from '../components/product/ProductCard';
 import ProductSkeleton from '../components/product/ProductSkeleton';
+import API from '../utils/api';
 
 const Collections = () => {
     const [products, setProducts] = useState([]);
@@ -16,7 +17,7 @@ const Collections = () => {
         const fetchProducts = async () => {
             setIsLoading(true);
             try {
-                const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/products`);
+                const res = await fetch(`${API}/api/products`);
                 if (res.ok) {
                     let data = await res.json();
 
@@ -34,14 +35,6 @@ const Collections = () => {
                                 return itemCat.includes('women') ||
                                     itemTags.includes('women') ||
                                     ['dress', 'skirt', 'top', 'co-ord', 'kurti', 'women'].some(kw => itemCat.includes(kw) || itemName.includes(kw));
-                            }
-
-                            // If filtering for "Men", broadly accept men's categories
-                            if (filterLower === 'men') {
-                                return itemCat.includes('men') ||
-                                    itemTags.includes('men') ||
-                                    // Exclude 'women' to prevent 'women's shirt' showing up in men's
-                                    (!itemCat.includes('women') && !itemName.includes('women') && ['shirt', 'suit', 'tie', 'men'].some(kw => itemCat.includes(kw) || itemName.includes(kw)));
                             }
 
                             // Default strict matching for Accessories, Outerwear, etc.

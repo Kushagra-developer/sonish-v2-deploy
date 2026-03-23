@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search as SearchIcon, X } from 'lucide-react';
 import ProductCard from '../components/product/ProductCard';
+import API from '../utils/api';
 
 const Search = () => {
     const [query, setQuery] = useState('');
@@ -13,7 +14,7 @@ const Search = () => {
         const fetchProducts = async () => {
             setIsLoading(true);
             try {
-                const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/products`);
+                const res = await fetch(`${API}/api/products`);
                 if (res.ok) {
                     const data = await res.json();
                     setProducts(data);

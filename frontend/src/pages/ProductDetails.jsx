@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Share2, Truck, RefreshCw, Star, Minus, Plus, ShieldCheck, X } from 'lucide-react';
+import { Heart, Share2, Truck, RefreshCw, Star, Minus, Plus, ShieldCheck, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductSkeleton from '../components/product/ProductSkeleton';
 import DOMPurify from 'dompurify';
+import { loadCart, saveCart, loadWishlist, saveWishlist } from '../utils/cartStorage';
+import API from '../utils/api';
 
 const ProductDetails = () => {
     const { id } = useParams();
     const [product, setProduct] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [mainImage, setMainImage] = useState('');
+    const navigate = useNavigate();
+
+    // Image Carousel State
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     // Interactive States
     const [quantity, setQuantity] = useState(1);
@@ -18,18 +23,21 @@ const ProductDetails = () => {
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [showSizeGuide, setShowSizeGuide] = useState(false);
 
+    // Zoom Effect States
+    const [isZoomed, setIsZoomed] = useState(false);
+    const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+
     useEffect(() => {
         const fetchProduct = async () => {
             setIsLoading(true);
             try {
-                const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/products/${id}`);
+                const res = await fetch(`${API}/api/products/${id}`);
                 if (res.ok) {
                     const data = await res.json();
                     setProduct(data);
-                    setMainImage(data.image);
 
                     // Check if already in wishlist
-                    const wishlist = JSON.parse(localStorage.getItem('sonish_wishlist')) || [];
+                    const wishlist = loadWishlist();
                     if (wishlist.some(item => item._id === data._id)) {
                         setIsWishlisted(true);
                     }
@@ -47,7 +55,14 @@ const ProductDetails = () => {
     // --- FUNCTIONAL ACTIONS ---
 
     const handleAddToCart = () => {
-        const cart = JSON.parse(localStorage.getItem('sonish_cart')) || [];
+        const userInfo = localStorage.getItem('userInfo');
+        if (!userInfo) {
+            alert('Please log in to add items to your cart.');
+            navigate('/login');
+            return;
+        }
+
+        const cart = loadCart();
         const cartItem = {
             ...product,
             selectedSize,
@@ -61,16 +76,21 @@ const ProductDetails = () => {
             cart.push(cartItem);
         }
 
-        localStorage.setItem('sonish_cart', JSON.stringify(cart));
+        saveCart(cart);
 
-        // Tell the whole app the cart updated
         window.dispatchEvent(new Event('cartUpdated'));
-        // Tell the Navbar to slide the drawer open!
         window.dispatchEvent(new Event('openCart'));
     };
 
     const handleToggleWishlist = () => {
-        let wishlist = JSON.parse(localStorage.getItem('sonish_wishlist')) || [];
+        const userInfo = localStorage.getItem('userInfo');
+        if (!userInfo) {
+            alert('Please log in to add items to your wishlist.');
+            navigate('/login');
+            return;
+        }
+
+        let wishlist = loadWishlist();
         if (isWishlisted) {
             wishlist = wishlist.filter(item => item._id !== product._id);
             setIsWishlisted(false);
@@ -78,7 +98,7 @@ const ProductDetails = () => {
             wishlist.push(product);
             setIsWishlisted(true);
         }
-        localStorage.setItem('sonish_wishlist', JSON.stringify(wishlist));
+        saveWishlist(wishlist);
         window.dispatchEvent(new Event('wishlistUpdated'));
     };
 
@@ -91,6 +111,23 @@ const ProductDetails = () => {
         }
     };
 
+    // --- ZOOM EFFECT HANDLERS ---
+    const handleMouseMove = (e) => {
+        if (!isZoomed) return;
+        const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+        const x = ((e.clientX - left) / width) * 100;
+        const y = ((e.clientY - top) / height) * 100;
+        setZoomPosition({ x, y });
+    };
+
+    const handleMouseLeave = () => {
+        setIsZoomed(false);
+    };
+
+    const toggleZoom = () => {
+        setIsZoomed(!isZoomed);
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen pt-32 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-offwhite dark:bg-charcoal">
@@ -101,8 +138,139 @@ const ProductDetails = () => {
 
     if (!product) return <div className="text-center pt-40 dark:text-white">Product not found.</div>;
 
-    const galleryImages = [product.image, product.secondaryImage].filter(Boolean);
-    const sizes = ['XS', 'S', 'M', 'L', 'XL'];
+    // =========================================================
+    // --- MANUAL IMAGE ADDITION (BY PRODUCT) ---
+    // FIXED: Added missing commas between all product entries!
+    // =========================================================
+    const manualExtraImages = {
+        "Maroon Muse": [
+            "/images/mm1.webp",
+            "/images/mm2.webp",
+            "/images/mm3.webp",
+            "/images/mm4.webp"
+        ],
+        "Midnight Bloom": [
+            "/images/mb1.webp",
+            "/images/mb2.webp",
+            "/images/mb3.webp",
+            "/images/mb4.webp",
+            "/images/m.webp"
+        ],
+        "Sunlit corset": [
+            "/images/sc1.webp",
+            "/images/sc2.webp",
+            "/images/sc3.webp",
+            "/images/sc4.webp",
+            "/images/sc5.webp"
+        ],
+        "Emerald Botanical V neck Top": [
+            "/images/ebvnt1.webp",
+            "/images/ebvnt2.webp",
+            "/images/ebvnt3.webp",
+            "/images/ebvnt4.webp"
+        ],
+        "Ombré Gradient Shirt": [
+            "/images/ogs1.webp",
+            "/images/ogs2.webp",
+            "/images/ogs3.webp",
+            "/images/ogs4.webp"
+        ],
+        "Green Ripple Shirt": [
+            "/images/grs1.webp",
+            "/images/grs2.webp",
+            "/images/grs3.webp",
+            "/images/grs4.webp",
+            "/images/grs5.webp"
+        ],
+        "Jade Jumble Shirt": [
+            "/images/jjs1.webp",
+            "/images/jjs2.webp",
+            "/images/jjs3.webp",
+            "/images/jjs4.webp",
+            "/images/jjs5.webp"
+        ],
+        "blosom fusion co-ord": [
+            "/images/bfc1.webp",
+            "/images/bfc2.webp",
+            "/images/bfc3.webp",
+            "/images/bfc4.webp",
+            "/images/bfc5.webp"
+        ],
+        "Ribbed Tank Top": [
+            "/images/rtt1.webp",
+            "/images/rtt2.webp",
+            "/images/rtt3.webp",
+            "/images/rtt4.webp",
+            "/images/rtt5.webp",
+            "/images/rtt6.webp",
+            "/images/rtt7.webp"
+        ],
+        "Black Heritage Co-ord Set": [
+            "/images/bhcs1.webp",
+            "/images/bhcs2.webp",
+            "/images/bhcs3.webp",
+            "/images/bhcs4.webp",
+            "/images/bhcs5.webp"
+        ],
+        "Mosaic Mustard Set": [
+            "/images/mms1.webp",
+            "/images/mms2.webp",
+            "/images/mms3.webp"
+        ],
+        "Floral Fusion Co-ords Set": [
+            "/images/ffcs1.webp",
+            "/images/ffcs2.webp",
+            "/images/ffcs3.webp",
+            "/images/ffcs4.webp",
+            "/images/ffcs5.webp",
+            "/images/ffcs6.webp",
+            "/images/ffcs7.webp",
+            "/images/ffcs8.webp",
+            "/images/ffcs9.webp",
+            "/images/ffcs10.webp"
+        ],
+        "Monochrome Mirage Co-ord Set": [
+            "/images/mmcs1.webp",
+            "/images/mmcs2.webp",
+            "/images/mmcs3.webp",
+            "/images/mmcs4.webp",
+            "/images/mmcs5.webp",
+            "/images/mmcs6.webp",
+            "/images/mmcs7.webp"
+        ],
+        "Azure Marble Button-Down": [
+            "/images/ambd1.webp",
+            "/images/ambd2.webp",
+            "/images/ambd3.webp",
+            "/images/ambd4.webp"
+        ]
+    };
+
+    const extraImagesForThisProduct = manualExtraImages[product.name] || [];
+
+    const displayImages = [
+        product.image,
+        ...extraImagesForThisProduct
+    ].filter(Boolean);
+
+
+    // Carousel Handlers
+    const nextImage = (e) => {
+        e.stopPropagation();
+        setCurrentImageIndex((prev) => (prev + 1) % displayImages.length);
+    };
+
+    const prevImage = (e) => {
+        e.stopPropagation();
+        setCurrentImageIndex((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1));
+    };
+
+    const displaySizes = product?.sizes?.length > 0 ? product.sizes : [
+        {size: 'S', stock: Math.floor((product?.countInStock || 0)/4) || 10}, 
+        {size: 'M', stock: Math.floor((product?.countInStock || 0)/4) || 10}, 
+        {size: 'L', stock: Math.floor((product?.countInStock || 0)/4) || 10}, 
+        {size: 'XL', stock: Math.floor((product?.countInStock || 0)/4) || 10}
+    ];
 
     return (
         <motion.div
@@ -122,21 +290,40 @@ const ProductDetails = () => {
 
                 <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
 
-                    {/* Left: Image Gallery */}
+                    {/* Left: Image Slider */}
                     <div className="flex-1 flex gap-4 md:gap-6 flex-col-reverse md:flex-row">
-                        <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-visible no-scrollbar w-full md:w-20 lg:w-24 shrink-0">
-                            {galleryImages.map((img, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => setMainImage(img)}
-                                    className={`relative aspect-[3/4] overflow-hidden bg-gray-100 ${mainImage === img ? 'border border-charcoal dark:border-offwhite' : 'opacity-70 hover:opacity-100'} transition-all`}
-                                >
-                                    <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex-1 aspect-[3/4] bg-gray-100 relative overflow-hidden group">
-                            <img src={mainImage} alt={product.name} className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105" />
+                        <div
+                            className={`flex-1 aspect-[3/4] bg-gray-100 relative overflow-hidden group ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+                            onClick={toggleZoom}
+                            onMouseMove={handleMouseMove}
+                            onMouseLeave={handleMouseLeave}
+                        >
+                            <img
+                                src={displayImages[currentImageIndex]}
+                                alt={product.name}
+                                className="w-full h-full object-cover object-top transition-transform duration-200 ease-out pointer-events-none"
+                                style={{
+                                    transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                                    transform: isZoomed ? 'scale(2.2)' : 'scale(1)'
+                                }}
+                            />
+
+                            {!isZoomed && displayImages.length > 1 && (
+                                <>
+                                    <button
+                                        onClick={prevImage}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-charcoal/80 p-2 rounded-full hover:bg-white dark:hover:bg-charcoal text-charcoal dark:text-offwhite z-40 transition-colors shadow-md"
+                                    >
+                                        <ChevronLeft className="w-6 h-6" />
+                                    </button>
+                                    <button
+                                        onClick={nextImage}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-charcoal/80 p-2 rounded-full hover:bg-white dark:hover:bg-charcoal text-charcoal dark:text-offwhite z-40 transition-colors shadow-md"
+                                    >
+                                        <ChevronRight className="w-6 h-6" />
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -157,26 +344,29 @@ const ProductDetails = () => {
                             <span className="text-2xl text-red-600 dark:text-red-400 font-serif font-medium">₹{(product?.price || 0).toFixed(2)}</span>
                         </div>
 
-                        {/* Size Selector */}
                         <div className="mb-8">
                             <div className="flex justify-between items-center mb-3">
                                 <span className="text-sm text-charcoal dark:text-offwhite tracking-wide">Select Size</span>
                                 <button onClick={() => setShowSizeGuide(true)} className="text-xs text-charcoal/60 dark:text-offwhite/60 underline hover:text-gold">Size Guide</button>
                             </div>
                             <div className="flex gap-3">
-                                {sizes.map(size => (
-                                    <button
-                                        key={size}
-                                        onClick={() => setSelectedSize(size)}
-                                        className={`w-12 h-12 flex items-center justify-center text-xs tracking-widest transition-all ${selectedSize === size ? 'border-2 border-charcoal dark:border-offwhite text-charcoal dark:text-offwhite font-bold' : 'border border-charcoal/20 dark:border-offwhite/20 text-charcoal/60 dark:text-offwhite/60 hover:border-charcoal dark:hover:border-offwhite'}`}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
+                                {displaySizes.map(s => {
+                                    const isOutOfStock = s.stock <= 0;
+                                    return (
+                                        <button
+                                            key={s.size}
+                                            disabled={isOutOfStock}
+                                            onClick={() => setSelectedSize(s.size)}
+                                            className={`relative w-12 h-12 flex items-center justify-center text-xs tracking-widest transition-all ${isOutOfStock ? 'opacity-40 cursor-not-allowed border-dashed border-charcoal/20 dark:border-offwhite/20' : selectedSize === s.size ? 'border-2 border-charcoal dark:border-offwhite text-charcoal dark:text-offwhite font-bold' : 'border border-charcoal/20 dark:border-offwhite/20 text-charcoal/60 dark:text-offwhite/60 hover:border-charcoal dark:hover:border-offwhite'}`}
+                                        >
+                                            {s.size}
+                                            {isOutOfStock && <div className="absolute inset-0 w-full h-full pointer-events-none opacity-50"><svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="2" /></svg></div>}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
-                        {/* Actions */}
                         <div className="flex flex-col sm:flex-row gap-4 mb-10">
                             <div className="flex items-center border border-charcoal/20 dark:border-offwhite/20 px-4 h-14 w-full sm:w-32 justify-between">
                                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-charcoal/50 dark:text-offwhite/50 hover:text-charcoal dark:hover:text-offwhite"><Minus className="w-4 h-4" /></button>
@@ -207,7 +397,6 @@ const ProductDetails = () => {
                             </div>
                         </div>
 
-                        {/* Badges */}
                         <div className="grid grid-cols-2 gap-4 mb-8">
                             <div className="border border-charcoal/10 dark:border-offwhite/10 p-4 flex flex-col items-center justify-center text-center gap-2">
                                 <Truck className="w-6 h-6 text-charcoal/70 dark:text-offwhite/70" />
@@ -224,7 +413,6 @@ const ProductDetails = () => {
                     </div>
                 </div>
 
-                {/* Tabs */}
                 <div className="mt-24">
                     <div className="flex border-b border-charcoal/10 dark:border-offwhite/10 gap-8 mb-8 overflow-x-auto no-scrollbar">
                         {['description', 'additional information', `reviews (${product.reviews?.length || 0})`].map((tab) => (
@@ -263,7 +451,6 @@ const ProductDetails = () => {
 
                         {activeTab.startsWith('reviews') && (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
-                                {/* Reviews List */}
                                 {product.reviews && product.reviews.length > 0 ? (
                                     product.reviews.map((review) => (
                                         <div key={review._id} className="flex gap-4 border-b border-charcoal/10 dark:border-offwhite/10 pb-8">
@@ -288,8 +475,6 @@ const ProductDetails = () => {
                                     <p className="text-charcoal/60 dark:text-offwhite/60">No reviews yet. Be the first to review this product!</p>
                                 )}
 
-
-                                {/* Write a Review Form */}
                                 <div className="bg-white dark:bg-charcoal/50 p-6 md:p-8 border border-charcoal/10 dark:border-offwhite/10">
                                     <h3 className="text-xl font-serif text-charcoal dark:text-offwhite mb-6">Leave a Review</h3>
                                     <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert("Review submitted for moderation!"); }}>
@@ -298,19 +483,11 @@ const ProductDetails = () => {
                                             <div className="flex text-charcoal/20 dark:text-offwhite/20 hover:text-gold cursor-pointer transition-colors w-max"><Star className="w-5 h-5" /><Star className="w-5 h-5" /><Star className="w-5 h-5" /><Star className="w-5 h-5" /><Star className="w-5 h-5" /></div>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <input type="text" placeholder="Name *" required className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/40 dark:placeholder:text-offwhite/40" />
-                                            </div>
-                                            <div>
-                                                <input type="email" placeholder="Email *" required className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/40 dark:placeholder:text-offwhite/40" />
-                                            </div>
+                                            <div><input type="text" placeholder="Name *" required className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/40 dark:placeholder:text-offwhite/40" /></div>
+                                            <div><input type="email" placeholder="Email *" required className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/40 dark:placeholder:text-offwhite/40" /></div>
                                         </div>
-                                        <div>
-                                            <textarea placeholder="Your Review *" required rows="4" className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/40 dark:placeholder:text-offwhite/40 resize-none"></textarea>
-                                        </div>
-                                        <button type="submit" className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-8 py-3 text-xs uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-colors mt-2">
-                                            Submit Review
-                                        </button>
+                                        <div><textarea placeholder="Your Review *" required rows="4" className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/40 dark:placeholder:text-offwhite/40 resize-none"></textarea></div>
+                                        <button type="submit" className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-8 py-3 text-xs uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-colors mt-2">Submit Review</button>
                                     </form>
                                 </div>
                             </motion.div>
@@ -319,23 +496,19 @@ const ProductDetails = () => {
                 </div>
             </div>
 
-            {/* Sticky Bottom Add to Cart Bar */}
             <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-charcoal border-t border-charcoal/10 dark:border-offwhite/10 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 hidden md:flex justify-between items-center transition-colors">
                 <div className="flex items-center gap-4 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-                    <img src={mainImage} alt="thumbnail" className="w-12 h-12 object-cover rounded-sm" />
+                    <img src={displayImages[currentImageIndex]} alt="thumbnail" className="w-12 h-12 object-cover rounded-sm" />
                     <div>
                         <h4 className="text-sm font-medium text-charcoal dark:text-offwhite truncate max-w-xs">{product.name}</h4>
                         <span className="text-xs text-red-600 dark:text-red-400">₹{(product?.price || 0).toFixed(2)}</span>
                     </div>
                     <div className="ml-auto flex items-center gap-4">
-                        <button onClick={handleAddToCart} className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-8 py-3 text-xs uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-colors">
-                            Add to Cart
-                        </button>
+                        <button onClick={handleAddToCart} className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-8 py-3 text-xs uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-colors">Add to Cart</button>
                     </div>
                 </div>
             </div>
 
-            {/* Size Guide Modal */}
             <AnimatePresence>
                 {showSizeGuide && (
                     <motion.div
@@ -366,7 +539,6 @@ const ProductDetails = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-
         </motion.div>
     );
 };

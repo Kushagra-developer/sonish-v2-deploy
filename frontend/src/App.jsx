@@ -20,13 +20,34 @@ import FAQ from './pages/FAQ';
 import ProductDetails from './pages/ProductDetails';
 import Search from './pages/Search';
 import Wishlist from './pages/Wishlist';
+import Profile from './pages/Profile';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminLogin from './pages/AdminLogin';
+import { Navigate } from 'react-router-dom';
+
+// Protected Admin Route wrapper
+const PrivateAdminRoute = ({ children }) => {
+  const adminInfo = localStorage.getItem('adminInfo');
+  if (adminInfo) {
+    const user = JSON.parse(adminInfo);
+    if (user.isAdmin) {
+      return children;
+    }
+  }
+  return <Navigate to="/admin/login" replace />;
+};
 
 // Inner component to access the router's useLocation hook
-const AnimatedRoutes = () => {
+const AppLayout = () => {
   const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
-    <AnimatePresence mode="wait">
+    <div className="flex flex-col min-h-screen relative">
+      {!isAdminRoute && <Navbar />}
+      
+      <main className="flex-grow">
+        <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Home />} />
         {/* ADDED THE COLLECTIONS ROUTE HERE */}
@@ -42,24 +63,35 @@ const AnimatedRoutes = () => {
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/search" element={<Search />} />
         <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/admin" element={
+          <PrivateAdminRoute>
+            <AdminDashboard />
+          </PrivateAdminRoute>
+        } />
+        <Route path="/admin/login" element={<AdminLogin />} />
       </Routes>
-    </AnimatePresence>
+        </AnimatePresence>
+      </main>
+
+      {!isAdminRoute && (
+        <>
+          <Footer />
+          <CookieBanner />
+          <Assistant />
+        </>
+      )}
+      
+      {/* Admin Assistant should only show on Admin visually, or globally if desired. Let's keep it global for now as per previous logic */}
+      <AdminAssistant />
+    </div>
   );
 };
 
 function App() {
   return (
     <Router>
-      <div className="flex flex-col min-h-screen relative">
-        <Navbar />
-        <main className="flex-grow">
-          <AnimatedRoutes />
-        </main>
-        <Footer />
-        <CookieBanner />
-        <Assistant />
-        <AdminAssistant />
-      </div>
+      <AppLayout />
     </Router>
   );
 }

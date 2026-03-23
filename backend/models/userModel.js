@@ -21,6 +21,20 @@ const userSchema = mongoose.Schema(
       required: true,
       default: false,
     },
+    cart: {
+      type: Array,
+      default: [],
+    },
+    wishlist: {
+      type: Array,
+      default: [],
+    },
+    shippingAddress: {
+      address: { type: String, default: '' },
+      city: { type: String, default: '' },
+      postalCode: { type: String, default: '' },
+      country: { type: String, default: '' },
+    },
   },
   {
     timestamps: true,

@@ -3,24 +3,24 @@ import { motion } from 'framer-motion';
 import { Trash2, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
+import { loadWishlist as loadWishlistFromStorage, saveWishlist } from '../utils/cartStorage';
 
 const Wishlist = () => {
     const [wishlistItems, setWishlistItems] = useState([]);
 
-    const loadWishlist = () => {
-        const savedWishlist = JSON.parse(localStorage.getItem('sonish_wishlist')) || [];
-        setWishlistItems(savedWishlist);
+    const refreshWishlist = () => {
+        setWishlistItems(loadWishlistFromStorage());
     };
 
     useEffect(() => {
-        loadWishlist();
-        // Listen for updates if an item is removed from elsewhere
-        window.addEventListener('wishlistUpdated', loadWishlist);
-        return () => window.removeEventListener('wishlistUpdated', loadWishlist);
+        refreshWishlist();
+        window.addEventListener('wishlistUpdated', refreshWishlist);
+        return () => window.removeEventListener('wishlistUpdated', refreshWishlist);
     }, []);
 
     const clearWishlist = () => {
-        localStorage.setItem('sonish_wishlist', JSON.stringify([]));
+        saveWishlist([]);
+        setWishlistItems([]);
         window.dispatchEvent(new Event('wishlistUpdated'));
     };
 

@@ -111,10 +111,19 @@ const getMyOrders = asyncHandler(async (req, res) => {
   res.json(orders);
 });
 
+// @desc    Get all orders (Admin)
+// @route   GET /api/orders
+// @access  Public (for now — add protect+admin later)
+const getOrders = asyncHandler(async (req, res) => {
+  const orders = await Order.find({}).populate('user', 'id name email').sort({ createdAt: -1 });
+  res.json(orders);
+});
+
 export {
   addOrderItems,
   getOrderById,
   updateOrderToPaid,
   updateOrderToDelivered,
   getMyOrders,
+  getOrders,
 };

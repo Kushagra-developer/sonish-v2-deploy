@@ -26,7 +26,6 @@ const Footer = () => {
             <ul className="space-y-3 text-sm font-light opacity-80">
               <li><Link to="/collections" className="hover:text-gold hover:opacity-100 transition">All Collections</Link></li>
               <li><Link to="/collections?category=Women" className="hover:text-gold hover:opacity-100 transition">Women's Collection</Link></li>
-              <li><Link to="/collections?category=Men" className="hover:text-gold hover:opacity-100 transition">Men's Collection</Link></li>
               <li><Link to="/collections?category=Accessories" className="hover:text-gold hover:opacity-100 transition">Accessories</Link></li>
             </ul>
           </div>

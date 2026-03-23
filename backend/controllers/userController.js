@@ -18,6 +18,8 @@ const authUser = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      cart: user.cart,
+      wishlist: user.wishlist,
     });
   } else {
     res.status(401);
@@ -52,6 +54,8 @@ const registerUser = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      cart: user.cart,
+      wishlist: user.wishlist,
     });
   } else {
     res.status(400);
@@ -71,6 +75,8 @@ const getUserProfile = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      cart: user.cart,
+      wishlist: user.wishlist,
     });
   } else {
     res.status(404);
@@ -88,6 +94,15 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
 
+    if (req.body.shippingAddress) {
+      user.shippingAddress = {
+        address: req.body.shippingAddress.address || user.shippingAddress?.address || '',
+        city: req.body.shippingAddress.city || user.shippingAddress?.city || '',
+        postalCode: req.body.shippingAddress.postalCode || user.shippingAddress?.postalCode || '',
+        country: req.body.shippingAddress.country || user.shippingAddress?.country || ''
+      };
+    }
+
     if (req.body.password) {
       user.password = req.body.password;
     }
@@ -99,6 +114,9 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       isAdmin: updatedUser.isAdmin,
+      cart: updatedUser.cart,
+      wishlist: updatedUser.wishlist,
+      shippingAddress: updatedUser.shippingAddress,
     });
   } else {
     res.status(404);
@@ -119,10 +137,30 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 
+// @desc    Sync user cart and wishlist
+// @route   PUT /api/users/sync
+// @access  Private
+const syncUserCartAndWishlist = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (user) {
+    if (req.body.cart) user.cart = req.body.cart;
+    if (req.body.wishlist) user.wishlist = req.body.wishlist;
+
+    await user.save();
+
+    res.json({ message: 'Synced successfully' });
+  } else {
+    res.status(404);
+    throw new Error('User not found');
+  }
+});
+
 export {
   authUser,
   registerUser,
   getUserProfile,
   updateUserProfile,
   logoutUser,
+  syncUserCartAndWishlist,
 };

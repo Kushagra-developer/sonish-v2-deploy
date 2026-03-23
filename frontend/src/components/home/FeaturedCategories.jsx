@@ -8,11 +8,6 @@ const categories = [
     link: '/collections?category=Women'
   },
   {
-    title: 'Men',
-    image: 'https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=800&auto=format&fit=crop',
-    link: '/collections?category=Men'
-  },
-  {
     title: 'Accessories',
     image: 'https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?q=80&w=800&auto=format&fit=crop',
     link: '/collections?category=Accessories'

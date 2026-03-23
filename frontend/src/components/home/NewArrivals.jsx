@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ProductCard from '../product/ProductCard';
 import ProductSkeleton from '../product/ProductSkeleton';
 import { motion } from 'framer-motion';
+import API from '../../utils/api';
 
 const NewArrivals = () => {
   const [products, setProducts] = useState([]);
@@ -10,7 +11,7 @@ const NewArrivals = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(`${API}/api/products`);
         if (res.ok) {
           const data = await res.json();
           // Using 5 items to showcase the asymmetric grid perfectly

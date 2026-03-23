@@ -4,7 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
-import stripeRoutes from './routes/stripeRoutes.js';
+import razorpayRoutes from './routes/razorpayRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import assistantRoutes from './routes/assistantRoutes.js';
@@ -19,25 +19,37 @@ const PORT = process.env.PORT || 5000;
 // ──────────────────────────────────────────────
 
 // Helmet – sets various HTTP security headers
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "unsafe-none" }
+}));
 
 // CORS – strict origin whitelist
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
-  .split(',')
-  .map((o) => o.trim());
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://sonish-v2.vercel.app',
+];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl) or allowed origins
-      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      // Allow requests with no origin (like mobile apps, curl)
+      if (!origin) return callback(null, true);
+      
+      const isAllowed = allowedOrigins.includes(origin) || 
+                       origin.endsWith('.vercel.app') || 
+                       origin.includes('localhost');
+      
+      if (isAllowed) {
         callback(null, true);
       } else {
+        console.warn(`CORS blocked for origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
+    optionsSuccessStatus: 200, // Important for some browser preflights
   }),
 );
 
@@ -56,7 +68,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/assistant', assistantRoutes);
-app.use('/api/stripe', stripeRoutes);
+app.use('/api/razorpay', razorpayRoutes);
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -72,22 +84,16 @@ app.use(errorHandler);
 // Database connection & server start
 // ──────────────────────────────────────────────
 
-const startServer = async () => {
-  try {
-    if (process.env.MONGO_URI) {
-      await mongoose.connect(process.env.MONGO_URI);
-      console.log('✅  MongoDB connected');
-    } else {
-      console.warn('⚠️   MONGO_URI not set – skipping database connection');
-    }
+if (process.env.MONGO_URI) {
+  mongoose.connect(process.env.MONGO_URI).then(() => console.log('✅  MongoDB connected')).catch(err => console.error(err));
+} else {
+  console.warn('⚠️   MONGO_URI not set – skipping database connection');
+}
 
-    app.listen(PORT, () => {
-      console.log(`🚀  Server running on http://localhost:${PORT}`);
-    });
-  } catch (err) {
-    console.error('❌  Failed to start server:', err.message);
-    process.exit(1);
-  }
-};
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () => {
+    console.log(`🚀  Server running on http://localhost:${PORT}`);
+  });
+}
 
-startServer();
+export default app;

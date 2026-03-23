@@ -2,21 +2,32 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Lock, Trash2, Plus, Minus } from 'lucide-react';
 import SecureCheckout from '../checkout/SecureCheckout';
+import { loadCart, saveCart } from '../../utils/cartStorage';
+import API from '../../utils/api';
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [userInfo, setUserInfo] = useState(null);
+  const [addressForm, setAddressForm] = useState({ address: '', city: '', postalCode: '', country: '' });
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
 
   // Dynamically load cart from LocalStorage whenever the drawer opens
-  const loadCart = () => {
-    const savedCart = JSON.parse(localStorage.getItem('sonish_cart')) || [];
-    setCartItems(savedCart);
+  const refreshCart = () => {
+    setCartItems(loadCart());
+    const storedUser = JSON.parse(localStorage.getItem('userInfo'));
+    if (storedUser) {
+      setUserInfo(storedUser);
+      if (storedUser.shippingAddress) {
+         setAddressForm(storedUser.shippingAddress);
+      }
+    }
   };
 
   useEffect(() => {
-    loadCart();
+    refreshCart();
     // Sync cart instantly when "Add to Cart" is clicked on any product page
-    window.addEventListener('cartUpdated', loadCart);
-    return () => window.removeEventListener('cartUpdated', loadCart);
+    window.addEventListener('cartUpdated', refreshCart);
+    return () => window.removeEventListener('cartUpdated', refreshCart);
   }, [isOpen]);
 
   const updateQuantity = (index, delta) => {
@@ -24,19 +35,43 @@ const CartDrawer = ({ isOpen, onClose }) => {
     newCart[index].cartQuantity += delta;
     if (newCart[index].cartQuantity < 1) newCart[index].cartQuantity = 1;
     setCartItems(newCart);
-    localStorage.setItem('sonish_cart', JSON.stringify(newCart));
+    saveCart(newCart);
     window.dispatchEvent(new Event('cartUpdated'));
   };
 
   const removeItem = (index) => {
     const newCart = cartItems.filter((_, i) => i !== index);
     setCartItems(newCart);
-    localStorage.setItem('sonish_cart', JSON.stringify(newCart));
+    saveCart(newCart);
     window.dispatchEvent(new Event('cartUpdated'));
   };
 
   // Calculate the real subtotal based on items actually in the cart
   const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.cartQuantity), 0);
+
+  const handleAddressSubmit = async (e) => {
+    e.preventDefault();
+    setIsSavingAddress(true);
+    try {
+      const res = await fetch(`${API}/api/users/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ shippingAddress: addressForm })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('userInfo', JSON.stringify(data));
+        setUserInfo(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
+
+  const hasAddress = userInfo?.shippingAddress?.address && userInfo?.shippingAddress?.city && userInfo?.shippingAddress?.postalCode && userInfo?.shippingAddress?.country;
 
   return (
     <AnimatePresence>
@@ -113,7 +148,25 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   <Lock className="w-3 h-3" />
                   <span>Secure 256-bit SSL Checkout</span>
                 </div>
-                <SecureCheckout cartTotal={cartTotal} />
+
+                {!hasAddress ? (
+                  <form onSubmit={handleAddressSubmit} className="mt-4 p-4 border border-charcoal/10 dark:border-offwhite/10 relative">
+                    <h3 className="text-xs uppercase tracking-widest text-charcoal dark:text-offwhite font-bold mb-4">Add Shipping Address to Proceed</h3>
+                    <div className="space-y-3">
+                      <input required type="text" placeholder="Street Address" value={addressForm.address} onChange={(e) => setAddressForm({...addressForm, address: e.target.value})} className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 text-xs outline-none focus:border-charcoal dark:focus:border-offwhite dark:text-offwhite transition-colors" />
+                      <div className="flex gap-4">
+                        <input required type="text" placeholder="City" value={addressForm.city} onChange={(e) => setAddressForm({...addressForm, city: e.target.value})} className="w-1/2 bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 text-xs outline-none focus:border-charcoal dark:focus:border-offwhite dark:text-offwhite transition-colors" />
+                        <input required type="text" placeholder="Postal Code" value={addressForm.postalCode} onChange={(e) => setAddressForm({...addressForm, postalCode: e.target.value})} className="w-1/2 bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 text-xs outline-none focus:border-charcoal dark:focus:border-offwhite dark:text-offwhite transition-colors" />
+                      </div>
+                      <input required type="text" placeholder="Country" value={addressForm.country} onChange={(e) => setAddressForm({...addressForm, country: e.target.value})} className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 text-xs outline-none focus:border-charcoal dark:focus:border-offwhite dark:text-offwhite transition-colors" />
+                    </div>
+                    <button type="submit" disabled={isSavingAddress} className="w-full mt-6 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal py-3 text-xs uppercase tracking-widest hover:bg-black dark:hover:bg-gray-200 transition-colors disabled:opacity-50">
+                      {isSavingAddress ? 'Saving...' : 'Save & Continue'}
+                    </button>
+                  </form>
+                ) : (
+                  <SecureCheckout cartTotal={cartTotal} cartItems={cartItems} shippingAddress={userInfo?.shippingAddress} onCloseDrawer={onClose} />
+                )}
               </div>
             )}
           </motion.div>

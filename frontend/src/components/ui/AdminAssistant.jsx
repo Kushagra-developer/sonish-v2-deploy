@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, X, Send, Database, Package, Settings, Activity } from 'lucide-react';
+import API from '../../utils/api';
 
 const AdminAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +21,7 @@ const AdminAssistant = () => {
     setIsTyping(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/assistant', {
+      const res = await fetch(`${API}/api/assistant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
