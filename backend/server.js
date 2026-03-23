@@ -83,12 +83,19 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ──────────────────────────────────────────────
-// Root API Route
+// Serve Static Frontend
 // ──────────────────────────────────────────────
 
-app.get('/', (req, res) => {
-  res.send('API is running securely on Render....');
-});
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'public')));
+  app.use((req, res) => {
+    res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('API is running securely on Render....');
+  });
+}
 // ──────────────────────────────────────────────
 // Error handling middleware
 // ──────────────────────────────────────────────
