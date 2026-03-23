@@ -83,23 +83,12 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ──────────────────────────────────────────────
-// Serve Static Frontend (Production Option B)
+// Root API Route
 // ──────────────────────────────────────────────
 
-if (process.env.NODE_ENV === 'production') {
-  // Serve static files from the backend's "public" directory
-  app.use(express.static(path.join(__dirname, 'public')));
-
-  // Any route that is not matched by an API route will send the React index.html
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-  });
-} else {
-  app.get('/', (req, res) => {
-    res.send('API is running....');
-  });
-}
-
+app.get('/', (req, res) => {
+  res.send('API is running securely on Render....');
+});
 // ──────────────────────────────────────────────
 // Error handling middleware
 // ──────────────────────────────────────────────
