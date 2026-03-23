@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/api/:match*",
-      "destination": "https://sonish-backend.onrender.com/api/:match*"
+      "source": "/api/(.*)",
+      "destination": "https://sonish-backend.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
