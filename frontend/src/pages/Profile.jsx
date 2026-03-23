@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { User, Package, MapPin, Settings, LogOut, ChevronRight, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { User, Package, MapPin, Settings, LogOut, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import API from '../utils/api';
 
 const Profile = () => {
-    const [activeTab, setActiveTab] = useState('dashboard');
+    const [searchParams] = useSearchParams();
+    const initialTab = searchParams.get('tab') || 'dashboard';
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [userInfo, setUserInfo] = useState(null);
     const [orders, setOrders] = useState([]);
     const [expandedOrder, setExpandedOrder] = useState(null);
@@ -33,14 +35,6 @@ const Profile = () => {
         if (savedUser) {
             const parsed = JSON.parse(savedUser);
             setUserInfo(parsed);
-            if (parsed.shippingAddress) {
-                setAddressForm({
-                    address: parsed.shippingAddress.address || '',
-                    city: parsed.shippingAddress.city || '',
-                    postalCode: parsed.shippingAddress.postalCode || '',
-                    country: parsed.shippingAddress.country || 'India',
-                });
-            }
             fetchOrders();
         } else {
             navigate('/login');
@@ -65,23 +59,56 @@ const Profile = () => {
         setIsSavingAddress(true);
         setAddressSaved(false);
         try {
+            const newSavedAddresses = [...(userInfo.savedAddresses || []), addressForm];
+            const reqBody = { savedAddresses: newSavedAddresses };
+            
+            // If this is their first address, auto-select it as the default
+            if (!userInfo.shippingAddress?.address?.trim().length) {
+                reqBody.shippingAddress = addressForm;
+            }
+
             const res = await fetch(`${API}/api/users/profile`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ shippingAddress: addressForm }),
+                body: JSON.stringify(reqBody),
             });
             if (res.ok) {
                 const data = await res.json();
                 localStorage.setItem('userInfo', JSON.stringify(data));
                 setUserInfo(data);
                 setAddressSaved(true);
+                setAddressForm({ address: '', city: '', postalCode: '', country: 'India' });
                 setTimeout(() => setAddressSaved(false), 3000);
             }
         } catch (err) {
             console.error('Failed to save address:', err);
         }
         setIsSavingAddress(false);
+    };
+
+    const handleSelectAddress = async (addr) => {
+        try {
+            const res = await fetch(`${API}/api/users/profile`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ shippingAddress: {
+                    address: addr.address,
+                    city: addr.city,
+                    postalCode: addr.postalCode,
+                    country: addr.country
+                } }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                localStorage.setItem('userInfo', JSON.stringify(data));
+                setUserInfo(data);
+                window.dispatchEvent(new Event('cartUpdated')); 
+            }
+        } catch (err) {
+            console.error('Failed to select address:', err);
+        }
     };
 
     const tabs = [
@@ -254,20 +281,41 @@ const Profile = () => {
                             {/* ADDRESSES TAB */}
                             {activeTab === 'addresses' && (
                                 <motion.div key="addresses" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                                    <h2 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-6">Shipping Address</h2>
+                                    <h2 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-6">Saved Addresses</h2>
                                     
-                                    {/* Current Saved Address Display */}
-                                    {userInfo.shippingAddress?.address?.trim().length > 0 && (
-                                        <div className="mb-8 p-6 bg-charcoal/[0.02] dark:bg-offwhite/[0.02] border border-charcoal/10 dark:border-offwhite/10">
-                                            <h3 className="text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-3 font-bold">Current Address</h3>
-                                            <p className="text-sm text-charcoal/80 dark:text-offwhite/80 leading-relaxed">
-                                                {userInfo.shippingAddress.address}<br />
-                                                {userInfo.shippingAddress.city}, {userInfo.shippingAddress.postalCode}<br />
-                                                {userInfo.shippingAddress.country}
-                                            </p>
-                                        </div>
-                                    )}
+                                    {/* Saved Addresses List */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                                        {(userInfo.savedAddresses && userInfo.savedAddresses.length > 0) ? userInfo.savedAddresses.map((addr, idx) => {
+                                            const isSelected = userInfo.shippingAddress?.address === addr.address && userInfo.shippingAddress?.postalCode === addr.postalCode;
+                                            return (
+                                                <div key={idx} className={`p-6 border relative transition-colors ${isSelected ? 'bg-charcoal/5 dark:bg-offwhite/5 border-charcoal/30 dark:border-offwhite/30' : 'bg-white dark:bg-charcoal/20 border-charcoal/10 dark:border-offwhite/10'}`}>
+                                                    {isSelected && (
+                                                        <span className="absolute top-4 right-4 text-[10px] uppercase tracking-widest font-bold bg-gold/20 text-gold px-2 py-1 flex items-center gap-1">
+                                                            <Check className="w-3 h-3" /> Selected
+                                                        </span>
+                                                    )}
+                                                    <p className="text-sm text-charcoal/80 dark:text-offwhite/80 leading-relaxed mb-6 mt-2">
+                                                        {addr.address}<br />
+                                                        {addr.city}, {addr.postalCode}<br />
+                                                        {addr.country}
+                                                    </p>
+                                                    {!isSelected && (
+                                                        <button 
+                                                            onClick={() => handleSelectAddress(addr)}
+                                                            className="text-xs uppercase tracking-widest font-bold text-charcoal/60 hover:text-charcoal dark:text-offwhite/60 dark:hover:text-offwhite transition-colors"
+                                                        >
+                                                            Select for Checkout
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )
+                                        }) : (
+                                            <p className="text-sm text-charcoal/50 dark:text-offwhite/50 col-span-2">No saved addresses yet. Please add one below.</p>
+                                        )}
+                                    </div>
 
+                                    <h3 className="text-xl font-serif text-charcoal dark:text-offwhite mb-6 border-t border-charcoal/10 dark:border-offwhite/10 pt-8">Add New Address</h3>
+                                    
                                     {/* Address Form */}
                                     <form onSubmit={handleAddressSave} className="space-y-5 max-w-lg">
                                         <div>

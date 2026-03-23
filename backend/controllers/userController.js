@@ -20,6 +20,8 @@ const authUser = asyncHandler(async (req, res) => {
       isAdmin: user.isAdmin,
       cart: user.cart,
       wishlist: user.wishlist,
+      shippingAddress: user.shippingAddress,
+      savedAddresses: user.savedAddresses,
     });
   } else {
     res.status(401);
@@ -56,6 +58,8 @@ const registerUser = asyncHandler(async (req, res) => {
       isAdmin: user.isAdmin,
       cart: user.cart,
       wishlist: user.wishlist,
+      shippingAddress: user.shippingAddress,
+      savedAddresses: user.savedAddresses,
     });
   } else {
     res.status(400);
@@ -77,6 +81,8 @@ const getUserProfile = asyncHandler(async (req, res) => {
       isAdmin: user.isAdmin,
       cart: user.cart,
       wishlist: user.wishlist,
+      shippingAddress: user.shippingAddress,
+      savedAddresses: user.savedAddresses,
     });
   } else {
     res.status(404);
@@ -107,6 +113,11 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       user.markModified('shippingAddress');
     }
 
+    if (req.body.savedAddresses !== undefined) {
+      user.savedAddresses = req.body.savedAddresses;
+      user.markModified('savedAddresses');
+    }
+
     if (req.body.password) {
       user.password = req.body.password;
     }
@@ -121,6 +132,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       cart: updatedUser.cart,
       wishlist: updatedUser.wishlist,
       shippingAddress: updatedUser.shippingAddress,
+      savedAddresses: updatedUser.savedAddresses,
     });
   } else {
     res.status(404);

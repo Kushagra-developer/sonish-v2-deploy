@@ -35,6 +35,14 @@ const userSchema = mongoose.Schema(
       postalCode: { type: String, default: '' },
       country: { type: String, default: '' },
     },
+    savedAddresses: [
+      {
+        address: String,
+        city: String,
+        postalCode: String,
+        country: String,
+      }
+    ],
   },
   {
     timestamps: true,

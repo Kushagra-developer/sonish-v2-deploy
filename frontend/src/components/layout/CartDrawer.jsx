@@ -8,8 +8,6 @@ import API from '../../utils/api';
 const CartDrawer = ({ isOpen, onClose }) => {
   const [cartItems, setCartItems] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
-  const [addressForm, setAddressForm] = useState({ address: '', city: '', postalCode: '', country: '' });
-  const [isSavingAddress, setIsSavingAddress] = useState(false);
 
   // Dynamically load cart from LocalStorage whenever the drawer opens
   const refreshCart = () => {
@@ -17,9 +15,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
     const storedUser = JSON.parse(localStorage.getItem('userInfo'));
     if (storedUser) {
       setUserInfo(storedUser);
-      if (storedUser.shippingAddress) {
-         setAddressForm(storedUser.shippingAddress);
-      }
     }
   };
 
@@ -48,28 +43,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
   // Calculate the real subtotal based on items actually in the cart
   const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.cartQuantity), 0);
-
-  const handleAddressSubmit = async (e) => {
-    e.preventDefault();
-    setIsSavingAddress(true);
-    try {
-      const res = await fetch(`${API}/api/users/profile`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ shippingAddress: addressForm })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        localStorage.setItem('userInfo', JSON.stringify(data));
-        setUserInfo(data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSavingAddress(false);
-    }
-  };
 
   const hasAddress = 
     userInfo?.shippingAddress?.address?.trim().length > 0 && 
@@ -153,20 +126,16 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 </div>
 
                 {!hasAddress ? (
-                  <form onSubmit={handleAddressSubmit} className="mt-4 p-4 border border-charcoal/10 dark:border-offwhite/10 relative">
-                    <h3 className="text-xs uppercase tracking-widest text-charcoal dark:text-offwhite font-bold mb-4">Add Shipping Address to Proceed</h3>
-                    <div className="space-y-3">
-                      <input required type="text" placeholder="Street Address" value={addressForm.address} onChange={(e) => setAddressForm({...addressForm, address: e.target.value})} className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 text-xs outline-none focus:border-charcoal dark:focus:border-offwhite dark:text-offwhite transition-colors" />
-                      <div className="flex gap-4">
-                        <input required type="text" placeholder="City" value={addressForm.city} onChange={(e) => setAddressForm({...addressForm, city: e.target.value})} className="w-1/2 bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 text-xs outline-none focus:border-charcoal dark:focus:border-offwhite dark:text-offwhite transition-colors" />
-                        <input required type="text" placeholder="Postal Code" value={addressForm.postalCode} onChange={(e) => setAddressForm({...addressForm, postalCode: e.target.value})} className="w-1/2 bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 text-xs outline-none focus:border-charcoal dark:focus:border-offwhite dark:text-offwhite transition-colors" />
-                      </div>
-                      <input required type="text" placeholder="Country" value={addressForm.country} onChange={(e) => setAddressForm({...addressForm, country: e.target.value})} className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 text-xs outline-none focus:border-charcoal dark:focus:border-offwhite dark:text-offwhite transition-colors" />
-                    </div>
-                    <button type="submit" disabled={isSavingAddress} className="w-full mt-6 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal py-3 text-xs uppercase tracking-widest hover:bg-black dark:hover:bg-gray-200 transition-colors disabled:opacity-50">
-                      {isSavingAddress ? 'Saving...' : 'Save & Continue'}
+                  <div className="mt-4 p-6 border border-charcoal/10 dark:border-offwhite/10 text-center bg-charcoal/[0.02] dark:bg-offwhite/[0.02]">
+                    <h3 className="text-xs uppercase tracking-widest text-charcoal dark:text-offwhite font-bold mb-2">Address Required</h3>
+                    <p className="text-sm text-charcoal/60 dark:text-offwhite/60 mb-6 leading-relaxed">Please select a shipping address in your profile to proceed with checkout.</p>
+                    <button 
+                      onClick={() => { onClose(); window.location.href = '/profile?tab=addresses'; }} 
+                      className="w-full bg-charcoal dark:bg-offwhite text-white dark:text-charcoal py-3 text-xs uppercase tracking-widest hover:bg-black transition-colors"
+                    >
+                      Go to Addresses
                     </button>
-                  </form>
+                  </div>
                 ) : (
                   <SecureCheckout cartTotal={cartTotal} cartItems={cartItems} shippingAddress={userInfo?.shippingAddress} onCloseDrawer={onClose} />
                 )}
