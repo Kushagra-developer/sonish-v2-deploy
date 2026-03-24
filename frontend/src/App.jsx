@@ -23,6 +23,7 @@ import Wishlist from './pages/Wishlist';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
+import Maintenance from './pages/Maintenance';
 import { Navigate } from 'react-router-dom';
 
 // Protected Admin Route wrapper
@@ -41,6 +42,13 @@ const PrivateAdminRoute = ({ children }) => {
 const AppLayout = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  
+  // Maintenance Mode Logic
+  const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
+  
+  if (isMaintenanceMode && !isAdminRoute) {
+    return <Maintenance />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen relative">

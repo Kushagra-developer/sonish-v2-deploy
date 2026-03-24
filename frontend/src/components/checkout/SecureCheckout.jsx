@@ -71,7 +71,7 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                         
                         if (verifyData.success) {
                             try {
-                                await authJsonFetch(`${API}/api/orders`, {
+                                const orderCreateRes = await authJsonFetch(`${API}/api/orders`, {
                                     method: 'POST',
                                     body: JSON.stringify({
                                         orderItems: cartItems,
@@ -90,12 +90,19 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                                         }
                                     })
                                 });
+
+                                if (!orderCreateRes.ok) {
+                                    const errorData = await orderCreateRes.json().catch(() => ({}));
+                                    throw new Error(errorData.message || 'Failed to save order to database');
+                                }
+
+                                setPaymentStatus('success');
+                                if (onPaymentSuccess) onPaymentSuccess(response)
                             } catch (e) {
                                 console.error('Order creation failed:', e);
+                                alert(`Payment successful but order saving failed: ${e.message}. Please contact support with your Payment ID: ${response.razorpay_payment_id}`);
+                                setPaymentStatus('failed');
                             }
-
-                            setPaymentStatus('success');
-                            if (onPaymentSuccess) onPaymentSuccess(response)
 
                             setTimeout(() => {
                                 try {
