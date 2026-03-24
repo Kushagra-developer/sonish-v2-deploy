@@ -1,21 +1,17 @@
-import asyncHandler from 'express-async-handler';
-import Product from '../models/productModel.js'; // Pulling from your Mongoose model instead of static data
+import Product from '../models/productModel.js';
 
 // @desc    Fetch all IN-STOCK products
 // @route   GET /api/products
 // @access  Public
-const getProducts = asyncHandler(async (req, res) => {
-  // $gt: 0 means "Greater Than Zero". 
-  // NOTE: If WooCommerce saved your stock under a different name like 'stock_quantity', change 'countInStock' to match your MongoDB schema!
+const getProducts = async (req, res) => {
   const products = await Product.find({ countInStock: { $gt: 0 } });
-
   res.json(products);
-});
+};
 
 // @desc    Fetch single product
 // @route   GET /api/products/:id
 // @access  Public
-const getProductById = asyncHandler(async (req, res) => {
+const getProductById = async (req, res) => {
   const product = await Product.findById(req.params.id);
 
   if (product) {
@@ -24,12 +20,12 @@ const getProductById = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Product not found');
   }
-});
+};
 
 // @desc    Create a product
 // @route   POST /api/products
 // @access  Private/Admin
-const createProduct = asyncHandler(async (req, res) => {
+const createProduct = async (req, res) => {
   const product = new Product({
     name: req.body.name || 'Sample name',
     price: req.body.price || 0,
@@ -47,12 +43,12 @@ const createProduct = asyncHandler(async (req, res) => {
 
   const createdProduct = await product.save();
   res.status(201).json(createdProduct);
-});
+};
 
 // @desc    Update a product
 // @route   PUT /api/products/:id
 // @access  Private/Admin
-const updateProduct = asyncHandler(async (req, res) => {
+const updateProduct = async (req, res) => {
   const { name, price, originalPrice, description, image, images, brand, category, countInStock, sizes } = req.body;
 
   const product = await Product.findById(req.params.id);
@@ -75,6 +71,6 @@ const updateProduct = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Product not found');
   }
-});
+};
 
 export { getProducts, getProductById, createProduct, updateProduct };

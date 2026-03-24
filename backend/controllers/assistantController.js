@@ -1,11 +1,10 @@
-import asyncHandler from 'express-async-handler';
 import Product from '../models/productModel.js';
 import Order from '../models/orderModel.js';
 
 // @desc    Process Admin Assistant Command
 // @route   POST /api/assistant
 // @access  Private/Admin
-const processCommand = asyncHandler(async (req, res) => {
+const processCommand = async (req, res) => {
   const { command } = req.body;
   if (!command) {
     res.status(400);
@@ -46,6 +45,6 @@ const processCommand = asyncHandler(async (req, res) => {
   res.json({
     message: `Command received: "${command}". I am a highly specialized Admin Operations AI. Please use keywords like 'inventory', 'orders', or 'sync' to execute database actions.`
   });
-});
+};
 
 export { processCommand };

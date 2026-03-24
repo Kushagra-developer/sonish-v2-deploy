@@ -1,11 +1,10 @@
-import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 import generateToken from '../utils/generateToken.js';
 
 // @desc    Auth user & get token
 // @route   POST /api/users/login
 // @access  Public
-const authUser = asyncHandler(async (req, res) => {
+const authUser = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -28,12 +27,12 @@ const authUser = asyncHandler(async (req, res) => {
     res.status(401);
     throw new Error('Invalid email or password');
   }
-});
+};
 
 // @desc    Register a new user
 // @route   POST /api/users
 // @access  Public
-const registerUser = asyncHandler(async (req, res) => {
+const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
   const userExists = await User.findOne({ email });
@@ -67,12 +66,12 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('Invalid user data');
   }
-});
+};
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
-const getUserProfile = asyncHandler(async (req, res) => {
+const getUserProfile = async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (user) {
@@ -90,12 +89,12 @@ const getUserProfile = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('User not found');
   }
-});
+};
 
 // @desc    Update user profile
 // @route   PUT /api/users/profile
 // @access  Private
-const updateUserProfile = asyncHandler(async (req, res) => {
+const updateUserProfile = async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (user) {
@@ -105,13 +104,11 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     if (req.body.shippingAddress) {
       if (!user.shippingAddress) user.shippingAddress = {};
       
-      // Update individual fields to ensure Mongoose tracks the changes to the nested object
       user.shippingAddress.address = req.body.shippingAddress.address || user.shippingAddress.address || '';
       user.shippingAddress.city = req.body.shippingAddress.city || user.shippingAddress.city || '';
       user.shippingAddress.postalCode = req.body.shippingAddress.postalCode || user.shippingAddress.postalCode || '';
       user.shippingAddress.country = req.body.shippingAddress.country || user.shippingAddress.country || '';
       
-      // Explicitly tell Mongoose that this nested object has changed
       user.markModified('shippingAddress');
     }
 
@@ -140,28 +137,19 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('User not found');
   }
-});
+};
 
 // @desc    Logout user / clear cookie
 // @route   POST /api/users/logout
 // @access  Private
-const logoutUser = asyncHandler(async (req, res) => {
-  const isProduction = process.env.NODE_ENV !== 'development';
-  res.cookie('jwt', '', {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
-    expires: new Date(0),
-  });
-
+const logoutUser = async (req, res) => {
   res.status(200).json({ message: 'Logged out successfully' });
-});
-
+};
 
 // @desc    Sync user cart and wishlist
 // @route   PUT /api/users/sync
 // @access  Private
-const syncUserCartAndWishlist = asyncHandler(async (req, res) => {
+const syncUserCartAndWishlist = async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (user) {
@@ -175,7 +163,7 @@ const syncUserCartAndWishlist = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('User not found');
   }
-});
+};
 
 export {
   authUser,
