@@ -479,30 +479,6 @@ const AdminDashboard = () => {
                           }`}>
                             {order.isDelivered ? 'Delivered' : order.isShipped ? 'Shipped' : 'Processing'}
                           </span>
-                          {!order.isShipped && order.isPaid && (
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                if(window.confirm('Mark this order as SHIPPED?')) {
-                                  try {
-                                    const res = await authJsonFetch(`${API}/api/orders/${order._id}/shipped`, {
-                                      method: 'PUT'
-                                    });
-                                    if (res.ok) {
-                                      const updatedOrder = await res.json();
-                                      setOrders(orders.map(o => o._id === order._id ? { ...o, isShipped: true, trackingStatus: 'Shipped', shippedAt: updatedOrder.shippedAt } : o));
-                                      alert('Order marked as SHIPPED');
-                                    }
-                                  } catch (err) {
-                                    alert('Failed to update status');
-                                  }
-                                }
-                              }}
-                              className="px-3 py-1 bg-amber-600 text-white text-[10px] uppercase tracking-widest font-bold rounded hover:bg-amber-700 transition-colors"
-                            >
-                              Ship Order
-                            </button>
-                          )}
                           {expandedOrder === order._id ? <ChevronUp className="w-4 h-4 text-charcoal/40 dark:text-offwhite/40" /> : <ChevronDown className="w-4 h-4 text-charcoal/40 dark:text-offwhite/40" />}
                         </div>
                       </button>
@@ -618,29 +594,6 @@ const AdminDashboard = () => {
                                   className="px-4 py-2 bg-green-600 text-white text-[10px] uppercase tracking-widest font-bold rounded hover:bg-green-700 transition-colors"
                                 >
                                   Mark as Paid
-                                </button>
-                              )}
-                              {!order.isShipped && order.isPaid && (
-                                <button
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    if(window.confirm('Mark this order as SHIPPED?')) {
-                                      try {
-                                        const res = await authJsonFetch(`${API}/api/orders/${order._id}/shipped`, {
-                                          method: 'PUT'
-                                        });
-                                        if (res.ok) {
-                                          setOrders(orders.map(o => o._id === order._id ? { ...o, isShipped: true, trackingStatus: 'Shipped' } : o));
-                                          alert('Order marked as SHIPPED');
-                                        }
-                                      } catch (err) {
-                                        alert('Failed to update status');
-                                      }
-                                    }
-                                  }}
-                                  className="px-4 py-2 bg-amber-600 text-white text-[10px] uppercase tracking-widest font-bold rounded hover:bg-amber-700 transition-colors"
-                                >
-                                  Mark as Shipped
                                 </button>
                               )}
                               {!order.isDelivered && order.isShipped && (
