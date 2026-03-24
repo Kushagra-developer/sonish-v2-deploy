@@ -137,11 +137,11 @@ const Profile = () => {
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-offwhite dark:bg-charcoal min-h-screen pt-32 pb-32 px-4 transition-colors duration-500"
+            className="bg-offwhite dark:bg-charcoal min-h-screen pt-24 md:pt-32 pb-20 md:pb-32 px-4 transition-colors duration-500"
         >
             <div className="max-w-7xl mx-auto">
                 {/* Header Section */}
-                <header className="mb-20 text-center">
+                <header className="mb-10 md:mb-20 text-center">
                     <span className="text-[10px] tracking-[0.4em] uppercase text-gold font-bold mb-4 block">Personal Workspace</span>
                     <h1 className="text-4xl md:text-6xl font-serif text-charcoal dark:text-offwhite tracking-tight mb-6 italic">My Account</h1>
                     <div className="flex items-center justify-center gap-4 text-charcoal/40 dark:text-offwhite/40">
@@ -151,9 +151,9 @@ const Profile = () => {
                     </div>
                 </header>
 
-                <div className="flex flex-col md:flex-row gap-16 items-start">
+                <div className="flex flex-col md:flex-row gap-6 md:gap-16 items-start">
                     {/* Editorial Sidebar */}
-                    <aside className="w-full md:w-80 shrink-0 sticky top-40">
+                    <aside className="w-full md:w-80 shrink-0 md:sticky md:top-40">
                         <div className="bg-white dark:bg-charcoal/40 border border-charcoal/5 dark:border-offwhite/5 overflow-hidden shadow-2xl shadow-charcoal/5">
                             <div className="p-8 border-b border-charcoal/5 dark:border-offwhite/5 flex items-center gap-4">
                                 <div className="w-12 h-12 bg-charcoal rounded-full flex items-center justify-center text-white font-serif text-xl border-2 border-gold/50">
@@ -169,7 +169,7 @@ const Profile = () => {
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`w-full flex items-center justify-between group px-6 py-4 text-[11px] uppercase tracking-[0.25em] transition-all duration-300 ${activeTab === tab.id
+                                        className={`w-full flex items-center justify-between group px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.25em] transition-all duration-300 ${activeTab === tab.id
                                             ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal font-bold'
                                             : 'text-charcoal/60 dark:text-offwhite/60 hover:bg-gold/5'
                                             }`}
@@ -267,10 +267,10 @@ const Profile = () => {
                                                 <div key={order._id} className="overflow-hidden border border-charcoal/8 dark:border-offwhite/8">
                                                     {/* Order Row Header */}
                                                     <div
-                                                      className={`px-8 py-5 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-300 ${expandedOrder === order._id ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal' : 'bg-white dark:bg-charcoal/20 hover:bg-gray-50 dark:hover:bg-charcoal/30'}`}
+                                                      className={`px-4 md:px-8 py-4 md:py-5 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 transition-colors duration-300 ${expandedOrder === order._id ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal' : 'bg-white dark:bg-charcoal/20 hover:bg-gray-50 dark:hover:bg-charcoal/30'}`}
                                                       onClick={() => handleOrderExpand(order)}
                                                     >
-                                                        <div className="flex gap-8 items-center">
+                                                        <div className="flex gap-4 md:gap-8 items-center">
                                                           <div>
                                                               <p className="text-xs text-current opacity-40 mb-1 font-semibold uppercase tracking-wider">Order ID</p>
                                                               <p className="text-sm font-mono font-semibold">#{order._id?.slice(-8)}</p>
@@ -280,12 +280,12 @@ const Profile = () => {
                                                               <p className="text-sm">{new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                                           </div>
                                                         </div>
-                                                        <div className="flex items-center gap-8">
+                                                        <div className="flex items-center gap-4 md:gap-8">
                                                             <div className="text-right">
                                                                 <p className="text-xs text-current opacity-40 mb-1 font-semibold uppercase tracking-wider">Total</p>
                                                                 <p className="text-base font-semibold">₹{(order.totalPrice || 0).toLocaleString()}</p>
                                                             </div>
-                                                            <div className="flex items-center gap-4 border-l border-current/10 pl-8">
+                                                            <div className="flex items-center gap-3 md:gap-4 border-l border-current/10 pl-4 md:pl-8">
                                                               <span className={`text-xs font-semibold px-3 py-1 rounded-sm ${order.isDelivered ? 'bg-green-100 text-green-700' : order.isShipped ? 'bg-amber-100 text-amber-700' : 'bg-gold/10 text-gold'}`}>
                                                                   {order.isDelivered ? 'Delivered' : order.isShipped ? 'Shipped' : 'Processing'}
                                                               </span>
@@ -303,7 +303,7 @@ const Profile = () => {
                                                               exit={{ height: 0, opacity: 0 }}
                                                               className="bg-white dark:bg-charcoal/30 border-t border-charcoal/5 dark:border-offwhite/5"
                                                           >
-                                                              <div className="p-8">
+                                                              <div className="p-4 md:p-8">
                                                                   {/* Download Button */}
                                                                   <button
                                                                       onClick={(e) => { e.stopPropagation(); generateInvoice(order, userInfo); }}
