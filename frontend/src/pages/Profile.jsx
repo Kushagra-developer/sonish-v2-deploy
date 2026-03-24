@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { User, Package, MapPin, Settings, LogOut, ChevronDown, ChevronUp, Check, Plus, CreditCard, ShoppingBag, ArrowRight, Truck } from 'lucide-react';
+import { User, Package, MapPin, Settings, LogOut, ChevronDown, ChevronUp, Check, Plus, CreditCard, ShoppingBag, ArrowRight, Truck, Download } from 'lucide-react';
 import API from '../utils/api';
 import { authFetch, authJsonFetch } from '../utils/authFetch';
+import { generateInvoice } from '../utils/generateInvoice';
 
 const Profile = () => {
     const [searchParams] = useSearchParams();
@@ -352,6 +353,14 @@ const Profile = () => {
                                                                               <p className="text-xs font-serif italic text-charcoal/60 dark:text-offwhite/60">
                                                                                 Transaction verified via Razorpay Secure Gateway. Secure Acquisition ID: {order.paymentResult?.id || 'SON-N/A'}
                                                                               </p>
+                                                                              <div className="mt-6 pt-6 border-t border-gold/10">
+                                                                                <button 
+                                                                                    onClick={(e) => { e.stopPropagation(); generateInvoice(order, userInfo); }}
+                                                                                    className="flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] font-bold text-charcoal dark:text-offwhite hover:text-gold transition-colors"
+                                                                                >
+                                                                                    <Download className="w-4 h-4" /> Download Official Receipt
+                                                                                </button>
+                                                                              </div>
                                                                           </div>
                                                                       </div>
 
