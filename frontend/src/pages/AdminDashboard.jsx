@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck, Image, Plus, Trash2, Edit2, ExternalLink } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck, Image, Plus, Trash2, Edit2, ExternalLink, ShieldCheck, Lock, Save } from 'lucide-react';
 import API from '../utils/api';
 import { authFetch, authJsonFetch } from '../utils/authFetch';
 
@@ -22,6 +22,8 @@ const AdminDashboard = () => {
   const [editingBanner, setEditingBanner] = useState(null);
   const [newBanner, setNewBanner] = useState({ title: '', subtitle: '', description: '', image: '', link: '/collections', order: 0 });
   const [bannerLoading, setBannerLoading] = useState(false);
+  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -136,11 +138,39 @@ const AdminDashboard = () => {
     }
   };
 
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      return alert('Passwords do not match');
+    }
+    setPasswordLoading(true);
+    try {
+      const res = await authJsonFetch(`${API}/api/users/profile`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          password: passwordData.newPassword
+        })
+      });
+      if (res.ok) {
+        alert('Password Updated Successfully');
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Failed to update password');
+      }
+    } catch (err) {
+      alert('Error updating password');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'products', label: 'Products', icon: Tag },
     { id: 'orders', label: 'Orders', icon: Truck },
     { id: 'banners', label: 'Banners', icon: Image },
+    { id: 'security', label: 'Security', icon: ShieldCheck },
   ];
 
   const statCards = [
@@ -883,6 +913,78 @@ const AdminDashboard = () => {
                    <p className="text-charcoal/30 dark:text-offwhite/30 text-[10px] mt-2 italic px-10">Add slides to breathe life into your homepage hero section</p>
                 </div>
               )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Security Tab */}
+        {activeTab === 'security' && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div className="mb-8">
+              <h2 className="text-xl font-serif text-charcoal dark:text-offwhite italic">Security & Credentials</h2>
+              <p className="text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold mt-1">Protect your administrative access</p>
+            </div>
+
+            <div className="max-w-xl">
+              <div className="bg-white dark:bg-charcoal/30 border border-charcoal/5 dark:border-offwhite/5 p-10 rounded-2xl shadow-xl">
+                <div className="flex items-center gap-4 mb-10">
+                  <div className="w-12 h-12 bg-gold/10 rounded-full flex items-center justify-center text-gold">
+                    <Lock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm uppercase tracking-widest font-bold">Update Portal Password</h3>
+                    <p className="text-[10px] text-charcoal/40 dark:text-offwhite/40 font-medium">Ensure your account remains secure with a strong password</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handlePasswordUpdate} className="space-y-8">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-3 font-bold">New Password</label>
+                    <div className="relative">
+                      <input 
+                        type="password" 
+                        required
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                        placeholder="••••••••"
+                        className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 text-sm focus:border-gold outline-none transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-3 font-bold">Confirm New Password</label>
+                    <div className="relative">
+                      <input 
+                        type="password" 
+                        required
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                        placeholder="••••••••"
+                        className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 text-sm focus:border-gold outline-none transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <button 
+                      type="submit" 
+                      disabled={passwordLoading}
+                      className="w-full flex items-center justify-center gap-3 px-8 py-4 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-gold hover:text-white transition-all shadow-lg disabled:opacity-50"
+                    >
+                      {passwordLoading ? (
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      {passwordLoading ? 'Securing...' : 'Update Administrative Password'}
+                    </button>
+                    <p className="text-[9px] text-center text-charcoal/30 dark:text-offwhite/30 mt-6 italic">
+                      Changing your password will take effect immediately. Ensure you have noted it safely.
+                    </p>
+                  </div>
+                </form>
+              </div>
             </div>
           </motion.div>
         )}
