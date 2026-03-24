@@ -566,42 +566,54 @@ const Profile = () => {
 
                             {/* ACCOUNT DETAILS TAB */}
                             {activeTab === 'account' && (
-                                <motion.div key="account" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.4 }} className="space-y-16">
-                                    <div className="grid md:grid-cols-2 gap-16">
-                                      <div className="space-y-12">
-                                        <h2 className="text-3xl font-serif text-charcoal dark:text-offwhite italic">Identity Refinement</h2>
-                                        <form className="space-y-10" onSubmit={(e) => e.preventDefault()}>
-                                            <div className="group">
-                                                <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold">Legal Full Name</label>
-                                                <input type="text" defaultValue={userInfo.name} className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold text-base font-serif italic" />
-                                            </div>
-                                            <div className="group opacity-60">
-                                                <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold">Verified Communication Channel</label>
-                                                <input type="email" defaultValue={userInfo.email} readOnly className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none text-base font-serif italic cursor-not-allowed" />
-                                            </div>
-                                            <button type="submit" className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-12 py-5 text-[10px] uppercase tracking-[0.5em] font-bold hover:bg-gold hover:text-white transition-all duration-700 shadow-xl">
-                                                Update Identity
-                                            </button>
-                                        </form>
-                                      </div>
+                                <motion.div key="account" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.4 }} className="space-y-8">
 
-                                      <div className="p-12 bg-white dark:bg-charcoal/30 border border-charcoal/10 dark:border-offwhite/10 relative shadow-2xl">
-                                        <h3 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-10 italic">Secure Vault Update</h3>
-                                        <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
-                                          <div className="group">
-                                            <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold">Current Cipher</label>
-                                            <input type="password" placeholder="Existing Secret" className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold font-mono text-sm placeholder:opacity-20" />
-                                          </div>
-                                          <div className="group">
-                                            <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold">New Cipher</label>
-                                            <input type="password" placeholder="New Secret" className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold font-mono text-sm placeholder:opacity-20" />
-                                          </div>
-                                          <button type="submit" className="w-full border-2 border-charcoal/10 dark:border-offwhite/10 text-charcoal dark:text-offwhite py-4 text-[10px] uppercase tracking-[0.4em] font-bold hover:bg-gold hover:text-white hover:border-gold transition-all duration-500">
-                                            Seal Vault
-                                          </button>
+                                    {/* Profile Info Card */}
+                                    <div className="bg-white dark:bg-charcoal/30 border border-charcoal/8 dark:border-offwhite/8 p-10">
+                                        <h2 className="text-xl font-serif text-charcoal dark:text-offwhite mb-1">Profile Information</h2>
+                                        <p className="text-xs text-charcoal/40 dark:text-offwhite/40 tracking-widest uppercase mb-8">Update your name and account details</p>
+                                        <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                                            <div>
+                                                <label className="block text-xs font-semibold uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-2">Full Name</label>
+                                                <input type="text" defaultValue={userInfo.name} className="w-full bg-transparent border-b border-charcoal/15 dark:border-offwhite/15 py-3 outline-none focus:border-charcoal dark:focus:border-offwhite text-base text-charcoal dark:text-offwhite transition-colors" />
+                                            </div>
+                                            <div className="opacity-60">
+                                                <label className="block text-xs font-semibold uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-2">Email Address <span className="normal-case tracking-normal font-normal">(cannot be changed)</span></label>
+                                                <input type="email" defaultValue={userInfo.email} readOnly className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 outline-none text-base text-charcoal dark:text-offwhite cursor-not-allowed" />
+                                            </div>
+                                            <div className="pt-2">
+                                                <button type="submit" className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-8 py-3 text-xs font-bold uppercase tracking-widest hover:bg-gold hover:text-white transition-all duration-300">
+                                                    Save Changes
+                                                </button>
+                                            </div>
                                         </form>
-                                      </div>
                                     </div>
+
+                                    {/* Password Card */}
+                                    <div className="bg-white dark:bg-charcoal/30 border border-charcoal/8 dark:border-offwhite/8 p-10">
+                                        <h2 className="text-xl font-serif text-charcoal dark:text-offwhite mb-1">Change Password</h2>
+                                        <p className="text-xs text-charcoal/40 dark:text-offwhite/40 tracking-widest uppercase mb-8">Keep your account secure with a strong password</p>
+                                        <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                                            <div>
+                                                <label className="block text-xs font-semibold uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-2">Current Password</label>
+                                                <input type="password" placeholder="Enter current password" className="w-full bg-transparent border-b border-charcoal/15 dark:border-offwhite/15 py-3 outline-none focus:border-charcoal dark:focus:border-offwhite text-base text-charcoal dark:text-offwhite transition-colors placeholder:text-charcoal/20 dark:placeholder:text-offwhite/20" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-semibold uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-2">New Password</label>
+                                                <input type="password" placeholder="Enter new password" className="w-full bg-transparent border-b border-charcoal/15 dark:border-offwhite/15 py-3 outline-none focus:border-charcoal dark:focus:border-offwhite text-base text-charcoal dark:text-offwhite transition-colors placeholder:text-charcoal/20 dark:placeholder:text-offwhite/20" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-semibold uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-2">Confirm New Password</label>
+                                                <input type="password" placeholder="Confirm new password" className="w-full bg-transparent border-b border-charcoal/15 dark:border-offwhite/15 py-3 outline-none focus:border-charcoal dark:focus:border-offwhite text-base text-charcoal dark:text-offwhite transition-colors placeholder:text-charcoal/20 dark:placeholder:text-offwhite/20" />
+                                            </div>
+                                            <div className="pt-2">
+                                                <button type="submit" className="border border-charcoal/20 dark:border-offwhite/20 text-charcoal dark:text-offwhite px-8 py-3 text-xs font-bold uppercase tracking-widest hover:bg-charcoal hover:text-white dark:hover:bg-offwhite dark:hover:text-charcoal transition-all duration-300">
+                                                    Update Password
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+
                                 </motion.div>
                             )}
 
