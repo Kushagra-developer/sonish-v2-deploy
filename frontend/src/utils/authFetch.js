@@ -1,12 +1,13 @@
-import API from './api';
-
 /**
  * Wrapper around fetch() that automatically attaches the JWT Bearer token
  * from localStorage to every request. Use this for all authenticated API calls.
+ * Checks both 'userInfo' (customer) and 'adminInfo' (admin) in localStorage.
  */
 export const authFetch = (url, options = {}) => {
+  // Try userInfo first, then adminInfo
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
-  const token = userInfo?.token;
+  const adminInfo = JSON.parse(localStorage.getItem('adminInfo') || 'null');
+  const token = userInfo?.token || adminInfo?.token;
 
   const headers = {
     ...options.headers,
