@@ -489,7 +489,8 @@ const AdminDashboard = () => {
                                       method: 'PUT'
                                     });
                                     if (res.ok) {
-                                      setOrders(orders.map(o => o._id === order._id ? { ...o, isShipped: true, trackingStatus: 'Shipped' } : o));
+                                      const updatedOrder = await res.json();
+                                      setOrders(orders.map(o => o._id === order._id ? { ...o, isShipped: true, trackingStatus: 'Shipped', shippedAt: updatedOrder.shippedAt } : o));
                                       alert('Order marked as SHIPPED');
                                     }
                                   } catch (err) {
@@ -581,8 +582,9 @@ const AdminDashboard = () => {
                                       body: JSON.stringify({ trackingNumber: awb, carrier: 'Delhivery' })
                                     });
                                     if (res.ok) {
+                                      const updatedOrder = await res.json();
                                       alert('Tracking Information Saved');
-                                      setOrders(orders.map(o => o._id === order._id ? { ...o, trackingNumber: awb, trackingStatus: 'Shipped' } : o));
+                                      setOrders(orders.map(o => o._id === order._id ? { ...o, trackingNumber: awb, trackingStatus: 'Shipped', isShipped: true, shippedAt: updatedOrder.shippedAt } : o));
                                     }
                                   } catch (err) {
                                     alert('Failed to save tracking');
