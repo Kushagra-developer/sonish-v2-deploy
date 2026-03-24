@@ -27,8 +27,8 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
   const updateQuantity = (index, delta) => {
     const newCart = [...cartItems];
-    newCart[index].cartQuantity += delta;
-    if (newCart[index].cartQuantity < 1) newCart[index].cartQuantity = 1;
+    newCart[index].qty += delta;
+    if (newCart[index].qty < 1) newCart[index].qty = 1;
     setCartItems(newCart);
     saveCart(newCart);
     window.dispatchEvent(new Event('cartUpdated'));
@@ -42,7 +42,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
   };
 
   // Calculate the real subtotal based on items actually in the cart
-  const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.cartQuantity), 0);
+  const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.qty), 0);
 
   const hasAddress = 
     userInfo?.shippingAddress?.address?.trim().length > 0 && 
@@ -104,7 +104,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                       </div>
                       <div className="flex items-center border border-charcoal/20 dark:border-offwhite/20 w-24 h-8 justify-between px-2 mt-2">
                         <button onClick={() => updateQuantity(index, -1)} className="dark:text-offwhite"><Minus className="w-3 h-3" /></button>
-                        <span className="text-xs dark:text-offwhite">{item.cartQuantity}</span>
+                        <span className="text-xs dark:text-offwhite">{item.qty}</span>
                         <button onClick={() => updateQuantity(index, 1)} className="dark:text-offwhite"><Plus className="w-3 h-3" /></button>
                       </div>
                     </div>

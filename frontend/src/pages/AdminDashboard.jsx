@@ -510,7 +510,7 @@ const AdminDashboard = () => {
                                     <img src={item.image} alt={item.name} className="w-10 h-12 object-cover rounded-sm bg-gray-100" />
                                     <div className="flex-1">
                                       <p className="text-[13px] text-charcoal dark:text-offwhite leading-tight">{item.name}</p>
-                                      <p className="text-[10px] text-charcoal/50 dark:text-offwhite/50">Qty: {item.qty} × ₹{item.price}</p>
+                                      <p className="text-[10px] text-charcoal/50 dark:text-offwhite/50">Qty: {item.qty || item.cartQuantity} × ₹{item.price}</p>
                                     </div>
                                   </div>
                                 ))}

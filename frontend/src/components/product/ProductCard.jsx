@@ -52,11 +52,11 @@ const ProductCard = ({ product, isFeatured = false }) => {
     }
 
     const cart = loadCart();
-    const cartItem = { ...product, selectedSize: 'S', cartQuantity: 1 };
+    const cartItem = { ...product, selectedSize: 'S', qty: 1 };
 
     const existingIndex = cart.findIndex(item => item._id === product._id && item.selectedSize === 'S');
     if (existingIndex >= 0) {
-      cart[existingIndex].cartQuantity += 1;
+      cart[existingIndex].qty += 1;
     } else {
       cart.push(cartItem);
     }

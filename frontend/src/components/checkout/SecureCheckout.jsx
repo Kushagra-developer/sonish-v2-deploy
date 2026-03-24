@@ -74,7 +74,11 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                                 const orderCreateRes = await authJsonFetch(`${API}/api/orders`, {
                                     method: 'POST',
                                     body: JSON.stringify({
-                                        orderItems: cartItems,
+                                        orderItems: cartItems.map(item => ({
+                                            ...item,
+                                            qty: item.qty || item.cartQuantity || 1,
+                                            product: item._id || item.product
+                                        })),
                                         shippingAddress,
                                         paymentMethod: 'Razorpay',
                                         itemsPrice: cartTotal,

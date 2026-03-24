@@ -66,12 +66,12 @@ const ProductDetails = () => {
         const cartItem = {
             ...product,
             selectedSize,
-            cartQuantity: quantity
+            qty: quantity
         };
 
         const existingIndex = cart.findIndex(item => item._id === product._id && item.selectedSize === selectedSize);
         if (existingIndex >= 0) {
-            cart[existingIndex].cartQuantity += quantity;
+            cart[existingIndex].qty += quantity;
         } else {
             cart.push(cartItem);
         }

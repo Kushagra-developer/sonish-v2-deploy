@@ -32,7 +32,7 @@ const Navbar = () => {
     const updateCounts = () => {
       const cart = loadCart();
       const wishlist = loadWishlist();
-      const totalItems = cart.reduce((acc, item) => acc + (item.cartQuantity || 1), 0);
+      const totalItems = cart.reduce((acc, item) => acc + (item.qty || item.cartQuantity || 1), 0);
       setCartCount(totalItems);
       setWishlistCount(wishlist.length);
       setIsLoggedIn(!!localStorage.getItem('userInfo'));
