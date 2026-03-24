@@ -4,10 +4,20 @@
  * Checks both 'userInfo' (customer) and 'adminInfo' (admin) in localStorage.
  */
 export const authFetch = (url, options = {}) => {
-  // Try userInfo first, then adminInfo
-  const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
-  const adminInfo = JSON.parse(localStorage.getItem('adminInfo') || 'null');
-  const token = userInfo?.token || adminInfo?.token;
+  let token = null;
+
+  try {
+    // Try userInfo first, then adminInfo
+    const userInfoStr = localStorage.getItem('userInfo');
+    const adminInfoStr = localStorage.getItem('adminInfo');
+    
+    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
+    const adminInfo = adminInfoStr ? JSON.parse(adminInfoStr) : null;
+    
+    token = userInfo?.token || adminInfo?.token;
+  } catch (err) {
+    console.error('Error parsing auth info from localStorage:', err);
+  }
 
   const headers = {
     ...options.headers,
