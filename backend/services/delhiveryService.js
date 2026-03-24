@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 
 /**
  * Delhivery Tracking API Service
