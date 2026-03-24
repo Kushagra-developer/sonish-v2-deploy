@@ -15,6 +15,8 @@ const AdminDashboard = () => {
   const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: '', countInStock: '', image: '', description: '', sizes: [{size: 'S', stock: 0}, {size: 'M', stock: 0}, {size: 'L', stock: 0}, {size: 'XL', stock: 0}] });
   const [editFormData, setEditFormData] = useState(null);
   const [addLoading, setAddLoading] = useState(false);
+  const [trackingAWBs, setTrackingAWBs] = useState({});
+  const [isSavingTracking, setIsSavingTracking] = useState({});
 
   const handleLogout = async () => {
     try {
@@ -515,6 +517,58 @@ const AdminDashboard = () => {
                                   </div>
                                 ))}
                               </div>
+                            </div>
+                          </div>
+
+
+                          <div className="mt-8 pt-8 border-t border-charcoal/5">
+                            <h4 className="text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-4 font-bold">Shipment Tracking (Delhivery)</h4>
+                            <div className="flex flex-col sm:flex-row gap-4 max-w-xl">
+                              <div className="flex-1 relative">
+                                <input 
+                                  type="text" 
+                                  placeholder="Enter AWB Number" 
+                                  defaultValue={order.trackingNumber || ''}
+                                  onChange={(e) => setTrackingAWBs({ ...trackingAWBs, [order._id]: e.target.value })}
+                                  className="w-full bg-white dark:bg-charcoal/20 border border-charcoal/10 dark:border-offwhite/10 px-4 py-2.5 rounded text-sm outline-none focus:border-gold transition-colors"
+                                />
+                                {order.trackingNumber && (
+                                  <a 
+                                    href={`https://www.delhivery.com/track/package/${order.trackingNumber}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="absolute right-3 top-3 text-[9px] uppercase tracking-widest text-gold hover:underline font-bold"
+                                  >
+                                    Verify Portal
+                                  </a>
+                                )}
+                              </div>
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  const awb = trackingAWBs[order._id] || order.trackingNumber;
+                                  if (!awb) return alert('Please enter an AWB number');
+                                  
+                                  setIsSavingTracking({ ...isSavingTracking, [order._id]: true });
+                                  try {
+                                    const res = await authJsonFetch(`${API}/api/orders/${order._id}/tracking`, {
+                                      method: 'PUT',
+                                      body: JSON.stringify({ trackingNumber: awb, carrier: 'Delhivery' })
+                                    });
+                                    if (res.ok) {
+                                      alert('Tracking Information Saved');
+                                      setOrders(orders.map(o => o._id === order._id ? { ...o, trackingNumber: awb, trackingStatus: 'Shipped' } : o));
+                                    }
+                                  } catch (err) {
+                                    alert('Failed to save tracking');
+                                  }
+                                  setIsSavingTracking({ ...isSavingTracking, [order._id]: false });
+                                }}
+                                disabled={isSavingTracking[order._id]}
+                                className="px-6 py-2.5 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-[10px] uppercase tracking-widest font-bold rounded hover:bg-gold hover:text-white transition-all disabled:opacity-50"
+                              >
+                                {isSavingTracking[order._id] ? 'Saving...' : 'Save Tracking'}
+                              </button>
                             </div>
                           </div>
 

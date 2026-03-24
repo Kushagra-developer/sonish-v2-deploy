@@ -126,11 +126,48 @@ const getOrders = async (req, res) => {
   res.json(orders);
 };
 
-export {
-  addOrderItems,
-  getOrderById,
-  updateOrderToPaid,
-  updateOrderToDelivered,
-  getMyOrders,
-  getOrders,
+// @desc    Update order tracking info
+// @route   PUT /api/orders/:id/tracking
+// @access  Private/Admin
+const updateOrderTracking = async (req, res) => {
+  const { trackingNumber, carrier } = req.body;
+  const order = await Order.findById(req.params.id);
+
+  if (order) {
+    order.trackingNumber = trackingNumber || order.trackingNumber;
+    order.carrier = carrier || order.carrier;
+    
+    if (trackingNumber && order.trackingStatus === 'Processing') {
+      order.trackingStatus = 'Shipped';
+    }
+
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+  } else {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+};
+
+// @desc    Get order tracking info from Delhivery
+// @route   GET /api/orders/:id/tracking
+// @access  Private
+const getOrderTracking = async (req, res) => {
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+
+  if (!order.trackingNumber) {
+    res.status(400);
+    throw new Error('Order does not have a tracking number yet');
+  }
+
+  // Import the service dynamically or at the top. Moving it here for self-containment in this chunk
+  const { fetchTrackingDetails } = await import('../services/delhiveryService.js');
+  const trackingData = await fetchTrackingDetails(order.trackingNumber);
+
+  res.json(trackingData);
 };

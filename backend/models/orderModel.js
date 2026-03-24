@@ -72,6 +72,24 @@ const orderSchema = mongoose.Schema(
     deliveredAt: {
       type: Date,
     },
+    trackingNumber: {
+      type: String,
+    },
+    carrier: {
+      type: String,
+      default: 'Delhivery',
+    },
+    trackingStatus: {
+      type: String,
+      default: 'Processing',
+    },
+    trackingHistory: [
+      {
+        status: String,
+        location: String,
+        timestamp: Date,
+      },
+    ],
   },
   {
     timestamps: true,

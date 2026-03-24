@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { User, Package, MapPin, Settings, LogOut, ChevronDown, ChevronUp, Check, Plus, CreditCard, ShoppingBag, ArrowRight } from 'lucide-react';
+import { User, Package, MapPin, Settings, LogOut, ChevronDown, ChevronUp, Check, Plus, CreditCard, ShoppingBag, ArrowRight, Truck } from 'lucide-react';
 import API from '../utils/api';
 import { authFetch, authJsonFetch } from '../utils/authFetch';
 
@@ -12,6 +12,8 @@ const Profile = () => {
     const [userInfo, setUserInfo] = useState(null);
     const [orders, setOrders] = useState([]);
     const [expandedOrder, setExpandedOrder] = useState(null);
+    const [orderTracking, setOrderTracking] = useState({});
+    const [loadingTracking, setLoadingTracking] = useState({});
     const [addressForm, setAddressForm] = useState({ address: '', city: '', postalCode: '', country: 'India' });
     const [isSavingAddress, setIsSavingAddress] = useState(false);
     const [addressSaved, setAddressSaved] = useState(false);
@@ -91,6 +93,33 @@ const Profile = () => {
             }
         } catch (err) {
             console.error('Failed to select address:', err);
+        }
+    };
+
+    const fetchTracking = async (orderId) => {
+        if (orderTracking[orderId]) return;
+        setLoadingTracking(prev => ({ ...prev, [orderId]: true }));
+        try {
+            const res = await authFetch(`${API}/api/orders/${orderId}/tracking`);
+            if (res.ok) {
+                const data = await res.json();
+                setOrderTracking(prev => ({ ...prev, [orderId]: data }));
+            }
+        } catch (err) {
+            console.error('Tracking fetch error:', err);
+        } finally {
+            setLoadingTracking(prev => ({ ...prev, [orderId]: false }));
+        }
+    };
+
+    const handleOrderExpand = (order) => {
+        if (expandedOrder === order._id) {
+            setExpandedOrder(null);
+        } else {
+            setExpandedOrder(order._id);
+            if (order.trackingNumber) {
+                fetchTracking(order._id);
+            }
         }
     };
 
@@ -237,7 +266,7 @@ const Profile = () => {
                                                 <div key={order._id} className="group overflow-hidden">
                                                     <div 
                                                       className={`p-10 transition-all duration-500 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-8 ${expandedOrder === order._id ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal' : 'bg-white dark:bg-charcoal/20 border border-charcoal/5 dark:border-offwhite/5 hover:border-gold/30 shadow-lg'}`}
-                                                      onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}
+                                                      onClick={() => handleOrderExpand(order)}
                                                     >
                                                         <div className="flex gap-10 items-center">
                                                           <div className={`text-[10px] font-bold tracking-[0.3em] font-mono opacity-40 group-hover:opacity-100 transition-opacity`}>0{idx + 1}</div>
@@ -325,6 +354,65 @@ const Profile = () => {
                                                                               </p>
                                                                           </div>
                                                                       </div>
+
+                                                                      {order.trackingNumber && (
+                                                                        <div>
+                                                                          <h4 className="text-[10px] uppercase tracking-[0.4em] text-gold mb-8 font-bold border-b border-gold/10 pb-4">Live Shipment Tracking</h4>
+                                                                          <div className="p-8 bg-offwhite dark:bg-charcoal shadow-inner relative overflow-hidden">
+                                                                            <div className="absolute top-0 right-0 p-4">
+                                                                              <Truck className="w-12 h-12 text-gold/5 opacity-20" />
+                                                                            </div>
+                                                                            
+                                                                            {loadingTracking[order._id] ? (
+                                                                              <div className="py-8 flex flex-col items-center gap-4">
+                                                                                <div className="w-6 h-6 border-b-2 border-gold rounded-full animate-spin" />
+                                                                                <p className="text-[9px] uppercase tracking-[0.3em] text-gold font-bold">Fetching Live Data...</p>
+                                                                              </div>
+                                                                            ) : orderTracking[order._id] ? (
+                                                                              <div className="space-y-6">
+                                                                                <div className="flex items-center justify-between mb-8">
+                                                                                  <div>
+                                                                                    <p className="text-[10px] uppercase tracking-widest opacity-40 mb-1 font-bold">Delhivery AWB</p>
+                                                                                    <p className="text-sm font-mono font-bold text-gold">{order.trackingNumber}</p>
+                                                                                  </div>
+                                                                                  <a 
+                                                                                    href={`https://www.delhivery.com/track/package/${order.trackingNumber}`} 
+                                                                                    target="_blank" 
+                                                                                    rel="noopener noreferrer"
+                                                                                    className="text-[9px] uppercase tracking-widest font-bold border border-gold/30 px-3 py-1.5 hover:bg-gold hover:text-white transition-all"
+                                                                                  >
+                                                                                    Open Portal
+                                                                                  </a>
+                                                                                </div>
+                                                                                
+                                                                                <div className="space-y-6 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[1px] before:bg-gold/20">
+                                                                                  {(orderTracking[order._id].Scans || []).slice(0, 3).map((scan, sIdx) => (
+                                                                                    <div key={sIdx} className="flex gap-4 relative">
+                                                                                      <div className={`w-[15px] h-[15px] rounded-full border-2 border-gold bg-white z-10 shrink-0 mt-1 ${sIdx === 0 ? 'scale-110 shadow-[0_0_10px_rgba(212,175,55,0.5)]' : 'opacity-40'}`} />
+                                                                                      <div>
+                                                                                        <p className={`text-xs font-bold uppercase tracking-widest ${sIdx === 0 ? 'text-charcoal dark:text-offwhite' : 'text-charcoal/40 dark:text-offwhite/40'}`}>
+                                                                                          {scan.Status}
+                                                                                        </p>
+                                                                                        <p className="text-[10px] italic text-charcoal/60 dark:text-offwhite/60 font-serif">
+                                                                                          {scan.Location} • {new Date(scan.ScanDateTime).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                                                        </p>
+                                                                                      </div>
+                                                                                    </div>
+                                                                                  ))}
+                                                                                  {(!orderTracking[order._id].Scans || orderTracking[order._id].Scans.length === 0) && (
+                                                                                    <p className="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold italic py-4">Shipment picked up, tracking updates will appear soon.</p>
+                                                                                  )}
+                                                                                </div>
+                                                                              </div>
+                                                                            ) : (
+                                                                              <div className="py-8 text-center bg-gold/5 border border-gold/10">
+                                                                                <p className="text-[10px] uppercase tracking-widest text-gold font-bold">Status: {order.trackingStatus}</p>
+                                                                                <p className="text-[9px] text-charcoal/50 mt-2 italic px-4">Live tracking data will be available once the carrier provides an update.</p>
+                                                                              </div>
+                                                                            )}
+                                                                          </div>
+                                                                        </div>
+                                                                      )}
                                                                   </div>
                                                               </div>
                                                           </motion.div>
