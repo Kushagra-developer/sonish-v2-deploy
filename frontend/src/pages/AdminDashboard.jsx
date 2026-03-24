@@ -473,10 +473,35 @@ const AdminDashboard = () => {
                           <span className={`text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full font-medium ${
                             order.isDelivered
                               ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                              : 'bg-charcoal/5 dark:bg-offwhite/5 text-charcoal/50 dark:text-offwhite/50'
+                              : order.isShipped
+                                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                : 'bg-charcoal/5 dark:bg-offwhite/5 text-charcoal/50 dark:text-offwhite/50'
                           }`}>
-                            {order.isDelivered ? 'Delivered' : 'Processing'}
+                            {order.isDelivered ? 'Delivered' : order.isShipped ? 'Shipped' : 'Processing'}
                           </span>
+                          {!order.isShipped && order.isPaid && (
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if(window.confirm('Mark this order as SHIPPED?')) {
+                                  try {
+                                    const res = await authJsonFetch(`${API}/api/orders/${order._id}/shipped`, {
+                                      method: 'PUT'
+                                    });
+                                    if (res.ok) {
+                                      setOrders(orders.map(o => o._id === order._id ? { ...o, isShipped: true, trackingStatus: 'Shipped' } : o));
+                                      alert('Order marked as SHIPPED');
+                                    }
+                                  } catch (err) {
+                                    alert('Failed to update status');
+                                  }
+                                }
+                              }}
+                              className="px-3 py-1 bg-amber-600 text-white text-[10px] uppercase tracking-widest font-bold rounded hover:bg-amber-700 transition-colors"
+                            >
+                              Ship Order
+                            </button>
+                          )}
                           {expandedOrder === order._id ? <ChevronUp className="w-4 h-4 text-charcoal/40 dark:text-offwhite/40" /> : <ChevronDown className="w-4 h-4 text-charcoal/40 dark:text-offwhite/40" />}
                         </div>
                       </button>
@@ -593,7 +618,30 @@ const AdminDashboard = () => {
                                   Mark as Paid
                                 </button>
                               )}
-                              {!order.isDelivered && (
+                              {!order.isShipped && order.isPaid && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if(window.confirm('Mark this order as SHIPPED?')) {
+                                      try {
+                                        const res = await authJsonFetch(`${API}/api/orders/${order._id}/shipped`, {
+                                          method: 'PUT'
+                                        });
+                                        if (res.ok) {
+                                          setOrders(orders.map(o => o._id === order._id ? { ...o, isShipped: true, trackingStatus: 'Shipped' } : o));
+                                          alert('Order marked as SHIPPED');
+                                        }
+                                      } catch (err) {
+                                        alert('Failed to update status');
+                                      }
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-amber-600 text-white text-[10px] uppercase tracking-widest font-bold rounded hover:bg-amber-700 transition-colors"
+                                >
+                                  Mark as Shipped
+                                </button>
+                              )}
+                              {!order.isDelivered && order.isShipped && (
                                 <button
                                   onClick={async (e) => {
                                     e.stopPropagation();
@@ -602,7 +650,10 @@ const AdminDashboard = () => {
                                         const res = await authJsonFetch(`${API}/api/orders/${order._id}/deliver`, {
                                           method: 'PUT'
                                         });
-                                        if (res.ok) window.location.reload();
+                                        if (res.ok) {
+                                          setOrders(orders.map(o => o._id === order._id ? { ...o, isDelivered: true } : o));
+                                          alert('Order marked as DELIVERED');
+                                        }
                                       } catch (err) {}
                                     }
                                   }}

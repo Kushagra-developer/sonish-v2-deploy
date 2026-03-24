@@ -3,22 +3,10 @@ import { Link } from 'react-router-dom';
 
 const categories = [
   {
-    title: 'New Arrivals',
+    title: 'The New Arrivals',
     subtitle: 'The Latest Edit',
-    image: 'https://images.unsplash.com/photo-1539109136881-3be0610917c1?q=80&w=800&auto=format&fit=crop',
+    image: '/Users/kushagrasachdeva/.gemini/antigravity/brain/e8db3940-bdd8-4f8b-96cb-5591e2fa4061/new_arrivals_featured_1774360000000_1774360060135.png',
     link: '/collections'
-  },
-  {
-    title: 'Evening Wear',
-    subtitle: 'Timeless Elegance',
-    image: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=800&auto=format&fit=crop',
-    link: '/collections?category=Women'
-  },
-  {
-    title: 'The Day Boutique',
-    subtitle: 'Urban Sophistication',
-    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop',
-    link: '/collections?category=Women'
   }
 ];
 

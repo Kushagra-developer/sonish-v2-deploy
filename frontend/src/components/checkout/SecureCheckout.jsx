@@ -7,7 +7,7 @@ import { authJsonFetch } from '../../utils/authFetch';
 const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, onPaymentSuccess }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [scriptLoaded, setScriptLoaded] = useState(false);
-    const [paymentStatus, setPaymentStatus] = useState('idle');
+    const [paymentMethod, setPaymentMethod] = useState('online');
 
     // Load Razorpay Script dynamically
     useEffect(() => {
@@ -23,7 +23,57 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
         loadScript();
     }, []);
 
+    const handleCODOrder = async () => {
+        setIsLoading(true);
+        try {
+            const orderCreateRes = await authJsonFetch(`${API}/api/orders`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    orderItems: cartItems.map(item => ({
+                        ...item,
+                        qty: item.qty || 1,
+                        product: item._id || item.product
+                    })),
+                    shippingAddress,
+                    paymentMethod: 'COD',
+                    itemsPrice: cartTotal,
+                    taxPrice: 0,
+                    shippingPrice: 0,
+                    totalPrice: cartTotal,
+                    isPaid: false,
+                })
+            });
+
+            if (!orderCreateRes.ok) {
+                const errorData = await orderCreateRes.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to place COD order');
+            }
+
+            setPaymentStatus('success');
+            
+            setTimeout(() => {
+                const uid = JSON.parse(localStorage.getItem('userInfo'))?._id;
+                if (uid) {
+                    localStorage.removeItem(`sonish_cart_${uid}`);
+                    window.dispatchEvent(new Event('cartUpdated'));
+                }
+                if (onCloseDrawer) onCloseDrawer();
+                window.location.href = '/profile?tab=orders';
+            }, 3000);
+
+        } catch (error) {
+            console.error('COD Flow Error:', error);
+            alert(error.message || 'Something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handlePayment = async () => {
+        if (paymentMethod === 'cod') {
+            return handleCODOrder();
+        }
+
         if (!scriptLoaded) {
             alert('Payment gateway is still loading. Please try again.');
             return;
@@ -117,6 +167,7 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                                     }
                                 } catch (e) {}
                                 if (onCloseDrawer) onCloseDrawer();
+                                window.location.href = '/profile?tab=orders';
                             }, 3000);
 
                         } else {
@@ -167,8 +218,12 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                 <div className="w-16 h-16 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-4 text-white">
                     <CheckCircle className="w-8 h-8" />
                 </div>
-                <h3 className="font-serif text-2xl text-charcoal mb-2">Payment Successful!</h3>
-                <p className="text-sm text-charcoal/60">Thank you for your premium order. Your transaction has been securely processed.</p>
+                <h3 className="font-serif text-2xl text-charcoal mb-2">Order Successful!</h3>
+                <p className="text-sm text-charcoal/60">
+                    {paymentMethod === 'cod' 
+                        ? "Your acquisition has been placed. Please have ₹" + cartTotal.toLocaleString() + " ready upon delivery." 
+                        : "Thank you for your premium order. Your transaction has been securely processed."}
+                </p>
             </motion.div>
         );
     }
@@ -178,27 +233,43 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
             <div className="flex items-center gap-3 mb-6 relative">
                 <Shield className="w-5 h-5 text-gold" />
                 <h3 className="font-serif text-xl text-charcoal">Secure Checkout</h3>
-                <p className="absolute right-0 top-1 text-[10px] uppercase tracking-widest text-charcoal/40 font-bold border border-charcoal/10 px-2 py-0.5 rounded-sm bg-white">
-                    Protected by Razorpay
-                </p>
             </div>
 
-            <p className="text-sm text-charcoal/60 mb-6">
-                All transactions are encrypted and processed through military-grade infrastructure. We support all major UPI Apps, Credit/Debit Cards, and Netbanking.
+            {/* Payment Method Selector */}
+            <div className="flex gap-4 mb-8">
+                <button
+                    onClick={() => setPaymentMethod('online')}
+                    className={`flex-1 py-4 border transition-all duration-300 flex flex-col items-center gap-2 ${paymentMethod === 'online' ? 'border-gold bg-gold/5 text-gold' : 'border-charcoal/10 text-charcoal/40 hover:border-gold/30'}`}
+                >
+                    <CreditCard className="w-5 h-5" />
+                    <span className="text-[10px] uppercase tracking-widest font-bold">Pay Online</span>
+                </button>
+                <button
+                    onClick={() => setPaymentMethod('cod')}
+                    className={`flex-1 py-4 border transition-all duration-300 flex flex-col items-center gap-2 ${paymentMethod === 'cod' ? 'border-gold bg-gold/5 text-gold' : 'border-charcoal/10 text-charcoal/40 hover:border-gold/30'}`}
+                >
+                    <ShoppingBag className="w-5 h-5" />
+                    <span className="text-[10px] uppercase tracking-widest font-bold">Cash on Delivery</span>
+                </button>
+            </div>
+
+            <p className="text-sm text-charcoal/60 mb-6 italic">
+                {paymentMethod === 'online' 
+                    ? "Encrypted transaction via Razorpay. Supports UPI, Cards, and Netbanking." 
+                    : "Pay with cash directly to the courier upon receipt of your Sonish acquisition."}
             </p>
 
             <button
                 onClick={handlePayment}
-                disabled={isLoading || !scriptLoaded || cartTotal === 0}
+                disabled={isLoading || (paymentMethod === 'online' && !scriptLoaded) || cartTotal === 0}
                 className="w-full relative overflow-hidden group py-4 flex items-center justify-center gap-3 bg-charcoal text-white rounded-md disabled:bg-charcoal/50 disabled:cursor-not-allowed transition-all duration-300 hover:bg-black hover:shadow-lg"
             >
                 {isLoading ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                     <>
-                        <CreditCard className="w-5 h-5 group-hover:text-gold transition-colors" />
                         <span className="font-medium text-sm tracking-wide uppercase">
-                            Pay ₹{cartTotal.toLocaleString()} Securely
+                            {paymentMethod === 'online' ? `Pay ₹${cartTotal.toLocaleString()} Securely` : "Place Order (COD)"}
                         </span>
                         <ChevronRight className="w-4 h-4 text-white/50 group-hover:text-gold group-hover:translate-x-1 transition-all" />
                     </>

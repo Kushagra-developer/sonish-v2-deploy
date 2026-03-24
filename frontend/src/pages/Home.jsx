@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import Hero from '../components/home/Hero';
 import FeaturedCategories from '../components/home/FeaturedCategories';
+import Editorial from '../components/home/Editorial';
 import NewArrivals from '../components/home/NewArrivals';
 
 const Home = () => {
@@ -14,6 +15,7 @@ const Home = () => {
     >
       <Hero />
       <FeaturedCategories />
+      <Editorial />
       {/* This is where your products are being rendered */}
       <NewArrivals />
     </motion.div>

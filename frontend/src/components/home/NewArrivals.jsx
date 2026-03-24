@@ -35,7 +35,26 @@ const NewArrivals = () => {
       <div className="flex flex-col items-center justify-center text-center mb-20">
         <span className="text-[10px] tracking-[0.4em] uppercase text-charcoal/40 dark:text-offwhite/40 mb-4 block font-bold">Curated Selection</span>
         <h2 className="text-4xl md:text-6xl font-serif text-charcoal dark:text-offwhite tracking-tight mb-8">The Seasonal Edit</h2>
-        <div className="w-16 h-[1px] bg-gold/50"></div>
+        <div className="w-16 h-[1px] bg-gold/50 mb-12"></div>
+        
+        {/* Featured Section Image */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.2 }}
+          className="w-full h-[500px] mb-20 overflow-hidden relative group"
+        >
+          <img 
+            src="/Users/kushagrasachdeva/.gemini/antigravity/brain/e8db3940-bdd8-4f8b-96cb-5591e2fa4061/new_arrivals_featured_1774360000000_1774360060135.png" 
+            alt="New Arrivals Featured" 
+            className="w-full h-full object-cover object-center grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000"
+          />
+          <div className="absolute inset-0 bg-charcoal/20 group-hover:bg-transparent transition-colors duration-1000" />
+          <div className="absolute bottom-10 left-10 text-left">
+            <p className="text-white text-[10px] uppercase tracking-[0.5em] font-bold mb-2">Summer '26</p>
+            <h3 className="text-white text-4xl font-serif italic">Modern Minimalist</h3>
+          </div>
+        </motion.div>
       </div>
 
       <motion.div 

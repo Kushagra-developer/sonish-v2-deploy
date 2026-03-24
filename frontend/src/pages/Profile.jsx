@@ -286,8 +286,8 @@ const Profile = () => {
                                                                 <p className="text-lg font-serif italic">₹{(order.totalPrice || 0).toLocaleString()}</p>
                                                             </div>
                                                             <div className="flex items-center gap-6 border-l border-current/10 pl-12">
-                                                              <span className={`text-[9px] uppercase tracking-[0.3em] font-bold px-4 py-2 border border-current/20 ${order.isDelivered ? 'text-green-500' : 'text-gold'}`}>
-                                                                  {order.isDelivered ? 'Delivered' : 'In Transit'}
+                                                              <span className={`text-[9px] uppercase tracking-[0.3em] font-bold px-4 py-2 border border-current/20 ${order.isDelivered ? 'text-green-500' : order.isShipped ? 'text-amber-500' : 'text-gold opacity-60'}`}>
+                                                                  {order.isDelivered ? 'Delivered' : order.isShipped ? 'Shipped' : 'Processing'}
                                                               </span>
                                                               <ChevronDown className={`w-4 h-4 transition-transform duration-500 ${expandedOrder === order._id ? 'rotate-180' : ''}`} />
                                                             </div>
@@ -355,7 +355,7 @@ const Profile = () => {
                                                                           </div>
                                                                       </div>
 
-                                                                      {order.trackingNumber && (
+                                                                      {(order.isShipped || order.trackingNumber) && (
                                                                         <div>
                                                                           <h4 className="text-[10px] uppercase tracking-[0.4em] text-gold mb-8 font-bold border-b border-gold/10 pb-4">Live Shipment Tracking</h4>
                                                                           <div className="p-8 bg-offwhite dark:bg-charcoal shadow-inner relative overflow-hidden">
@@ -368,7 +368,7 @@ const Profile = () => {
                                                                                 <div className="w-6 h-6 border-b-2 border-gold rounded-full animate-spin" />
                                                                                 <p className="text-[9px] uppercase tracking-[0.3em] text-gold font-bold">Fetching Live Data...</p>
                                                                               </div>
-                                                                            ) : orderTracking[order._id] ? (
+                                                                            ) : (orderTracking[order._id] && orderTracking[order._id].Scans) ? (
                                                                               <div className="space-y-6">
                                                                                 <div className="flex items-center justify-between mb-8">
                                                                                   <div>
@@ -386,7 +386,7 @@ const Profile = () => {
                                                                                 </div>
                                                                                 
                                                                                 <div className="space-y-6 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[1px] before:bg-gold/20">
-                                                                                  {(orderTracking[order._id].Scans || []).slice(0, 3).map((scan, sIdx) => (
+                                                                                  {orderTracking[order._id].Scans.slice(0, 3).map((scan, sIdx) => (
                                                                                     <div key={sIdx} className="flex gap-4 relative">
                                                                                       <div className={`w-[15px] h-[15px] rounded-full border-2 border-gold bg-white z-10 shrink-0 mt-1 ${sIdx === 0 ? 'scale-110 shadow-[0_0_10px_rgba(212,175,55,0.5)]' : 'opacity-40'}`} />
                                                                                       <div>
@@ -399,15 +399,15 @@ const Profile = () => {
                                                                                       </div>
                                                                                     </div>
                                                                                   ))}
-                                                                                  {(!orderTracking[order._id].Scans || orderTracking[order._id].Scans.length === 0) && (
-                                                                                    <p className="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold italic py-4">Shipment picked up, tracking updates will appear soon.</p>
+                                                                                  {orderTracking[order._id].Scans.length === 0 && (
+                                                                                    <p className="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold italic py-4">Shipment marked as shipped, awaiting first terminal scan.</p>
                                                                                   )}
                                                                                 </div>
                                                                               </div>
                                                                             ) : (
                                                                               <div className="py-8 text-center bg-gold/5 border border-gold/10">
                                                                                 <p className="text-[10px] uppercase tracking-widest text-gold font-bold">Status: {order.trackingStatus}</p>
-                                                                                <p className="text-[9px] text-charcoal/50 mt-2 italic px-4">Live tracking data will be available once the carrier provides an update.</p>
+                                                                                <p className="text-[9px] text-charcoal/50 mt-2 italic px-4">Your order has been marked as **{order.trackingStatus}**. Live tracking data will be available once the carrier receives the physical shipment.</p>
                                                                               </div>
                                                                             )}
                                                                           </div>

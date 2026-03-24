@@ -63,6 +63,25 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ──────────────────────────────────────────────
+// Maintenance Mode Middleware
+// ──────────────────────────────────────────────
+app.use((req, res, next) => {
+  const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
+  const isAdminRoute = req.path.startsWith('/api/admin') || 
+                       req.path.includes('admin') || 
+                       req.path.includes('login') || 
+                       req.path.includes('logout');
+
+  if (isMaintenanceMode && !isAdminRoute && req.path !== '/api/health' && req.path !== '/') {
+    return res.status(503).json({
+      message: 'Sonish Studio is currently undergoing a curated update. We will be back shortly with more elegance.',
+      maintenance: true
+    });
+  }
+  next();
+});
+
+// ──────────────────────────────────────────────
 // API Routes (Backend is API-ONLY)
 // ──────────────────────────────────────────────
 
