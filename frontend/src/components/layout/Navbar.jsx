@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Search, Menu, X, ChevronDown, Heart, Moon, Sun, User } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Heart, Moon, Sun, User } from 'lucide-react';
 import CartDrawer from './CartDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { loadCart, loadWishlist } from '../../utils/cartStorage';
@@ -11,14 +11,13 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [activeMegaMenu, setActiveMegaMenu] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
-  // 1. Toggle dark mode class on the HTML document
+  // 1. Toggle dark mode
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -27,7 +26,7 @@ const Navbar = () => {
     }
   }, [isDarkMode]);
 
-  // 2. Sync Cart & Wishlist counters + Listen for auto-open trigger
+  // 2. Sync Cart & Wishlist counters
   useEffect(() => {
     const updateCounts = () => {
       const cart = loadCart();
@@ -60,9 +59,8 @@ const Navbar = () => {
     const handleOpenCart = () => setIsCartOpen(true);
 
     updateCounts();
-    syncCloudData(); // Pull down the latest from MongoDB on mount
+    syncCloudData();
 
-    // Custom Event Listeners for real-time updates without refresh
     window.addEventListener('cartUpdated', updateCounts);
     window.addEventListener('wishlistUpdated', updateCounts);
     window.addEventListener('openCart', handleOpenCart);
@@ -85,71 +83,78 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const isSolid = !isHomePage || isScrolled || activeMegaMenu;
+  const isSolid = !isHomePage || isScrolled;
 
   return (
     <>
       <header
-        className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ease-in-out ${isSolid
+        className={`fixed top-0 left-0 w-full z-40 transition-all duration-500 ease-in-out ${isSolid
           ? 'bg-offwhite/95 dark:bg-charcoal/95 backdrop-blur-md shadow-sm py-4 dark:border-b dark:border-offwhite/10'
           : 'bg-transparent py-6'
           }`}
-        onMouseLeave={() => setActiveMegaMenu(false)}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
 
-            {/* Left Navigation */}
-            <nav className="hidden md:flex flex-1 space-x-8 items-center">
-              <Link to="/collections?category=Women" className={`text-[11px] uppercase tracking-[0.2em] hover:text-gold transition-colors duration-200 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}`}>Women</Link>
-              <div className="h-full py-4 flex items-center cursor-pointer" onMouseEnter={() => setActiveMegaMenu(true)}>
-                <span className={`flex items-center gap-1 text-[11px] uppercase tracking-[0.2em] hover:text-gold transition-colors duration-200 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}`}>
-                  Collections <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${activeMegaMenu ? 'rotate-180' : ''}`} />
-                </span>
-              </div>
+            {/* Left Navigation - Focused on Women */}
+            <nav className="hidden md:flex flex-1 space-x-12 items-center">
+              <Link 
+                to="/collections?category=Women" 
+                className={`text-[12px] uppercase tracking-[0.3em] font-medium hover:text-gold transition-all duration-300 relative group ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}`}
+              >
+                Women
+                <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-gold transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+              <Link 
+                to="/collections" 
+                className={`text-[12px] uppercase tracking-[0.3em] font-medium hover:text-gold transition-all duration-300 relative group ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}`}
+              >
+                New Arrivals
+                <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-gold transition-all duration-300 group-hover:w-full"></span>
+              </Link>
             </nav>
 
             {/* Center Logo */}
             <div className="flex-shrink-0 text-center">
-              <Link to="/" className={`font-serif text-3xl md:text-4xl font-bold tracking-[0.2em] transition-colors duration-200 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}`}>
+              <Link to="/" className={`font-serif text-3xl md:text-5xl font-bold tracking-[0.25em] transition-all duration-500 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}`}>
                 SONISH
               </Link>
             </div>
 
             {/* Right Icons */}
-            <div className="hidden md:flex flex-1 justify-end items-center space-x-6">
-              <button onClick={() => setIsDarkMode(!isDarkMode)} className={`transition-colors duration-200 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
+            <div className="hidden md:flex flex-1 justify-end items-center space-x-8">
+              <button onClick={() => setIsDarkMode(!isDarkMode)} className={`transition-colors duration-300 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
                 {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
 
-              <Link to="/search" className={`transition-colors duration-200 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
+              <Link to="/search" className={`transition-colors duration-300 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
                 <Search className="h-5 w-5" />
               </Link>
 
-              <Link to="/wishlist" className={`relative transition-colors duration-200 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
+              <Link to="/wishlist" className={`relative transition-colors duration-300 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
                 <Heart className="h-5 w-5" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-lg">
                     {wishlistCount}
                   </span>
                 )}
               </Link>
 
-              <button onClick={() => setIsCartOpen(true)} className={`relative transition-colors duration-200 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
+              <button onClick={() => setIsCartOpen(true)} className={`relative transition-colors duration-300 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
                 <ShoppingBag className="h-5 w-5" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-charcoal dark:bg-gold text-white dark:text-charcoal text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
+                  <span className="absolute -top-2 -right-2 bg-charcoal dark:bg-gold text-white dark:text-charcoal text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-lg">
                     {cartCount}
                   </span>
                 )}
               </button>
 
               {isLoggedIn ? (
-                <Link to="/profile" className={`text-[11px] uppercase tracking-[0.2em] font-medium transition-colors duration-200 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold flex items-center gap-1`}>
-                  <User className="w-4 h-4" /> Account
+                <Link to="/profile" className={`text-[10px] bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-5 py-2.5 uppercase tracking-[0.2em] font-bold transition-all duration-300 hover:bg-gold hover:text-white flex items-center gap-2 rounded-full`}>
+                  <User className="w-3.5 h-3.5" /> Account
                 </Link>
               ) : (
-                <Link to="/login" className={`text-[11px] uppercase tracking-[0.2em] font-medium transition-colors duration-200 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
+                <Link to="/login" className={`text-[11px] uppercase tracking-[0.25em] font-bold transition-colors duration-300 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
                   Login
                 </Link>
               )}
@@ -171,76 +176,29 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Editorial Mega Menu Panel */}
+        {/* Mobile Menu Dropdown */}
         <AnimatePresence>
-          {activeMegaMenu && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="absolute top-full left-0 w-full bg-offwhite/95 dark:bg-charcoal/95 backdrop-blur-xl border-t border-charcoal/10 dark:border-offwhite/10 shadow-xl"
-              onMouseLeave={() => setActiveMegaMenu(false)}
+          {isMobileMenuOpen && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="md:hidden bg-offwhite dark:bg-charcoal border-t border-gray-100 dark:border-offwhite/10 overflow-hidden"
             >
-              <div className="max-w-7xl mx-auto px-8 py-12 flex gap-16">
-                <div className="flex-1 grid grid-cols-3 gap-8">
-                  <div>
-                    <h3 className="text-xs uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-6">Ready to Wear</h3>
-                    <ul className="space-y-4 text-sm text-charcoal dark:text-offwhite">
-                      <li><Link to="/collections?category=Outerwear" className="hover:text-gold transition-colors">Outerwear</Link></li>
-                      <li><Link to="/collections?category=Knitwear" className="hover:text-gold transition-colors">Knitwear</Link></li>
-                      <li><Link to="/collections?category=Dresses" className="hover:text-gold transition-colors">Dresses</Link></li>
-                      <li><Link to="/collections?category=Tailoring" className="hover:text-gold transition-colors">Tailoring</Link></li>
-                      <li><Link to="/collections?category=Denim" className="hover:text-gold transition-colors">Denim</Link></li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="text-xs uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-6">Accessories</h3>
-                    <ul className="space-y-4 text-sm text-charcoal dark:text-offwhite">
-                      <li><Link to="/collections?category=Bags" className="hover:text-gold transition-colors">Bags</Link></li>
-                      <li><Link to="/collections?category=Shoes" className="hover:text-gold transition-colors">Shoes</Link></li>
-                      <li><Link to="/collections?category=Jewelry" className="hover:text-gold transition-colors">Jewelry</Link></li>
-                      <li><Link to="/collections?category=Sunglasses" className="hover:text-gold transition-colors">Sunglasses</Link></li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="text-xs uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-6">Curated</h3>
-                    <ul className="space-y-4 text-sm text-charcoal dark:text-offwhite">
-                      <li><Link to="/collections" className="hover:text-gold transition-colors flex items-center gap-2">New Arrivals <span className="bg-gold text-white text-[9px] px-1.5 py-0.5 rounded-sm">NEW</span></Link></li>
-                      <li><Link to="/collections" className="hover:text-gold transition-colors">Bestsellers</Link></li>
-                      <li><Link to="/collections" className="hover:text-gold transition-colors">The Gift Guide</Link></li>
-                    </ul>
-                  </div>
-                </div>
-                <div className="w-[400px] h-[300px] relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-charcoal/20 group-hover:bg-charcoal/30 transition-colors duration-500 z-10" />
-                  <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop" alt="The Winter Edit" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
-                  <div className="absolute bottom-6 left-6 z-20">
-                    <span className="text-white text-[10px] uppercase tracking-widest mb-1 block">Featured</span>
-                    <h4 className="text-white font-serif text-2xl tracking-wide mb-2">The Winter Edit</h4>
-                    <Link to="/collections" className="text-white text-xs border-b border-white/50 hover:border-white pb-0.5 transition-colors">Explore</Link>
-                  </div>
-                </div>
+              <div className="px-6 py-12 space-y-8 flex flex-col items-center">
+                <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-charcoal dark:text-offwhite text-lg uppercase tracking-[0.3em] font-serif hover:text-gold">Home</Link>
+                <Link to="/collections?category=Women" onClick={() => setIsMobileMenuOpen(false)} className="text-charcoal dark:text-offwhite text-lg uppercase tracking-[0.3em] font-serif hover:text-gold">Women</Link>
+                <Link to="/collections" onClick={() => setIsMobileMenuOpen(false)} className="text-charcoal dark:text-offwhite text-lg uppercase tracking-[0.3em] font-serif hover:text-gold">New Arrivals</Link>
+                <div className="h-[1px] bg-charcoal/10 dark:bg-offwhite/10 w-1/4"></div>
+                {isLoggedIn ? (
+                  <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="text-charcoal dark:text-offwhite text-sm uppercase tracking-widest font-bold hover:text-gold">Account</Link>
+                ) : (
+                  <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-charcoal dark:text-offwhite text-sm uppercase tracking-widest font-bold hover:text-gold">Login</Link>
+                )}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Mobile Menu Dropdown */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-offwhite dark:bg-charcoal absolute top-full left-0 w-full shadow-lg border-t border-gray-100 dark:border-offwhite/10">
-            <div className="px-4 py-8 space-y-6 flex flex-col items-center">
-              <Link to="/collections?category=Women" className="text-charcoal dark:text-offwhite text-lg uppercase tracking-widest w-full text-center hover:text-gold">Women</Link>
-              <Link to="/collections" className="text-charcoal dark:text-offwhite text-lg uppercase tracking-widest w-full text-center hover:text-gold">Collections</Link>
-              <div className="h-px bg-gray-200 dark:bg-offwhite/20 w-1/3 my-2"></div>
-              {isLoggedIn ? (
-                <Link to="/profile" className="text-charcoal dark:text-offwhite text-sm uppercase tracking-widest hover:text-gold">Account</Link>
-              ) : (
-                <Link to="/login" className="text-charcoal dark:text-offwhite text-sm uppercase tracking-widest hover:text-gold">Login</Link>
-              )}
-            </div>
-          </div>
-        )}
       </header>
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />

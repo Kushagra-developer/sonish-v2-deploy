@@ -31,11 +31,11 @@ const NewArrivals = () => {
   }, []);
 
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="flex flex-col items-center justify-center text-center mb-16">
-        <span className="text-xs tracking-widest uppercase text-charcoal/50 mb-3 block">Discover</span>
-        <h2 className="text-3xl md:text-4xl font-serif text-charcoal tracking-wide mb-6">The Lookbook</h2>
-        <div className="w-12 h-px bg-charcoal/30"></div>
+    <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="flex flex-col items-center justify-center text-center mb-20">
+        <span className="text-[10px] tracking-[0.4em] uppercase text-charcoal/40 dark:text-offwhite/40 mb-4 block font-bold">Curated Selection</span>
+        <h2 className="text-4xl md:text-6xl font-serif text-charcoal dark:text-offwhite tracking-tight mb-8">The Seasonal Edit</h2>
+        <div className="w-16 h-[1px] bg-gold/50"></div>
       </div>
 
       <motion.div 

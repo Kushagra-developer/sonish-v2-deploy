@@ -206,20 +206,20 @@ const ProductCard = ({ product, isFeatured = false }) => {
       </div>
 
       {/* Product Info */}
-      <div className="px-1 pt-4 pb-3 flex flex-col gap-1">
+      <div className="px-1 pt-6 pb-4 flex flex-col gap-1 text-center">
         <Link to={`/product/${product._id || product.id}`}>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-charcoal/40 dark:text-offwhite/40">
-            {product.category || product.brand || 'Sonish'}
+          <p className="text-[9px] uppercase tracking-[0.3em] text-charcoal/30 dark:text-offwhite/30 font-bold mb-1">
+            {product.category || product.brand || 'Sonish Studios'}
           </p>
-          <h3 className="text-sm font-medium text-charcoal dark:text-offwhite leading-snug line-clamp-1 mt-0.5">
+          <h3 className="text-base font-serif text-charcoal dark:text-offwhite leading-relaxed line-clamp-1 italic tracking-wide">
             {product.name}
           </h3>
-          <div className="flex items-center gap-2 mt-1.5">
-            <span className="text-sm font-serif text-charcoal dark:text-offwhite font-medium">
+          <div className="flex items-center justify-center gap-3 mt-2">
+            <span className="text-lg font-serif text-charcoal dark:text-offwhite font-medium">
               ₹{(product.price || 0).toLocaleString()}
             </span>
             {product.originalPrice && product.originalPrice > product.price && (
-              <span className="text-xs font-serif text-charcoal/40 dark:text-offwhite/40 line-through">
+              <span className="text-sm font-serif text-charcoal/30 dark:text-offwhite/30 line-through">
                 ₹{product.originalPrice.toLocaleString()}
               </span>
             )}

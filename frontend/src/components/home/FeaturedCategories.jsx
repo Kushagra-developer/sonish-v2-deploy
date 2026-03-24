@@ -3,64 +3,72 @@ import { Link } from 'react-router-dom';
 
 const categories = [
   {
-    title: 'Women',
-    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop',
+    title: 'New Arrivals',
+    subtitle: 'The Latest Edit',
+    image: 'https://images.unsplash.com/photo-1539109136881-3be0610917c1?q=80&w=800&auto=format&fit=crop',
+    link: '/collections'
+  },
+  {
+    title: 'Evening Wear',
+    subtitle: 'Timeless Elegance',
+    image: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=800&auto=format&fit=crop',
     link: '/collections?category=Women'
   },
   {
-    title: 'Accessories',
-    image: 'https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?q=80&w=800&auto=format&fit=crop',
-    link: '/collections?category=Accessories'
+    title: 'The Day Boutique',
+    subtitle: 'Urban Sophistication',
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop',
+    link: '/collections?category=Women'
   }
 ];
 
 const FeaturedCategories = () => {
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-offwhite dark:bg-charcoal transition-colors duration-300">
-      <div className="flex justify-between items-end mb-12">
-        <h2 className="text-3xl md:text-4xl font-serif text-charcoal dark:text-offwhite tracking-wide transition-colors duration-300">Explore Categories</h2>
-        <Link to="/collections" className="hidden md:inline-block text-sm uppercase tracking-widest text-charcoal dark:text-offwhite border-b border-charcoal/30 dark:border-offwhite/30 hover:border-charcoal dark:hover:border-offwhite pb-1 transition-colors duration-300">
-          View All
-        </Link>
+    <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-offwhite dark:bg-charcoal transition-colors duration-500">
+      <div className="flex flex-col items-center mb-20 text-center">
+        <h2 className="text-4xl md:text-6xl font-serif text-charcoal dark:text-offwhite tracking-tight mb-4">Curated Boutiques</h2>
+        <div className="w-24 h-[1px] bg-gold/50 mb-6"></div>
+        <p className="text-charcoal/60 dark:text-offwhite/60 text-sm md:text-lg max-w-xl font-light tracking-wide uppercase">
+          Explore our handpicked selections for every occasion.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
         {categories.map((category, index) => (
           <Link
             key={index}
             to={category.link}
-            className="group relative h-[600px] w-full overflow-hidden block"
+            className="group relative h-[700px] w-full overflow-hidden block"
           >
             {/* Image Container with Zoom Effect */}
             <motion.div
               className="absolute inset-0 w-full h-full"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              whileHover={{ scale: 1.1 }}
+              transition={{ duration: 1.5, ease: [0.33, 1, 0.68, 1] }}
             >
               <img
                 src={category.image}
                 alt={category.title}
-                className="w-full h-full object-cover object-center"
+                className="w-full h-full object-cover object-center grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000"
               />
-              <div className="absolute inset-0 bg-charcoal/20 group-hover:bg-charcoal/10 transition-colors duration-500" />
+              <div className="absolute inset-0 bg-charcoal/30 group-hover:bg-charcoal/10 transition-colors duration-1000" />
             </motion.div>
 
-            {/* Title */}
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-4/5 text-center">
-              <div className="bg-white/90 dark:bg-charcoal/90 backdrop-blur-sm py-4 px-6 shadow-sm overflow-hidden relative transition-colors duration-300">
-                <span className="relative z-10 text-charcoal dark:text-offwhite font-serif text-xl tracking-wider transition-colors duration-300">{category.title}</span>
-                {/* Button slide effect */}
-                <div className="absolute inset-0 bg-charcoal dark:bg-offwhite transform scale-y-0 origin-bottom transition-transform duration-300 ease-out group-hover:scale-y-100 mix-blend-multiply opacity-5"></div>
+            {/* Content Overlay */}
+            <div className="absolute inset-0 flex flex-col justify-end p-8 text-center bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+              <span className="text-white/70 text-[10px] uppercase tracking-[0.4em] mb-2">{category.subtitle}</span>
+              <h3 className="text-white font-serif text-3xl tracking-wide mb-6">{category.title}</h3>
+              <div className="flex justify-center">
+                <span className="text-white text-[10px] uppercase tracking-widest border-b border-white/50 pb-1 group-hover:border-white transition-colors">Shop Selection</span>
               </div>
             </div>
+
+            {/* Static Content (Always visible) */}
+             <div className="absolute inset-0 flex flex-col justify-end p-8 pointer-events-none group-hover:hidden transition-all duration-500">
+                <h3 className="text-white font-serif text-3xl tracking-wide text-center drop-shadow-lg">{category.title}</h3>
+             </div>
           </Link>
         ))}
-      </div>
-
-      <div className="mt-8 text-center md:hidden">
-        <Link to="/collections" className="inline-block text-sm uppercase tracking-widest text-charcoal dark:text-offwhite border-b border-charcoal/30 dark:border-offwhite/30 hover:border-charcoal dark:hover:border-offwhite pb-1 transition-colors duration-300">
-          View All Collections
-        </Link>
       </div>
     </section>
   );

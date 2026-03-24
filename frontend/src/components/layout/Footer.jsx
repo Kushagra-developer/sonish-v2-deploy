@@ -22,11 +22,11 @@ const Footer = () => {
 
           {/* Links: Shop */}
           <div>
-            <h4 className="text-sm tracking-widest uppercase mb-6 font-semibold text-white">Shop</h4>
-            <ul className="space-y-3 text-sm font-light opacity-80">
-              <li><Link to="/collections" className="hover:text-gold hover:opacity-100 transition">All Collections</Link></li>
-              <li><Link to="/collections?category=Women" className="hover:text-gold hover:opacity-100 transition">Women's Collection</Link></li>
-              <li><Link to="/collections?category=Accessories" className="hover:text-gold hover:opacity-100 transition">Accessories</Link></li>
+            <h4 className="text-xs tracking-[0.3em] uppercase mb-8 font-bold text-white">Boutique</h4>
+            <ul className="space-y-4 text-xs font-light tracking-widest opacity-60">
+              <li><Link to="/collections" className="hover:text-gold hover:opacity-100 transition-all duration-300">The Seasonal Edit</Link></li>
+              <li><Link to="/collections?category=Women" className="hover:text-gold hover:opacity-100 transition-all duration-300">Women's Collection</Link></li>
+              <li><Link to="/search" className="hover:text-gold hover:opacity-100 transition-all duration-300">Search Boutique</Link></li>
             </ul>
           </div>
 
