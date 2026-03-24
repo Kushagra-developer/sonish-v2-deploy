@@ -1,6 +1,8 @@
 import User from '../models/userModel.js';
 import Otp from '../models/otpModel.js';
 import generateToken from '../utils/generateToken.js';
+import nodemailer from 'nodemailer';
+import generateToken from '../utils/generateToken.js';
 
 // @desc    Auth user & get token
 // @route   POST /api/users/login
@@ -166,68 +168,88 @@ const syncUserCartAndWishlist = async (req, res) => {
   }
 };
 
-// @desc    Send OTP to phone
+// @desc    Send OTP to email
 // @route   POST /api/users/send-otp
 // @access  Public
 const sendOtp = async (req, res) => {
-  const { phone } = req.body;
+  const { email } = req.body;
 
-  if (!phone) {
+  if (!email) {
     res.status(400);
-    throw new Error('Please provide a phone number');
+    throw new Error('Please provide an email address');
   }
 
   // Generate a random 4-digit OTP
   const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-  // Clear existing OTP requests for this phone to prevent spam issues
-  await Otp.deleteMany({ phone });
+  // Clear existing OTP requests for this email to prevent spam issues
+  await Otp.deleteMany({ email });
 
   // Save the new OTP
   const otpEntry = await Otp.create({
-    phone,
+    email,
     otp: otpCode,
   });
 
   if (otpEntry) {
-    // Attempt to send real SMS if API Key is configured
-    if (process.env.FAST2SMS_API_KEY) {
-      try {
-        const response = await fetch('https://www.fast2sms.com/dev/bulkV2', {
-          method: 'POST',
-          headers: {
-            'authorization': process.env.FAST2SMS_API_KEY,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            route: 'q',
-            message: `Your Sonish login OTP is ${otpCode}. It is valid for 5 minutes.`,
-            language: 'english',
-            flash: 0,
-            numbers: phone,
-          })
-        });
-
-        const smsData = await response.json();
-        if (smsData.return === true) {
-          console.log(`[SMS] OTP dispatched to ${phone}`);
-        } else {
-          console.error('[SMS] Fast2SMS Error:', smsData);
-        }
-      } catch (err) {
-        console.error('[SMS] Network Error:', err);
-      }
+    try {
+      let transporter;
       
-      res.status(200).json({
-        message: 'OTP sent securely via SMS',
-        mockOtp: null // Production mode hides the OTP from the response
+      // Attempt to send real email if SMTP credentials are configured in Vercel
+      if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+        transporter = nodemailer.createTransport({
+          service: 'gmail', 
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+      } else {
+        // Fallback: Generate Ethereal test account (Zero configuration testing sandbox)
+        const testAccount = await nodemailer.createTestAccount();
+        transporter = nodemailer.createTransport({
+          host: "smtp.ethereal.email",
+          port: 587,
+          secure: false, // true for 465, false for other ports
+          auth: {
+            user: testAccount.user, // generated ethereal user
+            pass: testAccount.pass, // generated ethereal password
+          },
+        });
+      }
+
+      const info = await transporter.sendMail({
+        from: '"Sonish Boutique" <no-reply@sonish.co.in>',
+        to: email,
+        subject: "Your Sonish Secure Login Code",
+        html: `
+          <div style="font-family: sans-serif; text-align: center; padding: 40px 20px; background-color: #fcfcfc;">
+            <h2 style="color: #2C2C2C; margin-bottom: 5px;">Welcome to Sonish</h2>
+            <p style="color: #666;">Here is your secure verification code:</p>
+            <h1 style="letter-spacing: 8px; color: #000; background: #fff; padding: 20px; border: 1px solid #eee; border-radius: 5px; display: inline-block; margin: 20px 0;">${otpCode}</h1>
+            <p style="color: #999; font-size: 12px;">This code expires in 5 minutes. Do not share it with anyone.</p>
+          </div>
+        `,
       });
-    } else {
-      // Fallback: Development Mode
-      console.log(`[MOCK SMS] OTP for ${phone} is: ${otpCode}`);
+
+      console.log(`[EMAIL] OTP dispatched to ${email}`);
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      if (previewUrl) {
+        console.log(`[TEST EMAIL PREVIEW] ${previewUrl}`);
+      }
+
       res.status(200).json({
-        message: 'No SMS API Key found. OTP generated in test mode.',
-        mockOtp: otpCode 
+        message: 'OTP sent securely to your inbox',
+        mockOtp: process.env.EMAIL_USER ? null : otpCode, // Send it in response ONLY if using test mode
+        previewUrl: previewUrl || null
+      });
+
+    } catch (err) {
+      console.error('[EMAIL] Gateway Error:', err);
+      // Fallback response for extreme network failure
+      res.status(200).json({
+        message: 'Email gateway connection failed, but OTP generated. Check server console.',
+        mockOtp: otpCode
       });
     }
   } else {
@@ -240,15 +262,15 @@ const sendOtp = async (req, res) => {
 // @route   POST /api/users/verify-otp
 // @access  Public
 const verifyOtp = async (req, res) => {
-  const { phone, otp } = req.body;
+  const { email, otp } = req.body;
 
-  if (!phone || !otp) {
+  if (!email || !otp) {
     res.status(400);
-    throw new Error('Phone number and OTP are required');
+    throw new Error('Email address and OTP are required');
   }
 
   // Verify the OTP
-  const otpRecord = await Otp.findOne({ phone, otp });
+  const otpRecord = await Otp.findOne({ email, otp });
 
   if (!otpRecord) {
     res.status(401);
@@ -258,15 +280,13 @@ const verifyOtp = async (req, res) => {
   // Clear the OTP to prevent reuse
   await Otp.deleteOne({ _id: otpRecord._id });
 
-  // Find user by phone, or create one if they don't exist
-  let user = await User.findOne({ phone });
+  // Find user by email, or create one if they don't exist
+  let user = await User.findOne({ email });
 
   if (!user) {
-    // Check if phone matches an existing address's phone? 
-    // Usually mobile-first apps just create a profile.
     user = await User.create({
-      phone,
-      name: 'Guest User', // Placeholder name
+      email,
+      name: email.split('@')[0], // Extract first part of email for the placeholder name
     });
   }
 
@@ -275,12 +295,11 @@ const verifyOtp = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      phone: user.phone,
       isAdmin: user.isAdmin,
       cart: user.cart,
       wishlist: user.wishlist,
       token: generateToken(res, user._id),
-      isNewUser: user.name === 'Guest User'
+      isNewUser: user.name === email.split('@')[0]
     });
   } else {
     res.status(400);

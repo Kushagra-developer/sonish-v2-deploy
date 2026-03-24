@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import API from '../utils/api';
 
 const Login = () => {
-    // Auth Modes: 'login', 'register', 'phone'
+    // Auth Modes: 'login', 'register', 'otp'
     const [authMode, setAuthMode] = useState('login');
     
     // Standard Auth State
@@ -12,8 +12,8 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
     
-    // Phone Auth State
-    const [phone, setPhone] = useState('');
+    // Email OTP Auth State
+    const [otpEmail, setOtpEmail] = useState('');
     const [otp, setOtp] = useState('');
     const [otpSent, setOtpSent] = useState(false);
 
@@ -89,7 +89,7 @@ const Login = () => {
             const res = await fetch(`${API}/api/users/send-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone }),
+                body: JSON.stringify({ email: otpEmail }),
             });
 
             const data = await res.json();
@@ -117,7 +117,7 @@ const Login = () => {
             const res = await fetch(`${API}/api/users/verify-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone, otp }),
+                body: JSON.stringify({ email: otpEmail, otp }),
             });
 
             const data = await res.json();
@@ -154,7 +154,7 @@ const Login = () => {
                 {/* Left Side: Login/Register Form */}
                 <div className="flex-1">
                     <h2 className="text-3xl font-serif text-charcoal dark:text-offwhite mb-8 transition-colors">
-                        {authMode === 'login' ? 'Login' : authMode === 'register' ? 'Create Account' : 'Phone Login'}
+                        {authMode === 'login' ? 'Login' : authMode === 'register' ? 'Create Account' : 'Passwordless Login'}
                     </h2>
                     
                     {error && (
@@ -168,17 +168,17 @@ const Login = () => {
                         </div>
                     )}
 
-                    {authMode === 'phone' ? (
+                    {authMode === 'otp' ? (
                         <form className="space-y-6" onSubmit={otpSent ? handleVerifyOtp : handleSendOtp}>
                             <div>
-                                <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Phone Number *</label>
+                                <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Email Address *</label>
                                 <input 
-                                    type="tel" 
-                                    value={phone} 
-                                    onChange={(e) => setPhone(e.target.value)} 
+                                    type="email" 
+                                    value={otpEmail} 
+                                    onChange={(e) => setOtpEmail(e.target.value)} 
                                     disabled={otpSent}
                                     required 
-                                    placeholder="+91 9999999999"
+                                    placeholder="hello@example.com"
                                     className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite transition-colors text-charcoal dark:text-offwhite disabled:opacity-50" 
                                 />
                             </div>
@@ -206,7 +206,7 @@ const Login = () => {
                             )}
 
                             <button disabled={isLoading} type="submit" className="w-full bg-charcoal dark:bg-offwhite text-white dark:text-charcoal py-4 text-xs uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-colors disabled:opacity-50">
-                                {isLoading ? 'Processing...' : (otpSent ? 'Verify Code' : 'Send OTP via SMS')}
+                                {isLoading ? 'Processing...' : (otpSent ? 'Verify Code' : 'Email Me A Code')}
                             </button>
                             
                             <button 
@@ -214,7 +214,7 @@ const Login = () => {
                                 onClick={() => toggleMode('login')} 
                                 className="w-full text-xs text-charcoal/60 dark:text-offwhite/60 hover:text-charcoal dark:hover:text-offwhite tracking-widest uppercase transition-colors"
                             >
-                                Use Email Instead
+                                Use Password Instead
                             </button>
                         </form>
                     ) : (
@@ -250,10 +250,10 @@ const Login = () => {
                             
                             <button 
                                 type="button" 
-                                onClick={() => toggleMode('phone')} 
+                                onClick={() => toggleMode('otp')} 
                                 className="w-full border border-charcoal/20 dark:border-offwhite/20 text-charcoal dark:text-offwhite py-4 text-xs uppercase tracking-widest hover:border-charcoal dark:hover:border-offwhite transition-colors"
                             >
-                                Login via Phone OTP
+                                Login via Email OTP
                             </button>
                         </form>
                     )}
