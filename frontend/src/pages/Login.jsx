@@ -253,7 +253,7 @@ const Login = () => {
                                 onClick={() => toggleMode('otp')} 
                                 className="w-full border border-charcoal/20 dark:border-offwhite/20 text-charcoal dark:text-offwhite py-4 text-xs uppercase tracking-widest hover:border-charcoal dark:hover:border-offwhite transition-colors"
                             >
-                                Login via Email OTP
+                                Login via OTP
                             </button>
                         </form>
                     )}
