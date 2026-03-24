@@ -23,7 +23,12 @@ export const getWishlistKey = () => {
 export const loadCart = () => {
   const key = getCartKey();
   if (!key) return [];
-  return JSON.parse(localStorage.getItem(key)) || [];
+  const raw = JSON.parse(localStorage.getItem(key)) || [];
+  // Migrate legacy cartQuantity → qty
+  return raw.map(item => ({
+    ...item,
+    qty: item.qty || item.cartQuantity || 1,
+  }));
 };
 
 export const syncWithServer = async (cart, wishlist) => {

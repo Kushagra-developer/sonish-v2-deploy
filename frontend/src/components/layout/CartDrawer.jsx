@@ -44,9 +44,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
   // Calculate the real subtotal based on items actually in the cart
   const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.qty), 0);
 
-  const hasAddress = 
-    userInfo?.shippingAddress?.address?.trim().length > 0 && 
-    userInfo?.shippingAddress?.city?.trim().length > 0 && 
+  const hasAddress =
+    userInfo?.shippingAddress?.address?.trim().length > 0 &&
+    userInfo?.shippingAddress?.city?.trim().length > 0 &&
     userInfo?.shippingAddress?.postalCode?.trim().length > 0;
 
   return (
@@ -129,8 +129,8 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   <div className="mt-4 p-6 border border-charcoal/10 dark:border-offwhite/10 text-center bg-charcoal/[0.02] dark:bg-offwhite/[0.02]">
                     <h3 className="text-xs uppercase tracking-widest text-charcoal dark:text-offwhite font-bold mb-2">Address Required</h3>
                     <p className="text-sm text-charcoal/60 dark:text-offwhite/60 mb-6 leading-relaxed">Please select a shipping address in your profile to proceed with checkout.</p>
-                    <button 
-                      onClick={() => { onClose(); window.location.href = '/profile?tab=addresses'; }} 
+                    <button
+                      onClick={() => { onClose(); window.location.href = '/profile?tab=addresses'; }}
                       className="w-full bg-charcoal dark:bg-offwhite text-white dark:text-charcoal py-3 text-xs uppercase tracking-widest hover:bg-black transition-colors"
                     >
                       Go to Addresses
