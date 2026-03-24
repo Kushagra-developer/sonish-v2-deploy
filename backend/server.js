@@ -23,10 +23,22 @@ const __dirname = path.dirname(__filename);
 // Security middleware
 // ──────────────────────────────────────────────
 
-// Helmet – sets various HTTP security headers
+// Helmet – relaxed CSP to allow Vite's module scripts and Razorpay
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  crossOriginOpenerPolicy: { policy: "unsafe-none" }
+  crossOriginOpenerPolicy: { policy: "unsafe-none" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: ["'self'", "https://lumberjack-cx.razorpay.com", "https://*.razorpay.com"],
+      frameSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
+      objectSrc: ["'none'"],
+    },
+  },
 }));
 
 // CORS – strict origin whitelist
@@ -42,11 +54,12 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl)
+      // Allow requests with no origin (like mobile apps, curl, same-origin)
       if (!origin) return callback(null, true);
       
       const isAllowed = allowedOrigins.includes(origin) || 
                        origin.endsWith('.vercel.app') || 
+                       origin.endsWith('.onrender.com') ||
                        origin.includes('localhost');
       
       if (isAllowed) {
@@ -58,7 +71,7 @@ app.use(
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
-    optionsSuccessStatus: 200, // Important for some browser preflights
+    optionsSuccessStatus: 200,
   }),
 );
 
@@ -70,7 +83,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ──────────────────────────────────────────────
-// Routes
+// Serve Static Frontend (BEFORE API routes so assets load correctly)
+// ──────────────────────────────────────────────
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'public')));
+}
+
+// ──────────────────────────────────────────────
+// API Routes
 // ──────────────────────────────────────────────
 
 app.use('/api/products', productRoutes);
@@ -83,11 +104,10 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ──────────────────────────────────────────────
-// Serve Static Frontend
+// SPA Fallback (AFTER API routes, BEFORE error handlers)
 // ──────────────────────────────────────────────
 
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'public')));
   app.use((req, res) => {
     res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
   });
@@ -96,6 +116,7 @@ if (process.env.NODE_ENV === 'production') {
     res.send('API is running securely on Render....');
   });
 }
+
 // ──────────────────────────────────────────────
 // Error handling middleware
 // ──────────────────────────────────────────────
