@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import API from '../../utils/api';
 
-const slides = [
+const defaultSlides = [
   {
     image: '/images/hero1.png',
     title: 'Modern Couture',
@@ -28,14 +29,34 @@ const slides = [
 ];
 
 const Hero = () => {
+  const [slides, setSlides] = useState(defaultSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const res = await fetch(`${API}/api/banners`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            setSlides(data);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch banners:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBanners();
+
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, []);
+  }, [slides.length]);
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));

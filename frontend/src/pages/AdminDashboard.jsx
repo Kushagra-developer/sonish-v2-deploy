@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck, Image, Plus, Trash2, Edit2, ExternalLink } from 'lucide-react';
 import API from '../utils/api';
 import { authFetch, authJsonFetch } from '../utils/authFetch';
 
@@ -17,6 +17,11 @@ const AdminDashboard = () => {
   const [addLoading, setAddLoading] = useState(false);
   const [trackingAWBs, setTrackingAWBs] = useState({});
   const [isSavingTracking, setIsSavingTracking] = useState({});
+  const [banners, setBanners] = useState([]);
+  const [isAddingBanner, setIsAddingBanner] = useState(false);
+  const [editingBanner, setEditingBanner] = useState(null);
+  const [newBanner, setNewBanner] = useState({ title: '', subtitle: '', description: '', image: '', link: '/collections', order: 0 });
+  const [bannerLoading, setBannerLoading] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -30,9 +35,10 @@ const AdminDashboard = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [prodRes, orderRes] = await Promise.allSettled([
+        const [prodRes, orderRes, bannersRes] = await Promise.allSettled([
           authFetch(`${API}/api/products/admin`),
           authFetch(`${API}/api/orders`),
+          authFetch(`${API}/api/banners/admin`),
         ]);
 
         if (prodRes.status === 'fulfilled') {
@@ -48,6 +54,12 @@ const AdminDashboard = () => {
             setOrders(await orderRes.value.json());
           } else {
             console.error('Failed to fetch orders:', await orderRes.value.text());
+          }
+        }
+
+        if (bannersRes && bannersRes.status === 'fulfilled') {
+          if (bannersRes.value.ok) {
+            setBanners(await bannersRes.value.json());
           }
         }
       } catch (err) {
@@ -79,10 +91,56 @@ const AdminDashboard = () => {
   const pendingOrders = orders.filter(o => !o.isPaid).length;
   const deliveredOrders = orders.filter(o => o.isDelivered).length;
 
+  const handleBannerSave = async (e) => {
+    e.preventDefault();
+    setBannerLoading(true);
+    try {
+      const url = editingBanner 
+        ? `${API}/api/banners/${editingBanner._id}` 
+        : `${API}/api/banners`;
+      const method = editingBanner ? 'PUT' : 'POST';
+      
+      const res = await authJsonFetch(url, {
+        method,
+        body: JSON.stringify(newBanner)
+      });
+      
+      if (res.ok) {
+        const saved = await res.json();
+        if (editingBanner) {
+          setBanners(banners.map(b => b._id === saved._id ? saved : b));
+        } else {
+          setBanners([...banners, saved]);
+        }
+        setIsAddingBanner(false);
+        setEditingBanner(null);
+        setNewBanner({ title: '', subtitle: '', description: '', image: '', link: '/collections', order: 0 });
+      }
+    } catch (err) {
+      console.error('Banner save error:', err);
+    } finally {
+      setBannerLoading(false);
+    }
+  };
+
+  const handleBannerDelete = async (id) => {
+    if (window.confirm('Delete this banner?')) {
+      try {
+        const res = await authFetch(`${API}/api/banners/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          setBanners(banners.filter(b => b._id !== id));
+        }
+      } catch (err) {
+        console.error('Banner delete error:', err);
+      }
+    }
+  };
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'products', label: 'Products', icon: Tag },
     { id: 'orders', label: 'Orders', icon: Truck },
+    { id: 'banners', label: 'Banners', icon: Image },
   ];
 
   const statCards = [
@@ -632,6 +690,173 @@ const AdminDashboard = () => {
                   <ShoppingCart className="w-12 h-12 text-charcoal/10 dark:text-offwhite/10 mx-auto mb-4" />
                   <p className="text-charcoal/50 dark:text-offwhite/50 text-sm">No orders received yet</p>
                   <p className="text-charcoal/30 dark:text-offwhite/30 text-xs mt-1">Orders will appear here when customers make purchases</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Banners Tab */}
+        {activeTab === 'banners' && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-xl font-serif text-charcoal dark:text-offwhite italic">Hero Banners</h2>
+                <p className="text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold mt-1">Manage homepage slides</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setEditingBanner(null);
+                  setNewBanner({ title: '', subtitle: '', description: '', image: '', link: '/collections', order: banners.length });
+                  setIsAddingBanner(true);
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-gold text-white text-[10px] uppercase tracking-widest font-bold rounded-full hover:bg-charcoal dark:hover:bg-offwhite dark:hover:text-charcoal transition-all shadow-lg"
+              >
+                <Plus className="w-4 h-4" /> Add New Slide
+              </button>
+            </div>
+
+            {isAddingBanner && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mb-12 overflow-hidden">
+                <div className="bg-white dark:bg-charcoal/30 border border-charcoal/5 dark:border-offwhite/5 p-8 rounded-xl shadow-xl">
+                  <h3 className="text-sm uppercase tracking-[0.2em] font-bold mb-8 text-gold flex items-center gap-3">
+                    {editingBanner ? 'Edit Existing Slide' : 'Design New Slide'}
+                  </h3>
+                  <form onSubmit={handleBannerSave} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Slide Title</label>
+                        <input 
+                          type="text" 
+                          required
+                          value={newBanner.title}
+                          onChange={(e) => setNewBanner({...newBanner, title: e.target.value})}
+                          placeholder="Modern Couture"
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Subtitle / Season</label>
+                        <input 
+                          type="text" 
+                          required
+                          value={newBanner.subtitle}
+                          onChange={(e) => setNewBanner({...newBanner, subtitle: e.target.value})}
+                          placeholder="Fall / Winter 2026"
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Description Text</label>
+                        <textarea 
+                          required
+                          value={newBanner.description}
+                          onChange={(e) => setNewBanner({...newBanner, description: e.target.value})}
+                          placeholder="An elegant fusion of minimalist design..."
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors h-20 resize-none"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Image URL</label>
+                        <input 
+                          type="text" 
+                          required
+                          value={newBanner.image}
+                          onChange={(e) => setNewBanner({...newBanner, image: e.target.value})}
+                          placeholder="https://example.com/hero.jpg"
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors font-mono"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Action Link</label>
+                          <input 
+                            type="text" 
+                            required
+                            value={newBanner.link}
+                            onChange={(e) => setNewBanner({...newBanner, link: e.target.value})}
+                            placeholder="/collections"
+                            className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Display Order</label>
+                          <input 
+                            type="number" 
+                            required
+                            value={newBanner.order}
+                            onChange={(e) => setNewBanner({...newBanner, order: parseInt(e.target.value)})}
+                            className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-4 pt-4">
+                        <button type="submit" disabled={bannerLoading} className="flex-1 px-6 py-4 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-gold hover:text-white transition-all">
+                          {bannerLoading ? 'Inscribing...' : editingBanner ? 'Update Slide' : 'Publish Slide'}
+                        </button>
+                        <button type="button" onClick={() => {setIsAddingBanner(false); setEditingBanner(null);}} className="px-6 py-4 border border-charcoal/10 dark:border-offwhite/10 text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-red-500 hover:text-white transition-all">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </motion.div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {banners.map((banner, index) => (
+                <motion.div 
+                  key={banner._id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group bg-white dark:bg-charcoal/20 border border-charcoal/5 dark:border-offwhite/5 overflow-hidden rounded-xl shadow-sm hover:shadow-xl transition-all duration-500"
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <img src={banner.image} alt={banner.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
+                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <button 
+                        onClick={() => {
+                          setEditingBanner(banner);
+                          setNewBanner(banner);
+                          setIsAddingBanner(true);
+                        }}
+                        className="p-2 bg-white/90 backdrop-blur-sm rounded-full text-charcoal hover:bg-gold hover:text-white transition-all shadow-lg"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button 
+                        onClick={() => handleBannerDelete(banner._id)}
+                        className="p-2 bg-white/90 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-lg"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="absolute bottom-4 left-4">
+                      <p className="text-white text-[8px] uppercase tracking-[0.3em] font-bold opacity-70">{banner.subtitle}</p>
+                      <h4 className="text-white text-lg font-serif italic">{banner.title}</h4>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-xs text-charcoal/60 dark:text-offwhite/60 line-clamp-2 mb-4 italic font-light">"{banner.description}"</p>
+                    <div className="flex justify-between items-center text-[9px] uppercase tracking-widest font-bold">
+                       <span className="text-gold">Order: {banner.order}</span>
+                       <a href={banner.link} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-all">
+                        Preview Link <ExternalLink className="w-3 h-3" />
+                       </a>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+              {banners.length === 0 && !isAddingBanner && (
+                <div className="col-span-full py-24 text-center border-2 border-dashed border-charcoal/5 dark:border-offwhite/5 rounded-2xl bg-charcoal/2 dark:bg-offwhite/2">
+                   <Image className="w-12 h-12 text-charcoal/10 dark:text-offwhite/10 mx-auto mb-4" />
+                   <p className="text-charcoal/50 dark:text-offwhite/50 text-sm uppercase tracking-widest font-bold">No active banners in registry</p>
+                   <p className="text-charcoal/30 dark:text-offwhite/30 text-[10px] mt-2 italic px-10">Add slides to breathe life into your homepage hero section</p>
                 </div>
               )}
             </div>

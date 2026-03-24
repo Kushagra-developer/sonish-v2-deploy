@@ -10,6 +10,7 @@ import razorpayRoutes from './routes/razorpayRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import assistantRoutes from './routes/assistantRoutes.js';
+import bannerRoutes from './routes/bannerRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import userRoutes from './routes/userRoutes.js';
 
