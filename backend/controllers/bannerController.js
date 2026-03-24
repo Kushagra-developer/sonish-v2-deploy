@@ -23,6 +23,11 @@ const getAdminBanners = asyncHandler(async (req, res) => {
 const createBanner = asyncHandler(async (req, res) => {
   const { image, title, subtitle, description, link, order } = req.body;
 
+  if (image && !image.startsWith('https://') && !image.startsWith('data:image/')) {
+    res.status(400);
+    throw new Error('Invalid image format. Must be an HTTPS URL or base64 image data.');
+  }
+
   const banner = new Banner({
     image,
     title,
@@ -42,6 +47,11 @@ const createBanner = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 const updateBanner = asyncHandler(async (req, res) => {
   const { image, title, subtitle, description, link, isActive, order } = req.body;
+
+  if (image && !image.startsWith('https://') && !image.startsWith('data:image/')) {
+    res.status(400);
+    throw new Error('Invalid image format. Must be an HTTPS URL or base64 image data.');
+  }
 
   const banner = await Banner.findById(req.params.id);
 

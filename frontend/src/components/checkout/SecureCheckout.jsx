@@ -85,13 +85,9 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                                         taxPrice: 0,
                                         shippingPrice: 0,
                                         totalPrice: cartTotal,
-                                        isPaid: true,
-                                        paidAt: new Date(),
-                                        paymentResult: {
-                                            id: response.razorpay_payment_id,
-                                            status: 'captured',
-                                            update_time: new Date().toISOString(),
-                                        }
+                                        razorpay_order_id: response.razorpay_order_id,
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_signature: response.razorpay_signature,
                                     })
                                 });
 

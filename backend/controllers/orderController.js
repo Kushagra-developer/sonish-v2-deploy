@@ -1,6 +1,7 @@
 import Order from '../models/orderModel.js';
 import User from '../models/userModel.js';
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -14,15 +15,37 @@ const addOrderItems = async (req, res) => {
     taxPrice,
     shippingPrice,
     totalPrice,
-    isPaid,
-    paidAt,
-    paymentResult,
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
   } = req.body;
 
   if (orderItems && orderItems.length === 0) {
     res.status(400);
     throw new Error('No order items');
   } else {
+    let isPaidVerify = false;
+    let paymentResultData = null;
+
+    if (razorpay_order_id && razorpay_payment_id && razorpay_signature) {
+      const body = razorpay_order_id + "|" + razorpay_payment_id;
+      const expectedSignature = crypto
+        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+        .update(body.toString())
+        .digest('hex');
+      
+      if (expectedSignature === razorpay_signature) {
+        isPaidVerify = true;
+        paymentResultData = {
+          id: razorpay_payment_id,
+          status: 'captured',
+          update_time: new Date().toISOString(),
+        };
+      } else {
+        res.status(400);
+        throw new Error('Invalid payment signature');
+      }
+    }
     const order = new Order({
       orderItems: orderItems.map((x) => ({
         ...x,
@@ -35,9 +58,9 @@ const addOrderItems = async (req, res) => {
       taxPrice,
       shippingPrice,
       totalPrice,
-      isPaid: isPaid || false,
-      paidAt: paidAt || null,
-      paymentResult: paymentResult || null,
+      isPaid: isPaidVerify,
+      paidAt: isPaidVerify ? Date.now() : null,
+      paymentResult: paymentResultData,
     });
 
     const createdOrder = await order.save();

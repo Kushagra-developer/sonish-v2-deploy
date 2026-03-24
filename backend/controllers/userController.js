@@ -239,16 +239,16 @@ const sendOtp = async (req, res) => {
 
       res.status(200).json({
         message: 'OTP sent securely to your inbox',
-        mockOtp: process.env.EMAIL_USER ? null : otpCode, // Send it in response ONLY if using test mode
+        // Send it in response ONLY if using test mode (no email credentials set) and explicitly in a non-production environment
+        mockOtp: (process.env.EMAIL_USER || process.env.NODE_ENV === 'production') ? null : otpCode,
         previewUrl: previewUrl || null
       });
 
     } catch (err) {
       console.error('[EMAIL] Gateway Error:', err);
       // Fallback response for extreme network failure
-      res.status(200).json({
-        message: 'Email gateway connection failed, but OTP generated. Check server console.',
-        mockOtp: otpCode
+      res.status(500).json({
+        message: 'Email gateway connection failed. Please try again later.',
       });
     }
   } else {
