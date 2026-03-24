@@ -19,9 +19,19 @@ const protect = async (req, res, next) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
       req.user = await User.findById(decoded.userId).select('-password');
-      next();
+      
+      if (!req.user) {
+        return res.status(401).json({ message: 'Not authorized, user not found' });
+      }
+
+      if (typeof next === 'function') {
+        next();
+      } else {
+        console.error('CRITICAL: next is not a function in protect middleware');
+        res.status(500).json({ message: 'Internal server error: middleware chain broken' });
+      }
     } catch (error) {
-      console.error(error);
+      console.error('JWT Error:', error);
       res.status(401).json({ message: 'Not authorized, token failed' });
     }
   } else {
