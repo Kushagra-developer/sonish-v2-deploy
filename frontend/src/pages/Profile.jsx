@@ -408,128 +408,120 @@ const Profile = () => {
                             {/* ADDRESSES TAB */}
                             {activeTab === 'addresses' && (
                                 <motion.div key="addresses" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.4 }}>
-                                    <div className="mb-16">
-                                      <h2 className="text-3xl font-serif text-charcoal dark:text-offwhite mb-4 italic">Global Footprints</h2>
-                                      <p className="text-xs tracking-[0.3em] uppercase text-charcoal/40 dark:text-offwhite/40 font-bold mb-12">Your verified shipping registry</p>
+                                    <div className="mb-12">
+                                      <h2 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-2">Shipping Addresses</h2>
+                                      <p className="text-[10px] tracking-[0.2em] uppercase text-charcoal/40 dark:text-offwhite/40 font-bold mb-10">Manage your delivery destinations</p>
                                       
-                                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                           {(userInfo.savedAddresses && userInfo.savedAddresses.length > 0) ? userInfo.savedAddresses.map((addr, idx) => {
                                               const isSelected = userInfo.shippingAddress?.address === addr.address && userInfo.shippingAddress?.postalCode === addr.postalCode;
                                               return (
-                                                  <div key={idx} className={`group p-10 border relative overflow-hidden transition-all duration-700 ${isSelected ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal border-charcoal dark:border-offwhite shadow-2xl scale-[1.02]' : 'bg-white dark:bg-charcoal/20 border-charcoal/5 dark:border-offwhite/5 hover:border-gold/30 hover:shadow-xl'}`}>
+                                                  <div key={idx} className={`group p-8 border relative transition-all duration-500 ${isSelected ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal border-charcoal dark:border-offwhite shadow-xl' : 'bg-white dark:bg-charcoal/20 border-charcoal/5 dark:border-offwhite/5 hover:border-gold/30'}`}>
                                                       <div className="absolute top-0 right-0 p-6">
                                                         {isSelected ? (
-                                                            <div className="bg-gold text-white p-2 rounded-full shadow-lg">
-                                                              <Check className="w-4 h-4" />
+                                                            <div className="bg-gold text-white p-1.5 rounded-full">
+                                                              <Check className="w-3.5 h-3.5" />
                                                             </div>
                                                         ) : (
                                                             <MapPin className="w-5 h-5 text-gold/20 group-hover:text-gold/50 transition-colors" />
                                                         )}
                                                       </div>
                                                       
-                                                      <p className="text-[10px] uppercase tracking-[0.4em] mb-8 font-bold opacity-30">Registered Address 0{idx + 1}</p>
+                                                      <p className="text-[9px] uppercase tracking-widest mb-6 font-bold opacity-30">Address 0{idx + 1}</p>
                                                       
-                                                      <div className="space-y-2 mb-12">
-                                                        <p className="text-lg font-serif italic tracking-wide">{addr.address}</p>
-                                                        <p className="text-sm font-light uppercase tracking-widest opacity-60 italic">{addr.city}, {addr.postalCode}</p>
-                                                        <p className="text-sm font-bold uppercase tracking-[0.3em] text-gold">{addr.country}</p>
+                                                      <div className="space-y-1 mb-10">
+                                                        <p className="text-lg font-medium tracking-tight">{addr.address}</p>
+                                                        <p className="text-sm opacity-60">{addr.city}, {addr.postalCode}</p>
+                                                        <p className="text-sm font-bold text-gold uppercase tracking-widest">{addr.country}</p>
                                                       </div>
                                                       
-                                                      <div className="flex items-center justify-between pt-8 border-t border-current/10">
+                                                      <div className="flex items-center justify-between pt-6 border-t border-current/10">
                                                         {!isSelected ? (
                                                             <button 
                                                                 onClick={() => handleSelectAddress(addr)}
-                                                                className="text-[10px] uppercase tracking-[0.3em] font-bold text-gold hover:text-charcoal dark:hover:text-offwhite transition-all flex items-center gap-2"
+                                                                className="text-[10px] uppercase tracking-widest font-bold text-gold hover:text-charcoal dark:hover:text-offwhite transition-all flex items-center gap-2"
                                                             >
-                                                                Set As Primary <ArrowRight className="w-3 h-3" />
+                                                                Use This Address <ArrowRight className="w-3 h-3" />
                                                             </button>
                                                         ) : (
-                                                            <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 italic">Active Destination</span>
+                                                            <span className="text-[10px] uppercase tracking-widest font-bold opacity-40">Primary Address</span>
                                                         )}
-                                                        <button className="text-[10px] uppercase tracking-[0.3em] font-bold text-red-500 opacity-0 group-hover:opacity-100 transition-all">Remove</button>
+                                                        <button className="text-[10px] uppercase tracking-widest font-bold text-red-500/50 hover:text-red-500 transition-all">Remove</button>
                                                       </div>
                                                   </div>
                                               )
                                           }) : (
-                                              <div className="col-span-2 py-20 bg-white/50 dark:bg-charcoal/20 border-2 border-dashed border-charcoal/5 dark:border-offwhite/5 text-center">
-                                                  <Plus className="w-12 h-12 text-gold/20 mx-auto mb-6" />
-                                                  <p className="text-sm text-charcoal/30 dark:text-offwhite/30 tracking-[0.3em] uppercase font-bold text-center">No footprints found</p>
+                                              <div className="col-span-2 py-16 bg-white/50 dark:bg-charcoal/10 border-2 border-dashed border-charcoal/5 dark:border-offwhite/5 text-center">
+                                                  <Plus className="w-10 h-10 text-gold/20 mx-auto mb-4" />
+                                                  <p className="text-xs text-charcoal/30 dark:text-offwhite/30 tracking-widest uppercase font-bold">No saved addresses found</p>
                                               </div>
                                           )}
                                       </div>
                                     </div>
 
-                                    {/* Unified High-End Form Area */}
-                                    <div className="bg-white dark:bg-charcoal/30 p-16 shadow-2xl relative">
-                                      <div className="max-w-xl mx-auto">
-                                        <div className="text-center mb-16">
-                                          <Plus className="w-8 h-8 text-gold mx-auto mb-6 stroke-[1.5]" />
-                                          <h3 className="text-2xl font-serif italic mb-2">Register New Locale</h3>
-                                          <p className="text-[10px] uppercase tracking-[0.3em] text-charcoal/40 dark:text-offwhite/40 font-bold">Inscribe your next shipping destination</p>
+                                    {/* Add New Address Form */}
+                                    <div className="bg-white dark:bg-charcoal/40 p-12 border border-charcoal/5 dark:border-offwhite/5">
+                                      <div className="max-w-xl">
+                                        <div className="mb-12">
+                                          <h3 className="text-xl font-serif mb-1">Add New Address</h3>
+                                          <p className="text-[9px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold">Register a new shipping destination</p>
                                         </div>
                                         
-                                        <form onSubmit={handleAddressSave} className="space-y-10">
-                                            <div className="group">
-                                                <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold group-focus-within:text-gold transition-colors">Street Inscription</label>
+                                        <form onSubmit={handleAddressSave} className="space-y-8">
+                                            <div>
+                                                <label className="block text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-2 font-bold">Address Line</label>
                                                 <input
                                                     type="text"
                                                     required
                                                     value={addressForm.address}
                                                     onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
-                                                    placeholder="e.g. 88 Rue de Rivoli, Paris"
-                                                    className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold text-base font-serif italic transition-all placeholder:opacity-20"
+                                                    placeholder="Street name, building, apartment"
+                                                    className="w-full bg-transparent border-b border-charcoal/15 dark:border-offwhite/15 py-3 outline-none focus:border-gold text-base transition-all placeholder:text-charcoal/10"
                                                 />
                                             </div>
-                                            <div className="grid grid-cols-2 gap-12">
-                                                <div className="group">
-                                                  <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold group-focus-within:text-gold transition-colors">Administrative City</label>
+                                            <div className="grid grid-cols-2 gap-8">
+                                                <div>
+                                                  <label className="block text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-2 font-bold">City</label>
                                                   <input
                                                       type="text"
                                                       required
                                                       value={addressForm.city}
                                                       onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
                                                       placeholder="Mumbai"
-                                                      className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold text-base font-serif italic transition-all placeholder:opacity-20"
+                                                      className="w-full bg-transparent border-b border-charcoal/15 dark:border-offwhite/15 py-3 outline-none focus:border-gold text-base transition-all placeholder:text-charcoal/10"
                                                   />
                                                 </div>
-                                                <div className="group">
-                                                  <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold group-focus-within:text-gold transition-colors">Postal Code</label>
+                                                <div>
+                                                  <label className="block text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-2 font-bold">Postal Code</label>
                                                   <input
                                                       type="text"
                                                       required
                                                       value={addressForm.postalCode}
                                                       onChange={(e) => setAddressForm({ ...addressForm, postalCode: e.target.value })}
                                                       placeholder="400001"
-                                                      className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold text-base font-serif italic transition-all placeholder:opacity-20 font-mono"
+                                                      className="w-full bg-transparent border-b border-charcoal/15 dark:border-offwhite/15 py-3 outline-none focus:border-gold text-base font-mono transition-all placeholder:text-charcoal/10"
                                                   />
                                                 </div>
                                             </div>
-                                            <div className="group">
-                                                <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold group-focus-within:text-gold transition-colors">Sovereign State</label>
+                                            <div>
+                                                <label className="block text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-2 font-bold">Country</label>
                                                 <input
                                                     type="text"
                                                     required
                                                     value={addressForm.country}
                                                     onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
-                                                    className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold text-base font-serif italic transition-all"
+                                                    className="w-full bg-transparent border-b border-charcoal/15 dark:border-offwhite/15 py-3 outline-none focus:border-gold text-base transition-all"
                                                 />
                                             </div>
                                             
-                                            <div className="pt-10 flex flex-col items-center">
+                                            <div className="pt-6">
                                               <button
                                                   type="submit"
                                                   disabled={isSavingAddress}
-                                                  className="w-full bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-12 py-5 text-[10px] uppercase tracking-[0.5em] font-bold hover:bg-gold hover:text-white transition-all duration-700 disabled:opacity-50 flex items-center justify-center gap-4 group shadow-2xl"
+                                                  className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-10 py-4 text-[10px] uppercase tracking-widest font-bold hover:bg-gold hover:text-white transition-all duration-300 disabled:opacity-50"
                                               >
-                                                  {isSavingAddress ? (
-                                                      <span className="flex items-center gap-3"><div className="w-2 h-2 bg-white rounded-full animate-ping"></div> Inscribing...</span>
-                                                  ) : addressSaved ? (
-                                                      <><Check className="w-4 h-4" /> Destination Registry Saved</>
-                                                  ) : (
-                                                      <span className="flex items-center gap-4">Register Address <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" /></span>
-                                                  )}
+                                                  {isSavingAddress ? 'Saving...' : addressSaved ? 'Address Saved' : 'Save Address'}
                                               </button>
-                                              <p className="mt-8 text-[9px] uppercase tracking-[0.2em] text-charcoal/30 dark:text-offwhite/30 font-medium">Encrypted & Verified via Sonish Cloud Logistics</p>
                                             </div>
                                         </form>
                                       </div>

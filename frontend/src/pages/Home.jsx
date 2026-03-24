@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import Hero from '../components/home/Hero';
-import Hero from '../components/home/Hero';
 import Editorial from '../components/home/Editorial';
 
 const Home = () => {
