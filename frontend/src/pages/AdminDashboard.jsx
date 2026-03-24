@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck } from 'lucide-react';
 import API from '../utils/api';
+import { authFetch, authJsonFetch } from '../utils/authFetch';
 
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
@@ -17,7 +18,7 @@ const AdminDashboard = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API}/api/users/logout`, { method: 'POST', credentials: 'include' });
+      await authFetch(`${API}/api/users/logout`, { method: 'POST' });
     } catch (e) {}
     localStorage.removeItem('adminInfo');
     window.location.href = '/admin/login';
@@ -28,8 +29,8 @@ const AdminDashboard = () => {
       setIsLoading(true);
       try {
         const [prodRes, orderRes] = await Promise.allSettled([
-          fetch(`${API}/api/products`, { credentials: 'include' }),
-          fetch(`${API}/api/orders`, { credentials: 'include' }),
+          authFetch(`${API}/api/products`),
+          authFetch(`${API}/api/orders`),
         ]);
 
         if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
@@ -49,7 +50,7 @@ const AdminDashboard = () => {
     // Poll for new orders every 10 seconds
     const interval = setInterval(async () => {
       try {
-        const orderRes = await fetch(`${API}/api/orders`, { credentials: 'include' });
+        const orderRes = await authFetch(`${API}/api/orders`);
         if (orderRes.ok) {
           setOrders(await orderRes.json());
         }
@@ -216,10 +217,8 @@ const AdminDashboard = () => {
                     e.preventDefault();
                     setAddLoading(true);
                     try {
-                      const res = await fetch(`${API}/api/products`, {
+                      const res = await authJsonFetch(`${API}/api/products`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
                         body: JSON.stringify({
                           ...newProduct,
                           images: [newProduct.image]
@@ -275,10 +274,8 @@ const AdminDashboard = () => {
                     e.preventDefault();
                     setAddLoading(true);
                     try {
-                      const res = await fetch(`${API}/api/products/${editingProduct._id}`, {
+                      const res = await authJsonFetch(`${API}/api/products/${editingProduct._id}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
                         body: JSON.stringify(editFormData)
                       });
                       if (res.ok) {

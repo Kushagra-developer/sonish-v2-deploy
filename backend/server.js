@@ -23,45 +23,27 @@ const __dirname = path.dirname(__filename);
 // Security middleware
 // ──────────────────────────────────────────────
 
-// Helmet – relaxed CSP to allow Vite's module scripts and Razorpay
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
   crossOriginOpenerPolicy: { policy: "unsafe-none" },
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-      imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "https://lumberjack-cx.razorpay.com", "https://*.razorpay.com"],
-      frameSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
-      objectSrc: ["'none'"],
-    },
-  },
+  contentSecurityPolicy: false, // Frontend handles its own CSP
 }));
 
-// CORS – strict origin whitelist
+// CORS – allow Vercel frontend + localhost
 const allowedOrigins = [
   'http://localhost:5173',
   'https://sonish-v2.vercel.app',
   'https://sonish.co.in',
-  'http://sonish.co.in',
   'https://www.sonish.co.in',
-  'http://www.sonish.co.in',
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, same-origin)
       if (!origin) return callback(null, true);
-      
-      const isAllowed = allowedOrigins.includes(origin) || 
-                       origin.endsWith('.vercel.app') || 
-                       origin.endsWith('.onrender.com') ||
+      const isAllowed = allowedOrigins.includes(origin) ||
+                       origin.endsWith('.vercel.app') ||
                        origin.includes('localhost');
-      
       if (isAllowed) {
         callback(null, true);
       } else {
@@ -78,20 +60,10 @@ app.use(
 // Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-
-// Cookie parser needed for JWT read
 app.use(cookieParser());
 
 // ──────────────────────────────────────────────
-// Serve Static Frontend (BEFORE API routes so assets load correctly)
-// ──────────────────────────────────────────────
-
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'public')));
-}
-
-// ──────────────────────────────────────────────
-// API Routes
+// API Routes (Backend is API-ONLY)
 // ──────────────────────────────────────────────
 
 app.use('/api/products', productRoutes);
@@ -99,23 +71,14 @@ app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/assistant', assistantRoutes);
 app.use('/api/razorpay', razorpayRoutes);
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ──────────────────────────────────────────────
-// SPA Fallback (AFTER API routes, BEFORE error handlers)
-// ──────────────────────────────────────────────
-
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res) => {
-    res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-  });
-} else {
-  app.get('/', (req, res) => {
-    res.send('API is running securely on Render....');
-  });
-}
+app.get('/', (_req, res) => {
+  res.json({ message: 'Sonish API is running' });
+});
 
 // ──────────────────────────────────────────────
 // Error handling middleware
@@ -129,7 +92,9 @@ app.use(errorHandler);
 // ──────────────────────────────────────────────
 
 if (process.env.MONGO_URI) {
-  mongoose.connect(process.env.MONGO_URI).then(() => console.log('✅  MongoDB connected')).catch(err => console.error(err));
+  mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('✅  MongoDB connected'))
+    .catch(err => console.error(err));
 } else {
   console.warn('⚠️   MONGO_URI not set – skipping database connection');
 }

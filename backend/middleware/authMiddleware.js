@@ -6,19 +6,20 @@ import User from '../models/userModel.js';
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
-  // Read JWT from the 'jwt' cookie
-  token = req.cookies.jwt;
+  // 1. Check Authorization Bearer header (primary – works cross-domain)
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  // 2. Fallback: check cookie (for local dev convenience)
+  if (!token && req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
 
   if (token) {
     try {
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET || 'secret123'
-      );
-
-      // Attach user to request object (minus the password)
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
       req.user = await User.findById(decoded.userId).select('-password');
-
       next();
     } catch (error) {
       console.error(error);

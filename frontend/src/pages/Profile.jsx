@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { User, Package, MapPin, Settings, LogOut, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import API from '../utils/api';
+import { authFetch, authJsonFetch } from '../utils/authFetch';
 
 const Profile = () => {
     const [searchParams] = useSearchParams();
@@ -19,9 +20,7 @@ const Profile = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const res = await fetch(`${API}/api/orders/myorders`, {
-                    credentials: 'include'
-                });
+                const res = await authFetch(`${API}/api/orders/myorders`);
                 if (res.ok) {
                     const data = await res.json();
                     setOrders(data);
@@ -43,9 +42,8 @@ const Profile = () => {
 
     const handleLogout = async () => {
         try {
-            await fetch(`${API}/api/users/logout`, {
-                method: 'POST',
-                credentials: 'include'
+            await authFetch(`${API}/api/users/logout`, {
+                method: 'POST'
             });
         } catch (e) {}
         localStorage.removeItem('userInfo');
@@ -67,10 +65,8 @@ const Profile = () => {
                 reqBody.shippingAddress = addressForm;
             }
 
-            const res = await fetch(`${API}/api/users/profile`, {
+            const res = await authJsonFetch(`${API}/api/users/profile`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
                 body: JSON.stringify(reqBody),
             });
             if (res.ok) {
@@ -89,10 +85,8 @@ const Profile = () => {
 
     const handleSelectAddress = async (addr) => {
         try {
-            const res = await fetch(`${API}/api/users/profile`, {
+            const res = await authJsonFetch(`${API}/api/users/profile`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
                 body: JSON.stringify({ shippingAddress: {
                     address: addr.address,
                     city: addr.city,

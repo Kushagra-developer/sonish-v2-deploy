@@ -1,4 +1,5 @@
 import API from '../utils/api';
+import { authJsonFetch } from '../utils/authFetch';
 
 export const getUserId = () => {
   try {
@@ -27,10 +28,8 @@ export const loadCart = () => {
 
 export const syncWithServer = async (cart, wishlist) => {
   try {
-    await fetch(`${API}/api/users/sync`, {
+    await authJsonFetch(`${API}/api/users/sync`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ cart, wishlist }),
     });
   } catch (error) {

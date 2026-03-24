@@ -1,9 +1,8 @@
 {
-  "redirects": [
+  "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "https://sonish-backend.onrender.com/$1",
-      "permanent": false
+      "destination": "/index.html"
     }
   ]
 }

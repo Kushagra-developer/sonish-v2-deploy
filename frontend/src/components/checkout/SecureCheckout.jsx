@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, Shield, CreditCard, ChevronRight } from 'lucide-react';
 import API from '../../utils/api';
+import { authJsonFetch } from '../../utils/authFetch';
 
 const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, onPaymentSuccess }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -32,14 +33,8 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
 
         try {
             // 1. Create a Razorpay Order on the backend
-            const orderResponse = await fetch(`${API}/api/razorpay/create-order`, {
+            const orderResponse = await authJsonFetch(`${API}/api/razorpay/create-order`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // Assuming token is in localStorage for authenticated route, otherwise handle if public. 
-                    // Let's pass credentials if user is logged in, else handle normally.
-                },
-                credentials: 'include',
                 body: JSON.stringify({ totalAmount: cartTotal }),
             });
 
@@ -63,10 +58,8 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                     
                     // 3. Verify Payment
                     try {
-                        const verifyRes = await fetch(`${API}/api/razorpay/verify`, {
+                        const verifyRes = await authJsonFetch(`${API}/api/razorpay/verify`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            credentials: 'include',
                             body: JSON.stringify({
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_payment_id: response.razorpay_payment_id,
@@ -78,10 +71,8 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                         
                         if (verifyData.success) {
                             try {
-                                await fetch(`${API}/api/orders`, {
+                                await authJsonFetch(`${API}/api/orders`, {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    credentials: 'include',
                                     body: JSON.stringify({
                                         orderItems: cartItems,
                                         shippingAddress,

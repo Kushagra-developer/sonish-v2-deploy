@@ -5,6 +5,7 @@ import CartDrawer from './CartDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { loadCart, loadWishlist } from '../../utils/cartStorage';
 import API from '../../utils/api';
+import { authFetch } from '../../utils/authFetch';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -44,7 +45,7 @@ const Navbar = () => {
         const uid = JSON.parse(userInfoStr)._id;
         if (!uid) return;
         
-        const res = await fetch(`${API}/api/users/profile`, { credentials: 'include' });
+        const res = await authFetch(`${API}/api/users/profile`);
         if (res.ok) {
           const data = await res.json();
           if (data.cart) localStorage.setItem(`sonish_cart_${uid}`, JSON.stringify(data.cart));
