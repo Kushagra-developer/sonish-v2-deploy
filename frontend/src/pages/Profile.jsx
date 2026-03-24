@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { User, Package, MapPin, Settings, LogOut, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { User, Package, MapPin, Settings, LogOut, ChevronDown, ChevronUp, Check, Plus, CreditCard, ShoppingBag, ArrowRight } from 'lucide-react';
 import API from '../utils/api';
 import { authFetch, authJsonFetch } from '../utils/authFetch';
 
@@ -24,17 +24,9 @@ const Profile = () => {
                 if (res.ok) {
                     const data = await res.json();
                     setOrders(data);
-                } else {
-                    const errorText = await res.text();
-                    console.error('Failed to fetch orders:', errorText);
-                    // Only alert if it's a real error, not just empty
-                    if (res.status !== 404 && res.status !== 200) {
-                        alert(`Failed to load your orders: ${res.statusText}`);
-                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch orders:', error);
-                alert('Connection error while fetching orders.');
             }
         };
 
@@ -50,9 +42,7 @@ const Profile = () => {
 
     const handleLogout = async () => {
         try {
-            await authFetch(`${API}/api/users/logout`, {
-                method: 'POST'
-            });
+            await authFetch(`${API}/api/users/logout`, { method: 'POST' });
         } catch (e) {}
         localStorage.removeItem('userInfo');
         window.dispatchEvent(new Event('cartUpdated'));
@@ -67,11 +57,7 @@ const Profile = () => {
         try {
             const newSavedAddresses = [...(userInfo.savedAddresses || []), addressForm];
             const reqBody = { savedAddresses: newSavedAddresses };
-            
-            // If this is their first address, auto-select it as the default
-            if (!userInfo.shippingAddress?.address?.trim().length) {
-                reqBody.shippingAddress = addressForm;
-            }
+            if (!userInfo.shippingAddress?.address?.trim().length) reqBody.shippingAddress = addressForm;
 
             const res = await authJsonFetch(`${API}/api/users/profile`, {
                 method: 'PUT',
@@ -95,12 +81,7 @@ const Profile = () => {
         try {
             const res = await authJsonFetch(`${API}/api/users/profile`, {
                 method: 'PUT',
-                body: JSON.stringify({ shippingAddress: {
-                    address: addr.address,
-                    city: addr.city,
-                    postalCode: addr.postalCode,
-                    country: addr.country
-                } }),
+                body: JSON.stringify({ shippingAddress: addr }),
             });
             if (res.ok) {
                 const data = await res.json();
@@ -114,10 +95,10 @@ const Profile = () => {
     };
 
     const tabs = [
-        { id: 'dashboard', label: 'Dashboard', icon: <User className="w-5 h-5" /> },
-        { id: 'orders', label: 'Orders', icon: <Package className="w-5 h-5" /> },
-        { id: 'addresses', label: 'Addresses', icon: <MapPin className="w-5 h-5" /> },
-        { id: 'account', label: 'Account Details', icon: <Settings className="w-5 h-5" /> },
+        { id: 'dashboard', label: 'Overview', icon: <User className="w-4 h-4" /> },
+        { id: 'orders', label: 'Order History', icon: <ShoppingBag className="w-4 h-4" /> },
+        { id: 'addresses', label: 'Saved Addresses', icon: <MapPin className="w-4 h-4" /> },
+        { id: 'account', label: 'Security & Profile', icon: <Settings className="w-4 h-4" /> },
     ];
 
     if (!userInfo) return null;
@@ -126,153 +107,229 @@ const Profile = () => {
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="bg-offwhite dark:bg-charcoal min-h-screen pt-32 pb-24 px-4 sm:px-6 lg:px-8 transition-colors duration-300"
+            className="bg-offwhite dark:bg-charcoal min-h-screen pt-32 pb-32 px-4 transition-colors duration-500"
         >
             <div className="max-w-7xl mx-auto">
-                <div className="mb-12 text-center md:text-left">
-                    <h1 className="text-4xl md:text-5xl font-serif text-charcoal dark:text-offwhite tracking-wide mb-4">My Account</h1>
-                    <div className="w-16 h-px bg-charcoal/30 dark:bg-offwhite/30 md:mx-0 mx-auto"></div>
-                </div>
-
-                <div className="flex flex-col md:flex-row gap-12">
-                    {/* Sidebar Navigation */}
-                    <div className="w-full md:w-64 shrink-0">
-                        <nav className="flex flex-col space-y-2">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-3 px-4 py-3 text-sm tracking-widest uppercase transition-colors duration-300 ${activeTab === tab.id
-                                        ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal font-medium'
-                                        : 'text-charcoal/70 dark:text-offwhite/70 hover:bg-charcoal/5 dark:hover:bg-offwhite/5'
-                                        }`}
-                                >
-                                    {tab.icon}
-                                    {tab.label}
-                                </button>
-                            ))}
-                            <button
-                                onClick={handleLogout}
-                                className="flex items-center gap-3 px-4 py-3 text-sm tracking-widest uppercase text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors duration-300 mt-4"
-                            >
-                                <LogOut className="w-5 h-5" />
-                                Logout
-                            </button>
-                        </nav>
+                {/* Header Section */}
+                <header className="mb-20 text-center">
+                    <span className="text-[10px] tracking-[0.4em] uppercase text-gold font-bold mb-4 block">Personal Workspace</span>
+                    <h1 className="text-4xl md:text-6xl font-serif text-charcoal dark:text-offwhite tracking-tight mb-6 italic">My Account</h1>
+                    <div className="flex items-center justify-center gap-4 text-charcoal/40 dark:text-offwhite/40">
+                      <div className="h-[1px] w-12 bg-gold/30"></div>
+                      <span className="text-[10px] uppercase tracking-widest font-medium">Sonish Studios</span>
+                      <div className="h-[1px] w-12 bg-gold/30"></div>
                     </div>
+                </header>
+
+                <div className="flex flex-col md:flex-row gap-16 items-start">
+                    {/* Editorial Sidebar */}
+                    <aside className="w-full md:w-80 shrink-0 sticky top-40">
+                        <div className="bg-white dark:bg-charcoal/40 border border-charcoal/5 dark:border-offwhite/5 overflow-hidden shadow-2xl shadow-charcoal/5">
+                            <div className="p-8 border-b border-charcoal/5 dark:border-offwhite/5 flex items-center gap-4">
+                                <div className="w-12 h-12 bg-charcoal rounded-full flex items-center justify-center text-white font-serif text-xl border-2 border-gold/50">
+                                    {userInfo.name?.[0].toUpperCase()}
+                                </div>
+                                <div>
+                                    <p className="text-xs uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold mb-0.5">Welcome back,</p>
+                                    <p className="text-lg font-serif text-charcoal dark:text-offwhite">{userInfo.name?.split(' ')[0]}</p>
+                                </div>
+                            </div>
+                            <nav className="p-2 space-y-1">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`w-full flex items-center justify-between group px-6 py-4 text-[11px] uppercase tracking-[0.25em] transition-all duration-300 ${activeTab === tab.id
+                                            ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal font-bold'
+                                            : 'text-charcoal/60 dark:text-offwhite/60 hover:bg-gold/5'
+                                            }`}
+                                    >
+                                        <span className="flex items-center gap-4">
+                                            {tab.icon}
+                                            {tab.label}
+                                        </span>
+                                        <ArrowRight className={`w-3 h-3 transition-transform duration-300 ${activeTab === tab.id ? 'translate-x-0' : '-translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0'}`} />
+                                    </button>
+                                ))}
+                                <div className="h-px bg-charcoal/5 dark:bg-offwhite/5 mx-6 my-4"></div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center gap-4 px-6 py-4 text-[11px] uppercase tracking-[0.25em] text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors duration-300"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    Sign Out
+                                </button>
+                            </nav>
+                        </div>
+                    </aside>
 
                     {/* Content Area */}
-                    <div className="flex-1 bg-white dark:bg-charcoal/50 p-8 border border-charcoal/10 dark:border-offwhite/10 shadow-sm min-h-[400px]">
+                    <main className="flex-1 w-full min-h-[600px]">
                         <AnimatePresence mode="wait">
-
+                            
                             {/* DASHBOARD TAB */}
                             {activeTab === 'dashboard' && (
-                                <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                                    <h2 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-4">Hello, {userInfo.name || 'Beautiful'}</h2>
-                                    <p className="text-charcoal/70 dark:text-offwhite/70 leading-relaxed mb-6">
-                                        From your account dashboard you can view your <button onClick={() => setActiveTab('orders')} className="text-gold hover:underline">recent orders</button>, manage your <button onClick={() => setActiveTab('addresses')} className="text-gold hover:underline">shipping and billing addresses</button>, and <button onClick={() => setActiveTab('account')} className="text-gold hover:underline">edit your password and account details</button>.
-                                    </p>
+                                <motion.div key="dashboard" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.4 }} className="space-y-12">
+                                    <div className="bg-white dark:bg-charcoal/30 p-12 border border-charcoal/5 dark:border-offwhite/5 relative overflow-hidden group shadow-xl">
+                                        <div className="absolute top-0 right-0 p-8 opacity-5">
+                                          <User className="w-32 h-32" />
+                                        </div>
+                                        <h2 className="text-3xl md:text-4xl font-serif text-charcoal dark:text-offwhite mb-8 italic">Curated Dashboard</h2>
+                                        <p className="text-charcoal/60 dark:text-offwhite/60 leading-relaxed text-lg max-w-2xl font-light mb-12">
+                                            To offer you our most personalized services, we have centralized your preferences here. Explore your latest captures, manage your global footprints, and refine your identity within the world of Sonish.
+                                        </p>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                            <div className="p-8 bg-offwhite dark:bg-charcoal/50 border border-charcoal/5 dark:border-offwhite/5 group hover:border-gold/30 transition-all duration-500">
+                                              <Package className="w-6 h-6 text-gold mb-6" />
+                                              <p className="text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Total Orders</p>
+                                              <p className="text-3xl font-serif text-charcoal dark:text-offwhite">{orders.length}</p>
+                                            </div>
+                                            <div className="p-8 bg-offwhite dark:bg-charcoal/50 border border-charcoal/5 dark:border-offwhite/5 group hover:border-gold/30 transition-all duration-500">
+                                              <CreditCard className="w-6 h-6 text-gold mb-6" />
+                                              <p className="text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Member Tier</p>
+                                              <p className="text-3xl font-serif text-charcoal dark:text-offwhite italic">Studio Elite</p>
+                                            </div>
+                                            <div className="p-8 bg-offwhite dark:bg-charcoal/50 border border-charcoal/5 dark:border-offwhite/5 group hover:border-gold/30 transition-all duration-500">
+                                              <MapPin className="w-6 h-6 text-gold mb-6" />
+                                              <p className="text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Primary Address</p>
+                                              <p className="text-sm font-serif text-charcoal dark:text-offwhite line-clamp-1 italic">{userInfo.shippingAddress?.city || 'Not Defined'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                      <button onClick={() => setActiveTab('orders')} className="p-10 border border-charcoal/10 dark:border-offwhite/10 hover:border-gold group transition-all duration-500 text-left">
+                                        <h3 className="text-xl font-serif mb-4 flex items-center justify-between">Recent History <ArrowRight className="w-4 h-4 text-charcoal/20 group-hover:text-gold transition-colors" /></h3>
+                                        <p className="text-xs text-charcoal/50 dark:text-offwhite/50 tracking-widest uppercase">Track orders and returns.</p>
+                                      </button>
+                                      <button onClick={() => setActiveTab('addresses')} className="p-10 border border-charcoal/10 dark:border-offwhite/10 hover:border-gold group transition-all duration-500 text-left">
+                                        <h3 className="text-xl font-serif mb-4 flex items-center justify-between">Shipping Edits <ArrowRight className="w-4 h-4 text-charcoal/20 group-hover:text-gold transition-colors" /></h3>
+                                        <p className="text-xs text-charcoal/50 dark:text-offwhite/50 tracking-widest uppercase">Modify your global shipping data.</p>
+                                      </button>
+                                    </div>
                                 </motion.div>
                             )}
 
                             {/* ORDERS TAB */}
                             {activeTab === 'orders' && (
-                                <motion.div key="orders" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                                    <h2 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-6">Order History ({orders.length})</h2>
+                                <motion.div key="orders" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.4 }}>
+                                    <div className="mb-12 border-b border-charcoal/10 dark:border-offwhite/10 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                                      <div>
+                                        <h2 className="text-3xl font-serif text-charcoal dark:text-offwhite mb-2 italic">Capture History</h2>
+                                        <p className="text-[10px] uppercase tracking-[0.3em] text-charcoal/40 dark:text-offwhite/40 font-bold">Chronicles of your Sonish Acquisitions</p>
+                                      </div>
+                                      <span className="text-[10px] uppercase tracking-widest font-bold bg-gold/10 text-gold px-4 py-2 border border-gold/20">{orders.length} TOTAL SESSIONS</span>
+                                    </div>
+
                                     {orders.length === 0 ? (
-                                        <div className="text-center py-10 bg-charcoal/5 dark:bg-offwhite/5 border border-charcoal/10 dark:border-offwhite/10">
-                                            <Package className="w-12 h-12 text-charcoal/20 dark:text-offwhite/20 mx-auto mb-4" />
-                                            <p className="text-charcoal/60 dark:text-offwhite/60 mb-4">No orders have been placed yet.</p>
-                                            <Link to="/collections" className="inline-block bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-8 py-3 text-xs uppercase tracking-widest hover:bg-black transition-colors">
-                                                Browse Products
+                                        <div className="text-center py-32 bg-white dark:bg-charcoal/30 border border-charcoal/5 dark:border-offwhite/5 shadow-2xl">
+                                            <ShoppingBag className="w-16 h-16 text-gold/20 mx-auto mb-8 stroke-1" />
+                                            <h3 className="text-2xl font-serif italic mb-4">No History Found</h3>
+                                            <p className="text-charcoal/50 dark:text-offwhite/50 text-sm tracking-widest uppercase mb-10 max-w-md mx-auto">Your acquisitions gallery is currently waiting for its first masterpiece.</p>
+                                            <Link to="/collections" className="inline-block bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-12 py-4 text-[10px] uppercase tracking-[0.4em] font-bold hover:bg-gold hover:text-white transition-all duration-500 shadow-xl">
+                                                Discover The Collections
                                             </Link>
                                         </div>
                                     ) : (
-                                        <div className="space-y-4">
-                                            {orders.map(order => (
-                                                <div key={order._id} className="border border-charcoal/10 dark:border-offwhite/10 bg-white dark:bg-charcoal/20 shadow-sm rounded-sm overflow-hidden">
-                                                    <button
-                                                        onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}
-                                                        className="w-full px-6 py-5 flex items-center justify-between hover:bg-charcoal/[0.02] dark:hover:bg-offwhite/[0.02] transition-colors text-left"
+                                        <div className="space-y-8">
+                                            {orders.map((order, idx) => (
+                                                <div key={order._id} className="group overflow-hidden">
+                                                    <div 
+                                                      className={`p-10 transition-all duration-500 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-8 ${expandedOrder === order._id ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal' : 'bg-white dark:bg-charcoal/20 border border-charcoal/5 dark:border-offwhite/5 hover:border-gold/30 shadow-lg'}`}
+                                                      onClick={() => setExpandedOrder(expandedOrder === order._id ? null : order._id)}
                                                     >
-                                                        <div>
-                                                            <p className="text-sm font-medium text-charcoal dark:text-offwhite mb-1">
-                                                                Order <span className="font-mono text-xs text-charcoal/60 dark:text-offwhite/60 ml-2">#{order._id?.slice(-8).toUpperCase()}</span>
-                                                            </p>
-                                                            <p className="text-xs text-charcoal/50 dark:text-offwhite/50">
-                                                                Placed on: {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
-                                                            </p>
+                                                        <div className="flex gap-10 items-center">
+                                                          <div className={`text-[10px] font-bold tracking-[0.3em] font-mono opacity-40 group-hover:opacity-100 transition-opacity`}>0{idx + 1}</div>
+                                                          <div>
+                                                              <p className="text-[10px] uppercase tracking-widest opacity-40 mb-2 font-bold">Acquisition Ref.</p>
+                                                              <p className="text-base font-serif tracking-wide uppercase">#{order._id?.slice(-8)}</p>
+                                                          </div>
+                                                          <div className="hidden lg:block">
+                                                              <p className="text-[10px] uppercase tracking-widest opacity-40 mb-2 font-bold">Session Date</p>
+                                                              <p className="text-sm font-serif italic">{new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                                          </div>
                                                         </div>
-                                                        <div className="flex items-center gap-6">
-                                                            <div className="text-right flex flex-col items-end gap-1">
-                                                                <span className="text-sm font-serif font-medium text-charcoal dark:text-offwhite">
-                                                                    ₹{(order.totalPrice || 0).toLocaleString()}
-                                                                </span>
-                                                                <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-sm font-medium ${
-                                                                    order.isDelivered 
-                                                                    ? 'bg-green-500/10 text-green-700 dark:text-green-400' 
-                                                                    : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
-                                                                }`}>
-                                                                    {order.isDelivered ? 'Delivered' : 'Processing'}
-                                                                </span>
+                                                        
+                                                        <div className="flex items-center gap-12">
+                                                            <div className="text-right">
+                                                                <p className="text-[10px] uppercase tracking-widest opacity-40 mb-2 font-bold">Total Val.</p>
+                                                                <p className="text-lg font-serif italic">₹{(order.totalPrice || 0).toLocaleString()}</p>
                                                             </div>
-                                                            <div className="text-charcoal/40 dark:text-offwhite/40">
-                                                                {expandedOrder === order._id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                                                            <div className="flex items-center gap-6 border-l border-current/10 pl-12">
+                                                              <span className={`text-[9px] uppercase tracking-[0.3em] font-bold px-4 py-2 border border-current/20 ${order.isDelivered ? 'text-green-500' : 'text-gold'}`}>
+                                                                  {order.isDelivered ? 'Delivered' : 'In Transit'}
+                                                              </span>
+                                                              <ChevronDown className={`w-4 h-4 transition-transform duration-500 ${expandedOrder === order._id ? 'rotate-180' : ''}`} />
                                                             </div>
                                                         </div>
-                                                    </button>
+                                                    </div>
                                                     
-                                                    {expandedOrder === order._id && (
-                                                        <motion.div
-                                                            initial={{ height: 0, opacity: 0 }}
-                                                            animate={{ height: 'auto', opacity: 1 }}
-                                                            className="px-6 pb-6 bg-charcoal/[0.01] dark:bg-offwhite/[0.01] border-t border-charcoal/5 dark:border-offwhite/5 pt-4"
-                                                        >
-                                                            <div className="grid md:grid-cols-2 gap-8">
-                                                                <div>
-                                                                    <h4 className="text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-4 font-bold">Items Purchased</h4>
-                                                                    <div className="space-y-4">
-                                                                        {order.orderItems?.map((item, idx) => (
-                                                                            <div key={idx} className="flex gap-4 items-center">
-                                                                                <img src={item.image} alt={item.name} className="w-14 h-16 object-cover bg-gray-100" />
-                                                                                <div className="flex-1">
-                                                                                    <Link to={`/product/${item.product}`} className="text-sm font-medium text-charcoal dark:text-offwhite hover:text-gold transition-colors line-clamp-1">
-                                                                                        {item.name}
-                                                                                    </Link>
-                                                                                    <div className="mt-1 flex gap-4 text-xs text-charcoal/60 dark:text-offwhite/60">
-                                                                                        <span>Size: {item.selectedSize || 'Standard'}</span>
-                                                                                        <span>Qty: {item.qty}</span>
-                                                                                    </div>
+                                                    <AnimatePresence>
+                                                      {expandedOrder === order._id && (
+                                                          <motion.div
+                                                              initial={{ height: 0, opacity: 0 }}
+                                                              animate={{ height: 'auto', opacity: 1 }}
+                                                              exit={{ height: 0, opacity: 0 }}
+                                                              className="bg-white dark:bg-charcoal/40 border-x border-b border-charcoal/5 dark:border-offwhite/5"
+                                                          >
+                                                              <div className="p-12 grid lg:grid-cols-2 gap-16">
+                                                                  <div>
+                                                                      <h4 className="text-[10px] uppercase tracking-[0.4em] text-gold mb-12 font-bold border-b border-gold/10 pb-4">Acquired Items</h4>
+                                                                      <div className="space-y-10">
+                                                                          {order.orderItems?.map((item, idx) => (
+                                                                              <div key={idx} className="flex gap-8 group/item">
+                                                                                  <div className="w-24 h-32 overflow-hidden bg-gray-50 dark:bg-charcoal shadow-xl">
+                                                                                      <img src={item.image} alt={item.name} className="w-full h-full object-cover grayscale-[50%] group-hover/item:grayscale-0 transition-all duration-700" />
+                                                                                  </div>
+                                                                                  <div className="flex-1 py-2 flex flex-col justify-between">
+                                                                                      <div>
+                                                                                        <Link to={`/product/${item.product}`} className="text-lg font-serif italic text-charcoal dark:text-offwhite hover:text-gold transition-colors">{item.name}</Link>
+                                                                                        <div className="mt-4 flex gap-8 text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold">
+                                                                                            <span>Size: {item.selectedSize || 'OS'} / Qty: {item.qty}</span>
+                                                                                        </div>
+                                                                                      </div>
+                                                                                      <span className="text-sm font-serif italic text-gold">₹{item.price.toLocaleString()}</span>
+                                                                                  </div>
+                                                                              </div>
+                                                                          ))}
+                                                                      </div>
+                                                                  </div>
+                                                                  
+                                                                  <div className="space-y-12">
+                                                                      <div>
+                                                                          <h4 className="text-[10px] uppercase tracking-[0.4em] text-gold mb-8 font-bold border-b border-gold/10 pb-4">Logistics Details</h4>
+                                                                          <div className="p-10 bg-offwhite dark:bg-charcoal shadow-inner space-y-4">
+                                                                              <div className="flex items-start gap-4">
+                                                                                <MapPin className="w-4 h-4 text-gold mt-1" />
+                                                                                <div className="text-xs uppercase tracking-widest leading-loose text-charcoal/60 dark:text-offwhite/60">
+                                                                                    <p className="font-bold text-charcoal dark:text-offwhite mb-2">Shipping to:</p>
+                                                                                    <p>{order.shippingAddress?.address}</p>
+                                                                                    <p>{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
+                                                                                    <p className="text-gold">{order.shippingAddress?.country}</p>
                                                                                 </div>
-                                                                                <span className="text-sm font-serif text-charcoal dark:text-offwhite whitespace-nowrap">
-                                                                                    ₹{(item.price * item.qty).toLocaleString()}
+                                                                              </div>
+                                                                          </div>
+                                                                      </div>
+                                                                      <div>
+                                                                          <h4 className="text-[10px] uppercase tracking-[0.4em] text-gold mb-8 font-bold border-b border-gold/10 pb-4">Financial Narrative</h4>
+                                                                          <div className={`p-10 border border-gold/20 flex flex-col gap-4 ${order.isPaid ? 'bg-green-500/5' : 'bg-red-500/5'}`}>
+                                                                              <div className="flex justify-between items-center">
+                                                                                <span className="text-[10px] uppercase tracking-widest font-bold opacity-40">Payment Resolution</span>
+                                                                                <span className={`text-[10px] uppercase tracking-[0.2em] font-bold px-3 py-1 ${order.isPaid ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                                                                                  {order.isPaid ? 'SUCCESSFUL' : 'FAILED'}
                                                                                 </span>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                <div className="space-y-6">
-                                                                    <div>
-                                                                        <h4 className="text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-2 font-bold">Shipping Address</h4>
-                                                                        <div className="text-sm text-charcoal/80 dark:text-offwhite/80 p-4 bg-white dark:bg-charcoal/20 border border-charcoal/5 dark:border-offwhite/5">
-                                                                            <p>{order.shippingAddress?.address}</p>
-                                                                            <p>{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
-                                                                            <p>{order.shippingAddress?.country}</p>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div>
-                                                                        <h4 className="text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-2 font-bold">Payment Status</h4>
-                                                                        <div className={`text-sm p-4 border flex items-center gap-2 ${order.isPaid ? 'bg-green-500/5 border-green-500/10 text-green-700 dark:text-green-400' : 'bg-red-500/5 border-red-500/10 text-red-700 dark:text-red-400'}`}>
-                                                                            <div className={`w-2 h-2 rounded-full ${order.isPaid ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                                                            {order.isPaid ? 'Paid Successfully via Razorpay' : 'Action Required: Payment Failed/Pending'}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </motion.div>
-                                                    )}
+                                                                              </div>
+                                                                              <p className="text-xs font-serif italic text-charcoal/60 dark:text-offwhite/60">
+                                                                                Transaction verified via Razorpay Secure Gateway. Secure Acquisition ID: {order.paymentResult?.id || 'SON-N/A'}
+                                                                              </p>
+                                                                          </div>
+                                                                      </div>
+                                                                  </div>
+                                                              </div>
+                                                          </motion.div>
+                                                      )}
+                                                    </AnimatePresence>
                                                 </div>
                                             ))}
                                         </div>
@@ -282,132 +339,179 @@ const Profile = () => {
 
                             {/* ADDRESSES TAB */}
                             {activeTab === 'addresses' && (
-                                <motion.div key="addresses" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                                    <h2 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-6">Saved Addresses</h2>
-                                    
-                                    {/* Saved Addresses List */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                                        {(userInfo.savedAddresses && userInfo.savedAddresses.length > 0) ? userInfo.savedAddresses.map((addr, idx) => {
-                                            const isSelected = userInfo.shippingAddress?.address === addr.address && userInfo.shippingAddress?.postalCode === addr.postalCode;
-                                            return (
-                                                <div key={idx} className={`p-6 border relative transition-colors ${isSelected ? 'bg-charcoal/5 dark:bg-offwhite/5 border-charcoal/30 dark:border-offwhite/30' : 'bg-white dark:bg-charcoal/20 border-charcoal/10 dark:border-offwhite/10'}`}>
-                                                    {isSelected && (
-                                                        <span className="absolute top-4 right-4 text-[10px] uppercase tracking-widest font-bold bg-gold/20 text-gold px-2 py-1 flex items-center gap-1">
-                                                            <Check className="w-3 h-3" /> Selected
-                                                        </span>
-                                                    )}
-                                                    <p className="text-sm text-charcoal/80 dark:text-offwhite/80 leading-relaxed mb-6 mt-2">
-                                                        {addr.address}<br />
-                                                        {addr.city}, {addr.postalCode}<br />
-                                                        {addr.country}
-                                                    </p>
-                                                    {!isSelected && (
-                                                        <button 
-                                                            onClick={() => handleSelectAddress(addr)}
-                                                            className="text-xs uppercase tracking-widest font-bold text-charcoal/60 hover:text-charcoal dark:text-offwhite/60 dark:hover:text-offwhite transition-colors"
-                                                        >
-                                                            Select for Checkout
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )
-                                        }) : (
-                                            <p className="text-sm text-charcoal/50 dark:text-offwhite/50 col-span-2">No saved addresses yet. Please add one below.</p>
-                                        )}
+                                <motion.div key="addresses" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.4 }}>
+                                    <div className="mb-16">
+                                      <h2 className="text-3xl font-serif text-charcoal dark:text-offwhite mb-4 italic">Global Footprints</h2>
+                                      <p className="text-xs tracking-[0.3em] uppercase text-charcoal/40 dark:text-offwhite/40 font-bold mb-12">Your verified shipping registry</p>
+                                      
+                                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                          {(userInfo.savedAddresses && userInfo.savedAddresses.length > 0) ? userInfo.savedAddresses.map((addr, idx) => {
+                                              const isSelected = userInfo.shippingAddress?.address === addr.address && userInfo.shippingAddress?.postalCode === addr.postalCode;
+                                              return (
+                                                  <div key={idx} className={`group p-10 border relative overflow-hidden transition-all duration-700 ${isSelected ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal border-charcoal dark:border-offwhite shadow-2xl scale-[1.02]' : 'bg-white dark:bg-charcoal/20 border-charcoal/5 dark:border-offwhite/5 hover:border-gold/30 hover:shadow-xl'}`}>
+                                                      <div className="absolute top-0 right-0 p-6">
+                                                        {isSelected ? (
+                                                            <div className="bg-gold text-white p-2 rounded-full shadow-lg">
+                                                              <Check className="w-4 h-4" />
+                                                            </div>
+                                                        ) : (
+                                                            <MapPin className="w-5 h-5 text-gold/20 group-hover:text-gold/50 transition-colors" />
+                                                        )}
+                                                      </div>
+                                                      
+                                                      <p className="text-[10px] uppercase tracking-[0.4em] mb-8 font-bold opacity-30">Registered Address 0{idx + 1}</p>
+                                                      
+                                                      <div className="space-y-2 mb-12">
+                                                        <p className="text-lg font-serif italic tracking-wide">{addr.address}</p>
+                                                        <p className="text-sm font-light uppercase tracking-widest opacity-60 italic">{addr.city}, {addr.postalCode}</p>
+                                                        <p className="text-sm font-bold uppercase tracking-[0.3em] text-gold">{addr.country}</p>
+                                                      </div>
+                                                      
+                                                      <div className="flex items-center justify-between pt-8 border-t border-current/10">
+                                                        {!isSelected ? (
+                                                            <button 
+                                                                onClick={() => handleSelectAddress(addr)}
+                                                                className="text-[10px] uppercase tracking-[0.3em] font-bold text-gold hover:text-charcoal dark:hover:text-offwhite transition-all flex items-center gap-2"
+                                                            >
+                                                                Set As Primary <ArrowRight className="w-3 h-3" />
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 italic">Active Destination</span>
+                                                        )}
+                                                        <button className="text-[10px] uppercase tracking-[0.3em] font-bold text-red-500 opacity-0 group-hover:opacity-100 transition-all">Remove</button>
+                                                      </div>
+                                                  </div>
+                                              )
+                                          }) : (
+                                              <div className="col-span-2 py-20 bg-white/50 dark:bg-charcoal/20 border-2 border-dashed border-charcoal/5 dark:border-offwhite/5 text-center">
+                                                  <Plus className="w-12 h-12 text-gold/20 mx-auto mb-6" />
+                                                  <p className="text-sm text-charcoal/30 dark:text-offwhite/30 tracking-[0.3em] uppercase font-bold text-center">No footprints found</p>
+                                              </div>
+                                          )}
+                                      </div>
                                     </div>
 
-                                    <h3 className="text-xl font-serif text-charcoal dark:text-offwhite mb-6 border-t border-charcoal/10 dark:border-offwhite/10 pt-8">Add New Address</h3>
-                                    
-                                    {/* Address Form */}
-                                    <form onSubmit={handleAddressSave} className="space-y-5 max-w-lg">
-                                        <div>
-                                            <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Street Address</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                value={addressForm.address}
-                                                onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
-                                                placeholder="123 Main Street, Apt 4B"
-                                                className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/30 dark:placeholder:text-offwhite/30"
-                                            />
+                                    {/* Unified High-End Form Area */}
+                                    <div className="bg-white dark:bg-charcoal/30 p-16 shadow-2xl relative">
+                                      <div className="max-w-xl mx-auto">
+                                        <div className="text-center mb-16">
+                                          <Plus className="w-8 h-8 text-gold mx-auto mb-6 stroke-[1.5]" />
+                                          <h3 className="text-2xl font-serif italic mb-2">Register New Locale</h3>
+                                          <p className="text-[10px] uppercase tracking-[0.3em] text-charcoal/40 dark:text-offwhite/40 font-bold">Inscribe your next shipping destination</p>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">City</label>
+                                        
+                                        <form onSubmit={handleAddressSave} className="space-y-10">
+                                            <div className="group">
+                                                <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold group-focus-within:text-gold transition-colors">Street Inscription</label>
                                                 <input
                                                     type="text"
                                                     required
-                                                    value={addressForm.city}
-                                                    onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
-                                                    placeholder="Mumbai"
-                                                    className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/30 dark:placeholder:text-offwhite/30"
+                                                    value={addressForm.address}
+                                                    onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
+                                                    placeholder="e.g. 88 Rue de Rivoli, Paris"
+                                                    className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold text-base font-serif italic transition-all placeholder:opacity-20"
                                                 />
                                             </div>
-                                            <div>
-                                                <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Postal Code</label>
+                                            <div className="grid grid-cols-2 gap-12">
+                                                <div className="group">
+                                                  <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold group-focus-within:text-gold transition-colors">Administrative City</label>
+                                                  <input
+                                                      type="text"
+                                                      required
+                                                      value={addressForm.city}
+                                                      onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                                                      placeholder="Mumbai"
+                                                      className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold text-base font-serif italic transition-all placeholder:opacity-20"
+                                                  />
+                                                </div>
+                                                <div className="group">
+                                                  <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold group-focus-within:text-gold transition-colors">Postal Code</label>
+                                                  <input
+                                                      type="text"
+                                                      required
+                                                      value={addressForm.postalCode}
+                                                      onChange={(e) => setAddressForm({ ...addressForm, postalCode: e.target.value })}
+                                                      placeholder="400001"
+                                                      className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold text-base font-serif italic transition-all placeholder:opacity-20 font-mono"
+                                                  />
+                                                </div>
+                                            </div>
+                                            <div className="group">
+                                                <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold group-focus-within:text-gold transition-colors">Sovereign State</label>
                                                 <input
                                                     type="text"
                                                     required
-                                                    value={addressForm.postalCode}
-                                                    onChange={(e) => setAddressForm({ ...addressForm, postalCode: e.target.value })}
-                                                    placeholder="400001"
-                                                    className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite placeholder:text-charcoal/30 dark:placeholder:text-offwhite/30"
+                                                    value={addressForm.country}
+                                                    onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
+                                                    className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold text-base font-serif italic transition-all"
                                                 />
                                             </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Country</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                value={addressForm.country}
-                                                onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
-                                                className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite"
-                                            />
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            disabled={isSavingAddress}
-                                            className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-8 py-3 text-xs uppercase tracking-widest hover:bg-black transition-colors mt-4 disabled:opacity-50 flex items-center gap-2"
-                                        >
-                                            {isSavingAddress ? 'Saving...' : addressSaved ? (
-                                                <><Check className="w-4 h-4" /> Address Saved</>
-                                            ) : (
-                                                'Save Address'
-                                            )}
-                                        </button>
-                                    </form>
+                                            
+                                            <div className="pt-10 flex flex-col items-center">
+                                              <button
+                                                  type="submit"
+                                                  disabled={isSavingAddress}
+                                                  className="w-full bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-12 py-5 text-[10px] uppercase tracking-[0.5em] font-bold hover:bg-gold hover:text-white transition-all duration-700 disabled:opacity-50 flex items-center justify-center gap-4 group shadow-2xl"
+                                              >
+                                                  {isSavingAddress ? (
+                                                      <span className="flex items-center gap-3"><div className="w-2 h-2 bg-white rounded-full animate-ping"></div> Inscribing...</span>
+                                                  ) : addressSaved ? (
+                                                      <><Check className="w-4 h-4" /> Destination Registry Saved</>
+                                                  ) : (
+                                                      <span className="flex items-center gap-4">Register Address <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" /></span>
+                                                  )}
+                                              </button>
+                                              <p className="mt-8 text-[9px] uppercase tracking-[0.2em] text-charcoal/30 dark:text-offwhite/30 font-medium">Encrypted & Verified via Sonish Cloud Logistics</p>
+                                            </div>
+                                        </form>
+                                      </div>
+                                    </div>
                                 </motion.div>
                             )}
 
                             {/* ACCOUNT DETAILS TAB */}
                             {activeTab === 'account' && (
-                                <motion.div key="account" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                                    <h2 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-6">Account Details</h2>
-                                    <form className="space-y-6 max-w-lg" onSubmit={(e) => e.preventDefault()}>
-                                        <div>
-                                            <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Full Name</label>
-                                            <input type="text" defaultValue={userInfo.name} className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Email Address</label>
-                                            <input type="email" defaultValue={userInfo.email} readOnly className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none text-charcoal/50 dark:text-offwhite/50 cursor-not-allowed" />
-                                        </div>
-                                        <div className="pt-4">
-                                            <h3 className="text-lg font-serif text-charcoal dark:text-offwhite mb-4">Password Change</h3>
-                                            <input type="password" placeholder="Current Password (leave blank to leave unchanged)" className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 mb-4 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite" />
-                                            <input type="password" placeholder="New Password" className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite text-charcoal dark:text-offwhite" />
-                                        </div>
-                                        <button type="submit" className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-8 py-3 text-xs uppercase tracking-widest hover:bg-black transition-colors mt-4">
-                                            Save Changes
-                                        </button>
-                                    </form>
+                                <motion.div key="account" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.4 }} className="space-y-16">
+                                    <div className="grid md:grid-cols-2 gap-16">
+                                      <div className="space-y-12">
+                                        <h2 className="text-3xl font-serif text-charcoal dark:text-offwhite italic">Identity Refinement</h2>
+                                        <form className="space-y-10" onSubmit={(e) => e.preventDefault()}>
+                                            <div className="group">
+                                                <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold">Legal Full Name</label>
+                                                <input type="text" defaultValue={userInfo.name} className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold text-base font-serif italic" />
+                                            </div>
+                                            <div className="group opacity-60">
+                                                <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold">Verified Communication Channel</label>
+                                                <input type="email" defaultValue={userInfo.email} readOnly className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none text-base font-serif italic cursor-not-allowed" />
+                                            </div>
+                                            <button type="submit" className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-12 py-5 text-[10px] uppercase tracking-[0.5em] font-bold hover:bg-gold hover:text-white transition-all duration-700 shadow-xl">
+                                                Update Identity
+                                            </button>
+                                        </form>
+                                      </div>
+
+                                      <div className="p-12 bg-white dark:bg-charcoal/30 border border-charcoal/10 dark:border-offwhite/10 relative shadow-2xl">
+                                        <h3 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-10 italic">Secure Vault Update</h3>
+                                        <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+                                          <div className="group">
+                                            <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold">Current Cipher</label>
+                                            <input type="password" placeholder="Existing Secret" className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold font-mono text-sm placeholder:opacity-20" />
+                                          </div>
+                                          <div className="group">
+                                            <label className="block text-[9px] uppercase tracking-[0.4em] text-charcoal/30 dark:text-offwhite/30 mb-3 font-bold">New Cipher</label>
+                                            <input type="password" placeholder="New Secret" className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-4 outline-none focus:border-gold font-mono text-sm placeholder:opacity-20" />
+                                          </div>
+                                          <button type="submit" className="w-full border-2 border-charcoal/10 dark:border-offwhite/10 text-charcoal dark:text-offwhite py-4 text-[10px] uppercase tracking-[0.4em] font-bold hover:bg-gold hover:text-white hover:border-gold transition-all duration-500">
+                                            Seal Vault
+                                          </button>
+                                        </form>
+                                      </div>
+                                    </div>
                                 </motion.div>
                             )}
 
                         </AnimatePresence>
-                    </div>
-
+                    </main>
                 </div>
             </div>
         </motion.div>
