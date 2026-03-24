@@ -72,6 +72,14 @@ const orderSchema = mongoose.Schema(
     deliveredAt: {
       type: Date,
     },
+    isShipped: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    shippedAt: {
+      type: Date,
+    },
     trackingNumber: {
       type: String,
     },
