@@ -24,9 +24,17 @@ const Profile = () => {
                 if (res.ok) {
                     const data = await res.json();
                     setOrders(data);
+                } else {
+                    const errorText = await res.text();
+                    console.error('Failed to fetch orders:', errorText);
+                    // Only alert if it's a real error, not just empty
+                    if (res.status !== 404 && res.status !== 200) {
+                        alert(`Failed to load your orders: ${res.statusText}`);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch orders:', error);
+                alert('Connection error while fetching orders.');
             }
         };
 

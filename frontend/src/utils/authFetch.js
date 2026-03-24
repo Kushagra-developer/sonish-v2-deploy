@@ -11,8 +11,19 @@ export const authFetch = (url, options = {}) => {
     const userInfoStr = localStorage.getItem('userInfo');
     const adminInfoStr = localStorage.getItem('adminInfo');
     
-    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
-    const adminInfo = adminInfoStr ? JSON.parse(adminInfoStr) : null;
+    let userInfo = null;
+    let adminInfo = null;
+
+    try {
+      if (userInfoStr && userInfoStr !== 'undefined' && userInfoStr !== 'null') {
+        userInfo = JSON.parse(userInfoStr);
+      }
+      if (adminInfoStr && adminInfoStr !== 'undefined' && adminInfoStr !== 'null') {
+        adminInfo = JSON.parse(adminInfoStr);
+      }
+    } catch (e) {
+      console.error('Auth parse error:', e);
+    }
     
     token = userInfo?.token || adminInfo?.token;
   } catch (err) {

@@ -73,4 +73,9 @@ const updateProduct = async (req, res) => {
   }
 };
 
-export { getProducts, getProductById, createProduct, updateProduct };
+const getAdminProducts = async (req, res) => {
+  const products = await Product.find({});
+  res.json(products);
+};
+
+export { getProducts, getProductById, createProduct, updateProduct, getAdminProducts };

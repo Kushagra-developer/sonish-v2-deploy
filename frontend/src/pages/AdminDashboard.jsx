@@ -29,15 +29,24 @@ const AdminDashboard = () => {
       setIsLoading(true);
       try {
         const [prodRes, orderRes] = await Promise.allSettled([
-          authFetch(`${API}/api/products`),
+          authFetch(`${API}/api/products/admin`),
           authFetch(`${API}/api/orders`),
         ]);
 
-        if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
-          setProducts(await prodRes.value.json());
+        if (prodRes.status === 'fulfilled') {
+          if (prodRes.value.ok) {
+            setProducts(await prodRes.value.json());
+          } else {
+            console.error('Failed to fetch admin products:', await prodRes.value.text());
+          }
         }
-        if (orderRes.status === 'fulfilled' && orderRes.value.ok) {
-          setOrders(await orderRes.value.json());
+        
+        if (orderRes.status === 'fulfilled') {
+          if (orderRes.value.ok) {
+            setOrders(await orderRes.value.json());
+          } else {
+            console.error('Failed to fetch orders:', await orderRes.value.text());
+          }
         }
       } catch (err) {
         console.error('Admin fetch error:', err);
@@ -224,13 +233,19 @@ const AdminDashboard = () => {
                           images: [newProduct.image]
                         })
                       });
-                      if (res.ok) {
-                        const added = await res.json();
-                        setProducts([...products, added]);
-                        setIsAddingProduct(false);
-                        setNewProduct({ name: '', price: '', category: '', countInStock: '', image: '', description: '' });
+                        if (res.ok) {
+                          const added = await res.json();
+                          setProducts([...products, added]);
+                          setIsAddingProduct(false);
+                          setNewProduct({ name: '', price: '', category: '', countInStock: '', image: '', description: '' });
+                          alert('Product added successfully');
+                        } else {
+                          const errorData = await res.json().catch(() => ({}));
+                          alert(`Failed to add product: ${errorData.message || 'Server error'}`);
+                        }
+                      } catch (err) {
+                        alert(`Error adding product: ${err.message}`);
                       }
-                    } catch (err) {}
                     setAddLoading(false);
                   }} className="max-w-2xl mx-auto space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -278,13 +293,19 @@ const AdminDashboard = () => {
                         method: 'PUT',
                         body: JSON.stringify(editFormData)
                       });
-                      if (res.ok) {
-                        const updated = await res.json();
-                        setProducts(products.map(p => p._id === updated._id ? updated : p));
-                        setEditingProduct(null);
-                        setEditFormData(null);
+                        if (res.ok) {
+                          const updated = await res.json();
+                          setProducts(products.map(p => p._id === updated._id ? updated : p));
+                          setEditingProduct(null);
+                          setEditFormData(null);
+                          alert('Product updated successfully');
+                        } else {
+                          const errorData = await res.json().catch(() => ({}));
+                          alert(`Failed to update product: ${errorData.message || 'Server error'}`);
+                        }
+                      } catch (err) {
+                        alert(`Error updating product: ${err.message}`);
                       }
-                    } catch (err) {}
                     setAddLoading(false);
                   }} className="max-w-2xl mx-auto space-y-6">
                     <div className="grid grid-cols-2 gap-4">
