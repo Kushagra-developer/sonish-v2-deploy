@@ -45,7 +45,7 @@ const NewArrivals = () => {
           className="w-full h-[400px] mb-20 overflow-hidden relative group"
         >
           <img 
-            src="/Users/kushagrasachdeva/.gemini/antigravity/brain/e8db3940-bdd8-4f8b-96cb-5591e2fa4061/new_arrivals_featured_1774360000000_1774360060135.png" 
+            src="/images/new_arrivals_featured.png" 
             alt="New Arrivals Featured" 
             className="w-full h-full object-cover object-center grayscale-[20%] group-hover:grayscale-0 transition-all duration-1000"
           />

@@ -190,14 +190,46 @@ const sendOtp = async (req, res) => {
   });
 
   if (otpEntry) {
-    // In production, integrate Fast2SMS or Twilio here.
-    console.log(`[MOCK SMS] OTP for ${phone} is: ${otpCode}`);
+    // Attempt to send real SMS if API Key is configured
+    if (process.env.FAST2SMS_API_KEY) {
+      try {
+        const response = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+          method: 'POST',
+          headers: {
+            'authorization': process.env.FAST2SMS_API_KEY,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            route: 'q',
+            message: `Your Sonish login OTP is ${otpCode}. It is valid for 5 minutes.`,
+            language: 'english',
+            flash: 0,
+            numbers: phone,
+          })
+        });
 
-    res.status(200).json({
-      message: 'OTP sent successfully',
-      // Provide the code directly in development for easy testing
-      mockOtp: otpCode 
-    });
+        const smsData = await response.json();
+        if (smsData.return === true) {
+          console.log(`[SMS] OTP dispatched to ${phone}`);
+        } else {
+          console.error('[SMS] Fast2SMS Error:', smsData);
+        }
+      } catch (err) {
+        console.error('[SMS] Network Error:', err);
+      }
+      
+      res.status(200).json({
+        message: 'OTP sent securely via SMS',
+        mockOtp: null // Production mode hides the OTP from the response
+      });
+    } else {
+      // Fallback: Development Mode
+      console.log(`[MOCK SMS] OTP for ${phone} is: ${otpCode}`);
+      res.status(200).json({
+        message: 'No SMS API Key found. OTP generated in test mode.',
+        mockOtp: otpCode 
+      });
+    }
   } else {
     res.status(500);
     throw new Error('Failed to generate OTP');
