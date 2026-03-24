@@ -91,6 +91,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/assistant', assistantRoutes);
 app.use('/api/razorpay', razorpayRoutes);
+app.use('/api/banners', bannerRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

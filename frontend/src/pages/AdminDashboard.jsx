@@ -759,15 +759,39 @@ const AdminDashboard = () => {
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Image URL</label>
-                        <input 
-                          type="text" 
-                          required
-                          value={newBanner.image}
-                          onChange={(e) => setNewBanner({...newBanner, image: e.target.value})}
-                          placeholder="https://example.com/hero.jpg"
-                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors font-mono"
-                        />
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Image URL or Upload</label>
+                        <div className="flex gap-4">
+                          <input 
+                            type="text" 
+                            required={!newBanner.image}
+                            value={newBanner.image}
+                            onChange={(e) => setNewBanner({...newBanner, image: e.target.value})}
+                            placeholder="https://example.com/hero.jpg"
+                            className="flex-1 bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors font-mono"
+                          />
+                          <div className="relative">
+                            <input 
+                              type="file" 
+                              id="banner-upload"
+                              className="hidden" 
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  if (file.size > 2 * 1024 * 1024) return alert('File too large (max 2MB)');
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    setNewBanner({ ...newBanner, image: reader.result });
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                            <label htmlFor="banner-upload" className="px-4 py-3 bg-charcoal/5 dark:bg-offwhite/5 border border-charcoal/10 dark:border-offwhite/10 text-[10px] uppercase tracking-widest font-bold cursor-pointer hover:bg-gold hover:text-white transition-all rounded">
+                               Picker
+                            </label>
+                          </div>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-6">
                         <div>
