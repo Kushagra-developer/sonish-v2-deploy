@@ -31,14 +31,14 @@ const __dirname = path.dirname(__filename);
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  crossOriginOpenerPolicy: { policy: "same-origin" },
+  crossOriginOpenerPolicy: { policy: "unsafe-none" }, // Required for Razorpay payment popups
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'none'"],
-      scriptSrc: ["'none'"],
-      styleSrc: ["'none'"],
-      imgSrc: ["'none'"],
-      connectSrc: ["'none'"],
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "https:", "data:"],
+      connectSrc: ["'self'", "https:"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
     },
@@ -72,8 +72,8 @@ app.use(
 );
 
 // Body parsers
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(cookieParser());
 
 // ──────────────────────────────────────────────
