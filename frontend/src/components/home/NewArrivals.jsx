@@ -42,7 +42,7 @@ const NewArrivals = () => {
           initial={{ opacity: 0, scale: 0.98 }}
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2 }}
-          className="w-full h-[500px] mb-20 overflow-hidden relative group"
+          className="w-full h-[400px] mb-20 overflow-hidden relative group"
         >
           <img 
             src="/Users/kushagrasachdeva/.gemini/antigravity/brain/e8db3940-bdd8-4f8b-96cb-5591e2fa4061/new_arrivals_featured_1774360000000_1774360060135.png" 

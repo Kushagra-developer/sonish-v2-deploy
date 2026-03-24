@@ -1,4 +1,5 @@
 import User from '../models/userModel.js';
+import Otp from '../models/otpModel.js';
 import generateToken from '../utils/generateToken.js';
 
 // @desc    Auth user & get token
@@ -165,6 +166,96 @@ const syncUserCartAndWishlist = async (req, res) => {
   }
 };
 
+// @desc    Send OTP to phone
+// @route   POST /api/users/send-otp
+// @access  Public
+const sendOtp = async (req, res) => {
+  const { phone } = req.body;
+
+  if (!phone) {
+    res.status(400);
+    throw new Error('Please provide a phone number');
+  }
+
+  // Generate a random 4-digit OTP
+  const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+
+  // Clear existing OTP requests for this phone to prevent spam issues
+  await Otp.deleteMany({ phone });
+
+  // Save the new OTP
+  const otpEntry = await Otp.create({
+    phone,
+    otp: otpCode,
+  });
+
+  if (otpEntry) {
+    // In production, integrate Fast2SMS or Twilio here.
+    console.log(`[MOCK SMS] OTP for ${phone} is: ${otpCode}`);
+
+    res.status(200).json({
+      message: 'OTP sent successfully',
+      // Provide the code directly in development for easy testing
+      mockOtp: otpCode 
+    });
+  } else {
+    res.status(500);
+    throw new Error('Failed to generate OTP');
+  }
+};
+
+// @desc    Verify OTP & login/register user
+// @route   POST /api/users/verify-otp
+// @access  Public
+const verifyOtp = async (req, res) => {
+  const { phone, otp } = req.body;
+
+  if (!phone || !otp) {
+    res.status(400);
+    throw new Error('Phone number and OTP are required');
+  }
+
+  // Verify the OTP
+  const otpRecord = await Otp.findOne({ phone, otp });
+
+  if (!otpRecord) {
+    res.status(401);
+    throw new Error('Invalid or expired OTP');
+  }
+
+  // Clear the OTP to prevent reuse
+  await Otp.deleteOne({ _id: otpRecord._id });
+
+  // Find user by phone, or create one if they don't exist
+  let user = await User.findOne({ phone });
+
+  if (!user) {
+    // Check if phone matches an existing address's phone? 
+    // Usually mobile-first apps just create a profile.
+    user = await User.create({
+      phone,
+      name: 'Guest User', // Placeholder name
+    });
+  }
+
+  if (user) {
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      isAdmin: user.isAdmin,
+      cart: user.cart,
+      wishlist: user.wishlist,
+      token: generateToken(res, user._id),
+      isNewUser: user.name === 'Guest User'
+    });
+  } else {
+    res.status(400);
+    throw new Error('Invalid user data');
+  }
+};
+
 export {
   authUser,
   registerUser,
@@ -172,4 +263,6 @@ export {
   updateUserProfile,
   logoutUser,
   syncUserCartAndWishlist,
+  sendOtp,
+  verifyOtp,
 };

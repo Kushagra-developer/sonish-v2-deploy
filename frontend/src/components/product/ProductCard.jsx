@@ -198,7 +198,7 @@ const ProductCard = ({ product, isFeatured = false }) => {
         >
           <button
             onClick={handleQuickAdd}
-            className="w-full bg-white/95 dark:bg-charcoal/95 backdrop-blur-md text-charcoal dark:text-offwhite py-4 text-[10px] uppercase tracking-[0.25em] font-bold hover:bg-gold hover:text-white transition-all duration-300"
+            className="w-full bg-white/95 dark:bg-charcoal/95 backdrop-blur-md text-charcoal dark:text-offwhite py-5 text-xs uppercase tracking-[0.3em] font-bold hover:bg-gold hover:text-white transition-all duration-300"
           >
             Quick Add +
           </button>

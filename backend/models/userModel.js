@@ -5,16 +5,25 @@ const userSchema = mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      // Name is not strictly required if logging in via phone initially.
+      required: false,
     },
     email: {
       type: String,
-      required: true,
+      // Email is not required for phone-only users.
+      required: false,
       unique: true,
+      sparse: true, // Allows multiple null/undefined values
+    },
+    phone: {
+      type: String,
+      required: false,
+      unique: true,
+      sparse: true,
     },
     password: {
       type: String,
-      required: true,
+      required: false, // Not required for OTP users
     },
     isAdmin: {
       type: Boolean,

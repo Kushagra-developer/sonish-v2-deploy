@@ -368,7 +368,7 @@ const ProductDetails = () => {
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                            <div className="flex items-center border border-charcoal/20 dark:border-offwhite/20 px-4 h-14 w-full sm:w-32 justify-between">
+                            <div className="flex items-center border border-charcoal/20 dark:border-offwhite/20 px-4 h-16 w-full sm:w-32 justify-between">
                                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-charcoal/50 dark:text-offwhite/50 hover:text-charcoal dark:hover:text-offwhite"><Minus className="w-4 h-4" /></button>
                                 <span className="text-charcoal dark:text-offwhite font-medium">{quantity}</span>
                                 <button onClick={() => setQuantity(quantity + 1)} className="text-charcoal/50 dark:text-offwhite/50 hover:text-charcoal dark:hover:text-offwhite"><Plus className="w-4 h-4" /></button>
@@ -376,21 +376,21 @@ const ProductDetails = () => {
 
                             <button
                                 onClick={handleAddToCart}
-                                className="flex-1 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal h-14 text-xs uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-colors flex items-center justify-center gap-2"
+                                className="flex-1 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal h-16 text-sm uppercase tracking-widest font-bold hover:bg-black dark:hover:bg-white transition-colors flex items-center justify-center gap-2"
                             >
-                                Add to Cart <span className="text-white/50 dark:text-charcoal/50">- ₹{((product?.price || 0) * quantity).toFixed(2)}</span>
+                                Add to Cart <span className="text-white/50 dark:text-charcoal/50 text-xs font-normal">- ₹{((product?.price || 0) * quantity).toFixed(2)}</span>
                             </button>
 
                             <div className="flex gap-2">
                                 <button
                                     onClick={handleToggleWishlist}
-                                    className={`h-14 w-14 border border-charcoal/20 dark:border-offwhite/20 flex items-center justify-center transition-colors ${isWishlisted ? 'text-red-500 border-red-500' : 'text-charcoal dark:text-offwhite hover:border-charcoal dark:hover:border-offwhite'}`}
+                                    className={`h-16 w-16 border border-charcoal/20 dark:border-offwhite/20 flex items-center justify-center transition-colors ${isWishlisted ? 'text-red-500 border-red-500' : 'text-charcoal dark:text-offwhite hover:border-charcoal dark:hover:border-offwhite'}`}
                                 >
                                     <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
                                 </button>
                                 <button
                                     onClick={handleShare}
-                                    className="h-14 w-14 border border-charcoal/20 dark:border-offwhite/20 flex items-center justify-center text-charcoal dark:text-offwhite hover:border-charcoal dark:hover:border-offwhite transition-colors"
+                                    className="h-16 w-16 border border-charcoal/20 dark:border-offwhite/20 flex items-center justify-center text-charcoal dark:text-offwhite hover:border-charcoal dark:hover:border-offwhite transition-colors"
                                 >
                                     <Share2 className="w-5 h-5" />
                                 </button>
@@ -496,15 +496,15 @@ const ProductDetails = () => {
                 </div>
             </div>
 
-            <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-charcoal border-t border-charcoal/10 dark:border-offwhite/10 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 hidden md:flex justify-between items-center transition-colors">
+            <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-charcoal border-t border-charcoal/10 dark:border-offwhite/10 p-5 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 hidden md:flex justify-between items-center transition-colors">
                 <div className="flex items-center gap-4 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-                    <img src={displayImages[currentImageIndex]} alt="thumbnail" className="w-12 h-12 object-cover rounded-sm" />
+                    <img src={displayImages[currentImageIndex]} alt="thumbnail" className="w-14 h-14 object-cover rounded-sm" />
                     <div>
-                        <h4 className="text-sm font-medium text-charcoal dark:text-offwhite truncate max-w-xs">{product.name}</h4>
-                        <span className="text-xs text-red-600 dark:text-red-400">₹{(product?.price || 0).toFixed(2)}</span>
+                        <h4 className="text-base font-medium text-charcoal dark:text-offwhite truncate max-w-xs">{product.name}</h4>
+                        <span className="text-sm text-red-600 dark:text-red-400 font-bold">₹{(product?.price || 0).toFixed(2)}</span>
                     </div>
                     <div className="ml-auto flex items-center gap-4">
-                        <button onClick={handleAddToCart} className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-8 py-3 text-xs uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-colors">Add to Cart</button>
+                        <button onClick={handleAddToCart} className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-10 h-14 text-sm font-bold uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-colors">Add to Cart</button>
                     </div>
                 </div>
             </div>
