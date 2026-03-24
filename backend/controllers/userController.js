@@ -2,7 +2,6 @@ import User from '../models/userModel.js';
 import Otp from '../models/otpModel.js';
 import generateToken from '../utils/generateToken.js';
 import nodemailer from 'nodemailer';
-import generateToken from '../utils/generateToken.js';
 
 // @desc    Auth user & get token
 // @route   POST /api/users/login
