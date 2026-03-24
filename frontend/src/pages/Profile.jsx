@@ -304,6 +304,15 @@ const Profile = () => {
                                                               className="bg-white dark:bg-charcoal/40 border-x border-b border-charcoal/5 dark:border-offwhite/5"
                                                           >
                                                               <div className="p-12 grid lg:grid-cols-2 gap-16">
+                                                                  {/* Download Invoice Button - Prominent at Top */}
+                                                                  <div className="lg:col-span-2 mb-4">
+                                                                      <button
+                                                                          onClick={(e) => { e.stopPropagation(); generateInvoice(order, userInfo); }}
+                                                                          className="flex items-center gap-3 w-full justify-center bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-8 py-4 text-[11px] uppercase tracking-[0.4em] font-bold hover:bg-gold hover:text-white transition-all duration-500 shadow-lg"
+                                                                      >
+                                                                          <Download className="w-4 h-4" /> Download Invoice / Receipt
+                                                                      </button>
+                                                                  </div>
                                                                   <div>
                                                                       <h4 className="text-[10px] uppercase tracking-[0.4em] text-gold mb-12 font-bold border-b border-gold/10 pb-4">Acquired Items</h4>
                                                                       <div className="space-y-10">
@@ -349,17 +358,6 @@ const Profile = () => {
                                                                                 <span className={`text-[10px] uppercase tracking-[0.2em] font-bold px-3 py-1 ${order.isPaid ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
                                                                                   {order.isPaid ? 'SUCCESSFUL' : 'FAILED'}
                                                                                 </span>
-                                                                              </div>
-                                                                              <p className="text-xs font-serif italic text-charcoal/60 dark:text-offwhite/60">
-                                                                                Transaction verified via Razorpay Secure Gateway. Secure Acquisition ID: {order.paymentResult?.id || 'SON-N/A'}
-                                                                              </p>
-                                                                              <div className="mt-6 pt-6 border-t border-gold/10">
-                                                                                <button 
-                                                                                    onClick={(e) => { e.stopPropagation(); generateInvoice(order, userInfo); }}
-                                                                                    className="flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] font-bold text-charcoal dark:text-offwhite hover:text-gold transition-colors"
-                                                                                >
-                                                                                    <Download className="w-4 h-4" /> Download Official Receipt
-                                                                                </button>
                                                                               </div>
                                                                           </div>
                                                                       </div>
