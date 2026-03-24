@@ -80,7 +80,14 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                                         itemsPrice: cartTotal,
                                         taxPrice: 0,
                                         shippingPrice: 0,
-                                        totalPrice: cartTotal
+                                        totalPrice: cartTotal,
+                                        isPaid: true,
+                                        paidAt: new Date(),
+                                        paymentResult: {
+                                            id: response.razorpay_payment_id,
+                                            status: 'captured',
+                                            update_time: new Date().toISOString(),
+                                        }
                                     })
                                 });
                             } catch (e) {

@@ -465,9 +465,16 @@ const AdminDashboard = () => {
                           animate={{ height: 'auto', opacity: 1 }}
                           className="px-6 pb-6 bg-charcoal/[0.01] dark:bg-offwhite/[0.01]"
                         >
-                          <div className="grid md:grid-cols-2 gap-6">
+                          <div className="grid md:grid-cols-3 gap-6">
                             <div>
-                              <h4 className="text-xs uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-3">Shipping Address</h4>
+                              <h4 className="text-xs uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-3 font-bold">Customer Info</h4>
+                              <div className="text-sm text-charcoal/80 dark:text-offwhite/80 space-y-1">
+                                <p className="font-medium">{order.user?.name || 'Guest User'}</p>
+                                <p className="text-xs text-charcoal/50">{order.user?.email || 'No email provided'}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="text-xs uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-3 font-bold">Shipping Address</h4>
                               <div className="text-sm text-charcoal/80 dark:text-offwhite/80 space-y-1">
                                 <p>{order.shippingAddress?.address}</p>
                                 <p>{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
@@ -475,18 +482,63 @@ const AdminDashboard = () => {
                               </div>
                             </div>
                             <div>
-                              <h4 className="text-xs uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-3">Order Items</h4>
-                              <div className="space-y-2">
+                              <h4 className="text-xs uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-3 font-bold">Order Items</h4>
+                              <div className="space-y-3">
                                 {order.orderItems?.map((item, idx) => (
                                   <div key={idx} className="flex items-center gap-3">
                                     <img src={item.image} alt={item.name} className="w-10 h-12 object-cover rounded-sm bg-gray-100" />
                                     <div className="flex-1">
-                                      <p className="text-sm text-charcoal dark:text-offwhite">{item.name}</p>
-                                      <p className="text-xs text-charcoal/50 dark:text-offwhite/50">Qty: {item.qty} × ₹{item.price}</p>
+                                      <p className="text-[13px] text-charcoal dark:text-offwhite leading-tight">{item.name}</p>
+                                      <p className="text-[10px] text-charcoal/50 dark:text-offwhite/50">Qty: {item.qty} × ₹{item.price}</p>
                                     </div>
                                   </div>
                                 ))}
                               </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-8 pt-6 border-t border-charcoal/5 flex flex-wrap gap-4 items-center justify-between">
+                            <div className="flex gap-4">
+                              {!order.isPaid && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if(window.confirm('Mark this order as PAID?')) {
+                                      try {
+                                        const res = await authJsonFetch(`${API}/api/orders/${order._id}/pay`, {
+                                          method: 'PUT',
+                                          body: JSON.stringify({ id: 'MANUAL_ADMIN', status: 'COMPLETED' })
+                                        });
+                                        if (res.ok) window.location.reload();
+                                      } catch (err) {}
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-green-600 text-white text-[10px] uppercase tracking-widest font-bold rounded hover:bg-green-700 transition-colors"
+                                >
+                                  Mark as Paid
+                                </button>
+                              )}
+                              {!order.isDelivered && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if(window.confirm('Mark this order as DELIVERED?')) {
+                                      try {
+                                        const res = await authJsonFetch(`${API}/api/orders/${order._id}/deliver`, {
+                                          method: 'PUT'
+                                        });
+                                        if (res.ok) window.location.reload();
+                                      } catch (err) {}
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-blue-600 text-white text-[10px] uppercase tracking-widest font-bold rounded hover:bg-blue-700 transition-colors"
+                                >
+                                  Mark as Delivered
+                                </button>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-charcoal/30 uppercase tracking-widest font-mono">
+                              ID: {order._id}
                             </div>
                           </div>
                         </motion.div>

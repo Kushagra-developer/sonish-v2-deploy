@@ -12,6 +12,9 @@ const addOrderItems = async (req, res) => {
     taxPrice,
     shippingPrice,
     totalPrice,
+    isPaid,
+    paidAt,
+    paymentResult,
   } = req.body;
 
   if (orderItems && orderItems.length === 0) {
@@ -19,7 +22,10 @@ const addOrderItems = async (req, res) => {
     throw new Error('No order items');
   } else {
     const order = new Order({
-      orderItems,
+      orderItems: orderItems.map((x) => ({
+        ...x,
+        product: x.product || x._id, // Handle both formats
+      })),
       user: req.user._id,
       shippingAddress,
       paymentMethod,
@@ -27,6 +33,9 @@ const addOrderItems = async (req, res) => {
       taxPrice,
       shippingPrice,
       totalPrice,
+      isPaid: isPaid || false,
+      paidAt: paidAt || null,
+      paymentResult: paymentResult || null,
     });
 
     const createdOrder = await order.save();
