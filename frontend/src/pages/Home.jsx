@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
 import Hero from '../components/home/Hero';
-import FeaturedCategories from '../components/home/FeaturedCategories';
+import Hero from '../components/home/Hero';
 import Editorial from '../components/home/Editorial';
-import NewArrivals from '../components/home/NewArrivals';
 
 const Home = () => {
   return (
@@ -14,10 +13,7 @@ const Home = () => {
       className="bg-offwhite dark:bg-charcoal transition-colors duration-300 min-h-screen"
     >
       <Hero />
-      <FeaturedCategories />
       <Editorial />
-      {/* This is where your products are being rendered */}
-      <NewArrivals />
     </motion.div>
   );
 };
