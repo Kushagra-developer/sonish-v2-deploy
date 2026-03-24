@@ -231,7 +231,62 @@ const updateOrderToShipped = async (req, res) => {
   const order = await Order.findById(req.params.id);
 
   if (order) {
+    const wasShipped = order.isShipped;
+    order.isShipped = true;
+    order.shippedAt = new Date();
     order.trackingStatus = 'Shipped';
+
+    // Send shipping notification email to customer if not already sent
+    if (!wasShipped) {
+      try {
+        const customer = await User.findById(order.user).select('email name');
+        if (customer?.email) {
+          let transporter;
+          if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+            transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+            });
+          } else {
+            const testAccount = await nodemailer.createTestAccount();
+            transporter = nodemailer.createTransport({
+              host: 'smtp.ethereal.email', port: 587,
+              auth: { user: testAccount.user, pass: testAccount.pass },
+            });
+          }
+
+          await transporter.sendMail({
+            from: `"Sonish Studios" <${process.env.EMAIL_USER || 'no-reply@sonish.co.in'}>`,
+            to: customer.email,
+            subject: `Your order #${order._id.toString().slice(-8)} has been shipped! 🎉`,
+            html: `
+              <div style="font-family: Georgia, serif; max-width: 600px; margin: auto; background: #fff; border: 1px solid #eee; padding: 40px;">
+                <h1 style="font-size: 28px; letter-spacing: 3px; margin-bottom: 4px;">SONISH</h1>
+                <p style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 4px; margin-top: 0;">Modern Elegance</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+                <h2 style="font-size: 20px; color: #111; margin-bottom: 6px;">Your order is on its way!</h2>
+                <p style="color: #555; font-size: 14px; line-height: 1.8;">Hi ${customer.name || 'there'},<br/>Great news! Your order has been dispatched and is heading your way.</p>
+                <div style="background: #f9f9f9; border: 1px solid #eee; padding: 20px 24px; margin: 24px 0;">
+                  <p style="margin: 0; font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 2px;">Order ID</p>
+                  <p style="margin: 4px 0 16px; font-size: 16px; font-weight: bold; color: #111;">#${order._id.toString().slice(-8)}</p>
+                  ${order.trackingNumber ? `
+                  <p style="margin: 0; font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 2px;">Tracking Number</p>
+                  <p style="margin: 4px 0 0; font-size: 16px; font-weight: bold; color: #c9a84c;">${order.trackingNumber}</p>
+                  ` : '<p style="margin: 4px 0 0; font-size: 14px; font-style: italic; color: #666;">Tracking details will be updated soon.</p>'}
+                </div>
+                ${order.trackingNumber ? `
+                <a href="https://www.delhivery.com/track/package/${order.trackingNumber}" style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 14px 32px; font-size: 12px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 24px;">Track Your Order →</a>
+                ` : ''}
+                <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+                <p style="font-size: 12px; color: #aaa; text-align: center;">© Sonish Studios · Mumbai, India</p>
+              </div>`,
+          });
+        }
+      } catch (emailErr) {
+        console.error('Shipping email failed:', emailErr.message);
+      }
+    }
+
     const updatedOrder = await order.save();
     res.json(updatedOrder);
   } else {
