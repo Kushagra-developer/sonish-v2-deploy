@@ -987,14 +987,41 @@ const AdminDashboard = () => {
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Cover Image URL</label>
-                        <input 
-                          type="text" 
-                          value={newCategory.image}
-                          onChange={(e) => setNewCategory({...newCategory, image: e.target.value})}
-                          placeholder="https://example.com/category.jpg"
-                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors font-mono"
-                        />
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Category Cover Image</label>
+                        <div className="flex flex-col gap-4">
+                          <input 
+                            type="text" 
+                            value={newCategory.image}
+                            onChange={(e) => setNewCategory({...newCategory, image: e.target.value})}
+                            placeholder="Add via URL (https://...)"
+                            className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors font-mono"
+                          />
+                          <div className="relative">
+                            <input 
+                              type="file" 
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                if (file.size > 3 * 1024 * 1024) { alert('Image must be under 3MB'); return; }
+                                const reader = new FileReader();
+                                reader.onloadend = () => setNewCategory({...newCategory, image: reader.result});
+                                reader.readAsDataURL(file);
+                                e.target.value = '';
+                              }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <div className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-charcoal/20 dark:border-offwhite/20 rounded-lg hover:border-gold hover:text-gold transition-colors text-xs uppercase tracking-widest font-bold text-charcoal/60 dark:text-offwhite/60">
+                              <Upload className="w-4 h-4" /> Upload from Computer
+                            </div>
+                          </div>
+                        </div>
+                        {newCategory.image && (
+                          <div className="mt-4 relative group w-24 h-24 rounded-lg overflow-hidden border border-charcoal/10">
+                             <img src={newCategory.image} alt="Preview" className="w-full h-full object-cover" />
+                             <button type="button" onClick={() => setNewCategory({...newCategory, image: ''})} className="absolute top-1 right-1 p-1 bg-white/90 rounded-md text-red-500 opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md"><Trash2 className="w-3 h-3" /></button>
+                          </div>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-6 items-center pt-2">
                         <div>

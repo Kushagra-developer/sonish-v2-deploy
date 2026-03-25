@@ -23,7 +23,7 @@ const getAdminCategories = asyncHandler(async (req, res) => {
 const createCategory = asyncHandler(async (req, res) => {
   const { name, description, image, order } = req.body;
 
-  const exists = await Category.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+  const exists = await Category.findOne({ name: { $regex: `^${name}$`, $options: 'i' } });
   if (exists) {
     res.status(400);
     throw new Error('Category already exists');
@@ -34,7 +34,7 @@ const createCategory = asyncHandler(async (req, res) => {
     description: description || '',
     image: image || '',
     order: order || 0,
-    isActive: true,
+    isActive: req.body.isActive !== undefined ? req.body.isActive : true,
   });
 
   res.status(201).json(category);
