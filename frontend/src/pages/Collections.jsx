@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ProductCard from '../components/product/ProductCard';
 import ProductSkeleton from '../components/product/ProductSkeleton';
@@ -7,11 +7,27 @@ import API from '../utils/api';
 
 const Collections = () => {
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const location = useLocation();
+    const navigate = useNavigate();
 
     const searchParams = new URLSearchParams(location.search);
     const categoryFilter = searchParams.get('category');
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await fetch(`${API}/api/categories`);
+                if (res.ok) {
+                    setCategories(await res.json());
+                }
+            } catch (err) {
+                console.error('Error fetching categories:', err);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -67,7 +83,36 @@ const Collections = () => {
                     <h1 className="text-4xl md:text-5xl font-serif text-charcoal dark:text-offwhite tracking-wide mb-4 transition-colors">
                         {categoryFilter ? `${categoryFilter}'s Collection` : 'All Collections'}
                     </h1>
-                    <div className="w-16 h-px bg-charcoal/30 dark:bg-offwhite/30 mx-auto"></div>
+                    <div className="w-16 h-px bg-charcoal/30 dark:bg-offwhite/30 mx-auto mb-8"></div>
+                    
+                    {/* Category Filter Chips */}
+                    {categories.length > 0 && (
+                      <div className="flex flex-wrap justify-center gap-3">
+                        <button
+                          onClick={() => navigate('/collections')}
+                          className={`px-5 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold transition-all ${
+                            !categoryFilter 
+                              ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal' 
+                              : 'bg-white text-charcoal border border-charcoal/10 hover:border-charcoal/30 dark:bg-charcoal/50 dark:text-offwhite dark:border-offwhite/10 dark:hover:border-offwhite/30'
+                          }`}
+                        >
+                          All Products
+                        </button>
+                        {categories.map(cat => (
+                          <button
+                            key={cat._id}
+                            onClick={() => navigate(`/collections?category=${encodeURIComponent(cat.name)}`)}
+                            className={`px-5 py-2 rounded-full text-[10px] uppercase tracking-widest font-bold transition-all ${
+                              categoryFilter?.toLowerCase() === cat.name.toLowerCase()
+                                ? 'bg-charcoal text-white dark:bg-offwhite dark:text-charcoal' 
+                                : 'bg-white text-charcoal border border-charcoal/10 hover:border-charcoal/30 dark:bg-charcoal/50 dark:text-offwhite dark:border-offwhite/10 dark:hover:border-offwhite/30'
+                            }`}
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

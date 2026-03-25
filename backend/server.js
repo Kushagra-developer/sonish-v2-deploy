@@ -11,11 +11,15 @@ import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import assistantRoutes from './routes/assistantRoutes.js';
 import bannerRoutes from './routes/bannerRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+
+// Runtime maintenance mode state (defaults to env var, toggleable via API)
+let isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
 
 if (!process.env.JWT_SECRET) {
   console.error('FATAL ERROR: JWT_SECRET environment variable is not defined.');
@@ -80,7 +84,6 @@ app.use(cookieParser());
 // Maintenance Mode Middleware
 // ──────────────────────────────────────────────
 app.use((req, res, next) => {
-  const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
   const isAdminRoute = req.path.startsWith('/api/admin') || 
                        req.path.includes('admin') || 
                        req.path.includes('login') || 
@@ -105,6 +108,17 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/assistant', assistantRoutes);
 app.use('/api/razorpay', razorpayRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/categories', categoryRoutes);
+
+// Maintenance mode toggle API
+import { protect, admin } from './middleware/authMiddleware.js';
+app.get('/api/admin/maintenance', protect, admin, (_req, res) => {
+  res.json({ maintenance: isMaintenanceMode });
+});
+app.put('/api/admin/maintenance', protect, admin, (req, res) => {
+  isMaintenanceMode = !!req.body.maintenance;
+  res.json({ maintenance: isMaintenanceMode, message: isMaintenanceMode ? 'Site is now OFFLINE' : 'Site is now ONLINE' });
+});
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

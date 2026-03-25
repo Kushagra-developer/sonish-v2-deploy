@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck, Image, Plus, Trash2, Edit2, ExternalLink, ShieldCheck, Lock, Save } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck, Image, Plus, Trash2, Edit2, ExternalLink, ShieldCheck, Lock, Save, Power, Layers, Upload, X, GripVertical } from 'lucide-react';
 import API from '../utils/api';
 import { authFetch, authJsonFetch } from '../utils/authFetch';
 
@@ -24,6 +24,18 @@ const AdminDashboard = () => {
   const [bannerLoading, setBannerLoading] = useState(false);
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordLoading, setPasswordLoading] = useState(false);
+  // Categories
+  const [categories, setCategories] = useState([]);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [newCategory, setNewCategory] = useState({ name: '', description: '', image: '', order: 0 });
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  // Maintenance
+  const [siteOnline, setSiteOnline] = useState(true);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+  // Multi-image for products
+  const [productImages, setProductImages] = useState([]);
+  const [imageUrlInput, setImageUrlInput] = useState('');
 
   const handleLogout = async () => {
     try {
@@ -37,10 +49,12 @@ const AdminDashboard = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [prodRes, orderRes, bannersRes] = await Promise.allSettled([
+        const [prodRes, orderRes, bannersRes, catRes, maintRes] = await Promise.allSettled([
           authFetch(`${API}/api/products/admin`),
           authFetch(`${API}/api/orders`),
           authFetch(`${API}/api/banners/admin`),
+          authFetch(`${API}/api/categories/admin`),
+          authFetch(`${API}/api/admin/maintenance`),
         ]);
 
         if (prodRes.status === 'fulfilled') {
@@ -63,6 +77,13 @@ const AdminDashboard = () => {
           if (bannersRes.value.ok) {
             setBanners(await bannersRes.value.json());
           }
+        }
+        if (catRes && catRes.status === 'fulfilled' && catRes.value.ok) {
+          setCategories(await catRes.value.json());
+        }
+        if (maintRes && maintRes.status === 'fulfilled' && maintRes.value.ok) {
+          const mData = await maintRes.value.json();
+          setSiteOnline(!mData.maintenance);
         }
       } catch (err) {
         console.error('Admin fetch error:', err);
@@ -165,10 +186,86 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleToggleMaintenance = async () => {
+    setMaintenanceLoading(true);
+    try {
+      const res = await authJsonFetch(`${API}/api/admin/maintenance`, {
+        method: 'PUT',
+        body: JSON.stringify({ maintenance: siteOnline })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSiteOnline(!data.maintenance);
+      }
+    } catch (err) {
+      alert('Failed to toggle maintenance mode');
+    } finally {
+      setMaintenanceLoading(false);
+    }
+  };
+
+  const handleCategorySave = async (e) => {
+    e.preventDefault();
+    setCategoryLoading(true);
+    try {
+      const url = editingCategory ? `${API}/api/categories/${editingCategory._id}` : `${API}/api/categories`;
+      const method = editingCategory ? 'PUT' : 'POST';
+      const res = await authJsonFetch(url, { method, body: JSON.stringify(newCategory) });
+      if (res.ok) {
+        const saved = await res.json();
+        if (editingCategory) {
+          setCategories(categories.map(c => c._id === saved._id ? saved : c));
+        } else {
+          setCategories([...categories, saved]);
+        }
+        setIsAddingCategory(false);
+        setEditingCategory(null);
+        setNewCategory({ name: '', description: '', image: '', order: 0 });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || 'Failed to save category');
+      }
+    } catch (err) {
+      alert('Error saving category');
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
+  const handleCategoryDelete = async (id) => {
+    if (window.confirm('Delete this category?')) {
+      try {
+        const res = await authFetch(`${API}/api/categories/${id}`, { method: 'DELETE' });
+        if (res.ok) setCategories(categories.filter(c => c._id !== id));
+      } catch (err) { alert('Failed to delete category'); }
+    }
+  };
+
+  const handleAddImageUrl = () => {
+    if (imageUrlInput.trim()) {
+      setProductImages([...productImages, imageUrlInput.trim()]);
+      setImageUrlInput('');
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      if (file.size > 3 * 1024 * 1024) { alert(`${file.name} is too large (max 3MB)`); return; }
+      const reader = new FileReader();
+      reader.onloadend = () => setProductImages(prev => [...prev, reader.result]);
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
+  const handleRemoveImage = (idx) => setProductImages(prev => prev.filter((_, i) => i !== idx));
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'products', label: 'Products', icon: Tag },
     { id: 'orders', label: 'Orders', icon: Truck },
+    { id: 'categories', label: 'Categories', icon: Layers },
     { id: 'banners', label: 'Banners', icon: Image },
     { id: 'security', label: 'Security', icon: ShieldCheck },
   ];
@@ -222,7 +319,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-1 mb-8 bg-white dark:bg-charcoal/50 p-1 rounded-lg border border-charcoal/5 dark:border-offwhite/5 w-max">
+        <div className="flex gap-1 mb-8 bg-white dark:bg-charcoal/50 p-1 rounded-lg border border-charcoal/5 dark:border-offwhite/5 w-full overflow-x-auto">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -257,6 +354,35 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Site Online/Offline Toggle */}
+            <div className="mb-10 bg-white dark:bg-charcoal/50 border border-charcoal/5 dark:border-offwhite/5 rounded-lg p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${siteOnline ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
+                    <Power className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-charcoal dark:text-offwhite">Website Status</h3>
+                    <p className="text-xs text-charcoal/50 dark:text-offwhite/50 mt-0.5">
+                      {siteOnline ? 'Your site is live and accessible to customers' : 'Your site is in maintenance mode — customers see an offline page'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleToggleMaintenance}
+                  disabled={maintenanceLoading}
+                  className={`relative flex items-center gap-3 px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-bold transition-all shadow-lg disabled:opacity-50 ${
+                    siteOnline
+                      ? 'bg-green-600 text-white hover:bg-red-600'
+                      : 'bg-red-600 text-white hover:bg-green-600'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${siteOnline ? 'bg-green-200 animate-pulse' : 'bg-red-200'}`} />
+                  {maintenanceLoading ? 'Switching...' : siteOnline ? 'Take Offline' : 'Bring Online'}
+                </button>
+              </div>
             </div>
 
             {/* Recent Orders */}
@@ -303,7 +429,10 @@ const AdminDashboard = () => {
               <div className="px-6 py-4 border-b border-charcoal/5 dark:border-offwhite/5 flex justify-between items-center">
                 <h3 className="font-serif text-lg text-charcoal dark:text-offwhite">All Products ({products.length})</h3>
                 <button
-                  onClick={() => setIsAddingProduct(!isAddingProduct)}
+                  onClick={() => {
+                    setIsAddingProduct(!isAddingProduct);
+                    setProductImages([]);
+                  }}
                   className="px-4 py-2 bg-charcoal/5 dark:bg-offwhite/5 hover:bg-charcoal/10 dark:hover:bg-offwhite/10 text-charcoal dark:text-offwhite text-xs uppercase tracking-widest font-medium rounded transition-colors"
                 >
                   {isAddingProduct ? 'Cancel' : '+ Add Product'}
@@ -320,14 +449,16 @@ const AdminDashboard = () => {
                         method: 'POST',
                         body: JSON.stringify({
                           ...newProduct,
-                          images: [newProduct.image]
+                          images: productImages.length > 0 ? productImages : [newProduct.image || '/images/sample.webp'],
+                          image: productImages.length > 0 ? productImages[0] : (newProduct.image || '/images/sample.webp')
                         })
                       });
                         if (res.ok) {
                           const added = await res.json();
                           setProducts([...products, added]);
                           setIsAddingProduct(false);
-                          setNewProduct({ name: '', price: '', category: '', countInStock: '', image: '', description: '' });
+                          setNewProduct({ name: '', price: '', category: '', countInStock: '', image: '', description: '', sizes: [{size: 'S', stock: 0}, {size: 'M', stock: 0}, {size: 'L', stock: 0}, {size: 'XL', stock: 0}] });
+                          setProductImages([]);
                           alert('Product added successfully');
                         } else {
                           const errorData = await res.json().catch(() => ({}));
@@ -345,7 +476,14 @@ const AdminDashboard = () => {
                       </div>
                       <div>
                         <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Category</label>
-                        <input required value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" />
+                        {categories.length > 0 ? (
+                          <select required value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded">
+                            <option value="">Select Category</option>
+                            {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+                          </select>
+                        ) : (
+                          <input required value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" placeholder="e.g. Women" />
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Price (₹)</label>
@@ -356,9 +494,40 @@ const AdminDashboard = () => {
                         <input required type="number" value={newProduct.countInStock} onChange={e => setNewProduct({...newProduct, countInStock: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Image URL</label>
-                      <input required placeholder="/images/sample.webp" value={newProduct.image} onChange={e => setNewProduct({...newProduct, image: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" />
+                    <div className="border border-charcoal/10 dark:border-offwhite/10 p-4 rounded bg-white dark:bg-charcoal/20">
+                      <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-3 font-bold">Product Media (First image is main)</label>
+                      
+                      {/* Upload Controls */}
+                      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                        <div className="flex-1 flex gap-2">
+                          <input type="text" value={imageUrlInput} onChange={e => setImageUrlInput(e.target.value)} placeholder="https://example.com/image.jpg" className="flex-1 p-2 text-sm border border-charcoal/20 bg-transparent rounded outline-none focus:border-gold" />
+                          <button type="button" onClick={handleAddImageUrl} className="px-4 py-2 bg-charcoal/5 hover:bg-gold hover:text-white text-xs uppercase tracking-widest font-bold rounded transition-colors">Add URL</button>
+                        </div>
+                        <div className="relative">
+                          <input type="file" multiple accept="image/*" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                          <div className="flex items-center gap-2 px-6 py-2 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-xs uppercase tracking-widest font-bold rounded hover:bg-black transition-colors h-full cursor-pointer">
+                            <Upload className="w-4 h-4" /> Upload Files
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Image Gallery */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {productImages.map((img, idx) => (
+                          <div key={idx} className="relative group aspect-[3/4] rounded overflow-hidden border border-charcoal/10">
+                            <img src={img} alt={`Product ${idx}`} className="w-full h-full object-cover" />
+                            {idx === 0 && <span className="absolute top-2 left-2 bg-gold text-white text-[9px] uppercase tracking-widest px-2 py-0.5 font-bold shadow-md">Main</span>}
+                            <button type="button" onClick={() => handleRemoveImage(idx)} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {productImages.length === 0 && (
+                          <div className="col-span-full py-8 text-center text-charcoal/40 text-xs uppercase tracking-widest border-2 border-dashed border-charcoal/10 rounded">
+                            No images added yet
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Description</label>
@@ -373,7 +542,7 @@ const AdminDashboard = () => {
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="font-serif text-2xl text-charcoal dark:text-offwhite">Edit Product</h3>
-                    <button onClick={() => setEditingProduct(null)} className="text-charcoal/50 hover:text-charcoal">Cancel</button>
+                    <button onClick={() => { setEditingProduct(null); setProductImages([]); }} className="text-charcoal/50 hover:text-charcoal">Cancel</button>
                   </div>
                   <form onSubmit={async (e) => {
                     e.preventDefault();
@@ -381,13 +550,18 @@ const AdminDashboard = () => {
                     try {
                       const res = await authJsonFetch(`${API}/api/products/${editingProduct._id}`, {
                         method: 'PUT',
-                        body: JSON.stringify(editFormData)
+                        body: JSON.stringify({
+                          ...editFormData,
+                          images: productImages.length > 0 ? productImages : [editFormData.image || '/images/placeholder.jpg'],
+                          image: productImages.length > 0 ? productImages[0] : (editFormData.image || '/images/placeholder.jpg')
+                        })
                       });
                         if (res.ok) {
                           const updated = await res.json();
                           setProducts(products.map(p => p._id === updated._id ? updated : p));
                           setEditingProduct(null);
                           setEditFormData(null);
+                          setProductImages([]);
                           alert('Product updated successfully');
                         } else {
                           const errorData = await res.json().catch(() => ({}));
@@ -405,7 +579,14 @@ const AdminDashboard = () => {
                       </div>
                       <div>
                         <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Category</label>
-                        <input required value={editFormData.category} onChange={e => setEditFormData({...editFormData, category: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" />
+                        {categories.length > 0 ? (
+                          <select required value={editFormData.category} onChange={e => setEditFormData({...editFormData, category: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded">
+                            <option value="">Select Category</option>
+                            {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+                          </select>
+                        ) : (
+                          <input required value={editFormData.category} onChange={e => setEditFormData({...editFormData, category: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" />
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Sale Price (₹)</label>
@@ -438,9 +619,36 @@ const AdminDashboard = () => {
                         <p className="text-[10px] text-charcoal/50 mt-1 uppercase">Total Combined Stock: {editFormData.sizes?.reduce((a, b) => a + b.stock, 0) || editFormData.countInStock}</p>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Main Image URL</label>
-                      <input required value={editFormData.image} onChange={e => setEditFormData({...editFormData, image: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" />
+                    <div className="border border-charcoal/10 dark:border-offwhite/10 p-4 rounded bg-white dark:bg-charcoal/20">
+                      <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-3 font-bold">Product Media (First image is main)</label>
+                      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                        <div className="flex-1 flex gap-2">
+                          <input type="text" value={imageUrlInput} onChange={e => setImageUrlInput(e.target.value)} placeholder="https://example.com/image.jpg" className="flex-1 p-2 text-sm border border-charcoal/20 bg-transparent rounded outline-none focus:border-gold" />
+                          <button type="button" onClick={handleAddImageUrl} className="px-4 py-2 bg-charcoal/5 hover:bg-gold hover:text-white text-xs uppercase tracking-widest font-bold rounded transition-colors">Add URL</button>
+                        </div>
+                        <div className="relative">
+                          <input type="file" multiple accept="image/*" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                          <div className="flex items-center gap-2 px-6 py-2 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-xs uppercase tracking-widest font-bold rounded hover:bg-black transition-colors h-full cursor-pointer">
+                            <Upload className="w-4 h-4" /> Upload Files
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {productImages.map((img, idx) => (
+                          <div key={idx} className="relative group aspect-[3/4] rounded overflow-hidden border border-charcoal/10">
+                            <img src={img} alt={`Product ${idx}`} className="w-full h-full object-cover bg-gray-50" />
+                            {idx === 0 && <span className="absolute top-2 left-2 bg-gold text-white text-[9px] uppercase tracking-widest px-2 py-0.5 font-bold shadow-md">Main</span>}
+                            <button type="button" onClick={() => handleRemoveImage(idx)} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {productImages.length === 0 && (
+                          <div className="col-span-full py-8 text-center text-charcoal/40 text-xs uppercase tracking-widest border-2 border-dashed border-charcoal/10 rounded">
+                            No images found. Please add media.
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Description</label>
@@ -505,6 +713,8 @@ const AdminDashboard = () => {
                           <button 
                             onClick={() => {
                               setEditingProduct(product);
+                              // Load images array into productImages state
+                              setProductImages(product.images && product.images.length > 0 ? product.images : [product.image].filter(Boolean));
                               // Ensure sizes array exists for legacy products
                               const initSizes = product.sizes?.length > 0 ? product.sizes : [{size: 'S', stock: Math.floor((product.countInStock||0)/4)}, {size: 'M', stock: Math.floor((product.countInStock||0)/4)}, {size: 'L', stock: Math.floor((product.countInStock||0)/4)}, {size: 'XL', stock: Math.floor((product.countInStock||0)/4)}];
                               setEditFormData({...product, sizes: initSizes, originalPrice: product.originalPrice || 0});
@@ -720,6 +930,160 @@ const AdminDashboard = () => {
                   <ShoppingCart className="w-12 h-12 text-charcoal/10 dark:text-offwhite/10 mx-auto mb-4" />
                   <p className="text-charcoal/50 dark:text-offwhite/50 text-sm">No orders received yet</p>
                   <p className="text-charcoal/30 dark:text-offwhite/30 text-xs mt-1">Orders will appear here when customers make purchases</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Categories Tab */}
+        {activeTab === 'categories' && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-xl font-serif text-charcoal dark:text-offwhite italic">Categories</h2>
+                <p className="text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold mt-1">Organize your product collections</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setEditingCategory(null);
+                  setNewCategory({ name: '', description: '', image: '', order: categories.length });
+                  setIsAddingCategory(!isAddingCategory);
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-[10px] uppercase tracking-widest font-bold rounded-full hover:bg-gold hover:text-white transition-all shadow-lg"
+              >
+                {isAddingCategory ? 'Cancel' : <><Plus className="w-4 h-4" /> Add Category</>}
+              </button>
+            </div>
+
+            {isAddingCategory && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mb-12 overflow-hidden">
+                <div className="bg-white dark:bg-charcoal/30 border border-charcoal/5 dark:border-offwhite/5 p-8 rounded-xl shadow-xl">
+                  <h3 className="text-sm uppercase tracking-[0.2em] font-bold mb-8 text-gold flex items-center gap-3">
+                    {editingCategory ? 'Edit Category' : 'Create New Category'}
+                  </h3>
+                  <form onSubmit={handleCategorySave} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Category Name</label>
+                        <input 
+                          type="text" 
+                          required
+                          value={newCategory.name}
+                          onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
+                          placeholder="Women's Collection"
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Description Text</label>
+                        <textarea 
+                          value={newCategory.description}
+                          onChange={(e) => setNewCategory({...newCategory, description: e.target.value})}
+                          placeholder="A brief description of this category..."
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors h-20 resize-none"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Cover Image URL</label>
+                        <input 
+                          type="text" 
+                          value={newCategory.image}
+                          onChange={(e) => setNewCategory({...newCategory, image: e.target.value})}
+                          placeholder="https://example.com/category.jpg"
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors font-mono"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-6 items-center pt-2">
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Display Order</label>
+                          <input 
+                            type="number" 
+                            required
+                            value={newCategory.order}
+                            onChange={(e) => setNewCategory({...newCategory, order: parseInt(e.target.value)})}
+                            className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3 pt-6">
+                           <input 
+                             type="checkbox" 
+                             id="isActiveCat"
+                             checked={newCategory.isActive !== false}
+                             onChange={(e) => setNewCategory({...newCategory, isActive: e.target.checked})}
+                             className="w-4 h-4 accent-gold"
+                           />
+                           <label htmlFor="isActiveCat" className="text-xs uppercase tracking-widest font-bold text-charcoal dark:text-offwhite">Active (Visible)</label>
+                        </div>
+                      </div>
+                      <div className="flex gap-4 pt-4">
+                        <button type="submit" disabled={categoryLoading} className="flex-1 px-6 py-4 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-gold hover:text-white transition-all">
+                          {categoryLoading ? 'Saving...' : editingCategory ? 'Update Category' : 'Create Category'}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </motion.div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categories.map((cat, index) => (
+                <motion.div 
+                  key={cat._id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-white dark:bg-charcoal/20 border border-charcoal/5 dark:border-offwhite/5 rounded-lg overflow-hidden flex"
+                >
+                  <div className="w-1/3 bg-gray-100 flex-shrink-0">
+                    {cat.image ? (
+                      <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-charcoal/5 dark:bg-offwhite/5">
+                        <Layers className="w-8 h-8 text-charcoal/20 dark:text-offwhite/20" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-5 flex flex-col justify-between w-full">
+                     <div>
+                       <div className="flex justify-between items-start mb-1">
+                         <h3 className="font-serif text-lg text-charcoal dark:text-offwhite leading-tight">{cat.name}</h3>
+                         <div className={`w-2 h-2 rounded-full mt-1.5 ${cat.isActive !== false ? 'bg-green-500' : 'bg-red-500'}`} title={cat.isActive !== false ? "Active" : "Inactive"} />
+                       </div>
+                       <p className="text-[10px] text-charcoal/50 dark:text-offwhite/50 line-clamp-2 leading-relaxed mb-4">{cat.description || 'No description provided.'}</p>
+                     </div>
+                     <div className="flex items-center justify-between mt-auto">
+                        <span className="text-[9px] uppercase tracking-widest font-bold text-gold">Order: {cat.order}</span>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => {
+                              setEditingCategory(cat);
+                              setNewCategory(cat);
+                              setIsAddingCategory(true);
+                            }}
+                            className="p-1.5 text-charcoal/40 hover:text-gold transition-colors"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            onClick={() => handleCategoryDelete(cat._id)}
+                            className="p-1.5 text-charcoal/40 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                     </div>
+                  </div>
+                </motion.div>
+              ))}
+              {categories.length === 0 && !isAddingCategory && (
+                <div className="col-span-full py-20 text-center border-2 border-dashed border-charcoal/10 dark:border-offwhite/10 rounded-xl">
+                   <Layers className="w-10 h-10 text-charcoal/10 dark:text-offwhite/10 mx-auto mb-4" />
+                   <p className="text-charcoal/60 dark:text-offwhite/60 text-sm font-serif">No categories found</p>
+                   <p className="text-charcoal/40 dark:text-offwhite/40 text-[10px] uppercase tracking-widest mt-2">Create categories to organize products</p>
                 </div>
               )}
             </div>
