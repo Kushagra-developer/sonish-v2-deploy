@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Shield, CreditCard, ChevronRight } from 'lucide-react';
+import { CheckCircle, Shield, CreditCard, ChevronRight, Tag, X } from 'lucide-react';
 import API from '../../utils/api';
 import { authJsonFetch } from '../../utils/authFetch';
 

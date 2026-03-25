@@ -76,6 +76,18 @@ const productSchema = mongoose.Schema(
         stock: { type: Number, required: true, default: 0 },
       }
     ],
+    sizeAndFit: {
+      type: String,
+    },
+    materialAndCare: {
+      type: String,
+    },
+    specifications: [
+      {
+        label: { type: String },
+        value: { type: String },
+      }
+    ],
   },
   {
     timestamps: true,

@@ -438,14 +438,46 @@ const ProductDetails = () => {
                         )}
 
                         {activeTab === 'additional information' && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                                <table className="w-full max-w-lg text-left text-sm border-collapse">
-                                    <tbody>
-                                        <tr className="border-b border-charcoal/10 dark:border-offwhite/10"><th className="py-3 font-medium">Weight</th><td className="py-3">0.5 kg</td></tr>
-                                        <tr className="border-b border-charcoal/10 dark:border-offwhite/10"><th className="py-3 font-medium">Dimensions</th><td className="py-3">30 × 20 × 5 cm</td></tr>
-                                        <tr className="border-b border-charcoal/10 dark:border-offwhite/10"><th className="py-3 font-medium">Materials</th><td className="py-3">Imported Premium Fabric</td></tr>
-                                    </tbody>
-                                </table>
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+                                <div className="grid md:grid-cols-2 gap-12">
+                                    <div className="space-y-6">
+                                        <div>
+                                            <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-gold mb-2">Size & Fit</h4>
+                                            <p className="text-sm font-light leading-relaxed text-charcoal/70 dark:text-offwhite/70">
+                                                {product.sizeAndFit || "Regular fit. Designed for a comfortable and stylish silhouette. True to size."}
+                                            </p>
+                                        </div>
+                                        
+                                        <div>
+                                            <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-gold mb-2">Material & Care</h4>
+                                            <p className="text-sm font-light leading-relaxed text-charcoal/70 dark:text-offwhite/70">
+                                                {product.materialAndCare || "Premium quality fabric. Handle with care for long-lasting wear. Dry clean recommended or machine wash cold."}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-gold mb-4">Specifications</h4>
+                                        <div className="border border-charcoal/10 dark:border-offwhite/10 rounded overflow-hidden">
+                                            {product.specifications?.length > 0 ? (
+                                                <table className="w-full text-left text-xs border-collapse">
+                                                    <tbody className="divide-y divide-charcoal/5 dark:divide-offwhite/5 text-charcoal dark:text-offwhite">
+                                                        {product.specifications.map((spec, idx) => (
+                                                            <tr key={idx} className={idx % 2 === 0 ? 'bg-charcoal/[0.02] dark:bg-white/[0.02]' : ''}>
+                                                                <th className="py-3 px-4 font-medium text-charcoal/50 dark:text-offwhite/50 w-1/3 lowercase tracking-wide">{spec.label}</th>
+                                                                <td className="py-3 px-4 font-light">{spec.value || "N/A"}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            ) : (
+                                                <div className="p-8 text-center text-charcoal/30 dark:text-offwhite/30 italic text-xs uppercase tracking-widest">
+                                                    No specific details available
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                             </motion.div>
                         )}
 

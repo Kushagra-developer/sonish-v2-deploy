@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck, Image, Plus, Trash2, Edit2, ExternalLink, ShieldCheck, Lock, Save, Power, Layers, Upload, X, GripVertical, Ticket } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck, Image, Plus, Trash2, Edit2, ExternalLink, ShieldCheck, Lock, Save, Power, Layers, Upload, X, GripVertical } from 'lucide-react';
 import API from '../utils/api';
 import { authFetch, authJsonFetch } from '../utils/authFetch';
 
@@ -12,7 +12,26 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', originalPrice: '', category: '', countInStock: '', image: '', description: '', sizes: [{size: 'S', stock: 0}, {size: 'M', stock: 0}, {size: 'L', stock: 0}, {size: 'XL', stock: 0}] });
+  const [newProduct, setNewProduct] = useState({ 
+    name: '', 
+    price: '', 
+    originalPrice: '', 
+    category: '', 
+    countInStock: '', 
+    image: '', 
+    description: '', 
+    sizeAndFit: '',
+    materialAndCare: '',
+    specifications: [
+      { label: 'Type', value: '' },
+      { label: 'Length', value: '' },
+      { label: 'Hemline', value: '' },
+      { label: 'Knit or Woven', value: '' },
+      { label: 'Closure', value: '' },
+      { label: 'Transparency', value: '' }
+    ],
+    sizes: [{size: 'S', stock: 0}, {size: 'M', stock: 0}, {size: 'L', stock: 0}, {size: 'XL', stock: 0}] 
+  });
   const [editFormData, setEditFormData] = useState(null);
   const [addLoading, setAddLoading] = useState(false);
   const [trackingAWBs, setTrackingAWBs] = useState({});
@@ -324,7 +343,7 @@ const AdminDashboard = () => {
     { id: 'products', label: 'Products', icon: Tag },
     { id: 'orders', label: 'Orders', icon: Truck },
     { id: 'categories', label: 'Categories', icon: Layers },
-    { id: 'coupons', label: 'Coupons', icon: Ticket },
+    { id: 'coupons', label: 'Coupons', icon: Tag },
     { id: 'banners', label: 'Banners', icon: Image },
     { id: 'security', label: 'Security', icon: ShieldCheck },
   ];
@@ -588,9 +607,38 @@ const AdminDashboard = () => {
                         )}
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Description</label>
-                      <textarea required value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" rows="3"></textarea>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Description</label>
+                        <textarea required value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" rows="3"></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Size & Fit</label>
+                        <textarea value={newProduct.sizeAndFit} onChange={e => setNewProduct({...newProduct, sizeAndFit: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" rows="3" placeholder="Model (height 5'8) is wearing size 28"></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Material & Care</label>
+                        <textarea value={newProduct.materialAndCare} onChange={e => setNewProduct({...newProduct, materialAndCare: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" rows="3" placeholder="Polyester / Machine-wash"></textarea>
+                      </div>
+                      <div className="border border-charcoal/5 p-4 rounded bg-gray-50/50">
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 mb-3 font-bold">Specifications</label>
+                        <div className="space-y-3">
+                          {newProduct.specifications.map((spec, sidx) => (
+                            <div key={sidx} className="flex gap-2 items-center">
+                              <span className="text-[10px] w-24 opacity-50">{spec.label}</span>
+                              <input 
+                                type="text" value={spec.value} 
+                                onChange={(e) => {
+                                  const updatedSpecs = [...newProduct.specifications];
+                                  updatedSpecs[sidx].value = e.target.value;
+                                  setNewProduct({...newProduct, specifications: updatedSpecs});
+                                }}
+                                className="flex-1 p-1.5 text-xs border-b border-charcoal/10 bg-transparent outline-none focus:border-gold"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                     <button type="submit" disabled={addLoading} className="w-full py-3 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-xs uppercase tracking-widest font-medium rounded hover:bg-black transition-colors disabled:opacity-50">
                       {addLoading ? 'Saving...' : 'Save Product'}
@@ -600,8 +648,8 @@ const AdminDashboard = () => {
               ) : editingProduct ? (
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-serif text-2xl text-charcoal dark:text-offwhite">Edit Product</h3>
-                    <button onClick={() => { setEditingProduct(null); setProductImages([]); }} className="text-charcoal/50 hover:text-charcoal">Cancel</button>
+                    <h2 className="font-serif text-2xl text-charcoal dark:text-offwhite italic">Edit Product</h2>
+                    <button onClick={() => { setEditingProduct(null); setProductImages([]); }} className="text-charcoal/50 hover:text-charcoal uppercase text-[10px] tracking-widest font-bold">Cancel</button>
                   </div>
                   <form onSubmit={async (e) => {
                     e.preventDefault();
@@ -634,30 +682,30 @@ const AdminDashboard = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Name</label>
-                        <input required value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" />
+                        <input required value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded text-charcoal dark:text-offwhite" />
                       </div>
                       <div>
                         <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Category</label>
                         {categories.length > 0 ? (
-                          <select required value={editFormData.category} onChange={e => setEditFormData({...editFormData, category: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded">
+                          <select required value={editFormData.category} onChange={e => setEditFormData({...editFormData, category: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded text-charcoal dark:text-offwhite">
                             <option value="">Select Category</option>
                             {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                           </select>
                         ) : (
-                          <input required value={editFormData.category} onChange={e => setEditFormData({...editFormData, category: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" />
+                          <input required value={editFormData.category} onChange={e => setEditFormData({...editFormData, category: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded text-charcoal dark:text-offwhite" />
                         )}
                       </div>
                       <div>
                         <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Sale Price (₹)</label>
-                        <input required type="number" value={editFormData.price} onChange={e => setEditFormData({...editFormData, price: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" />
+                        <input required type="number" value={editFormData.price} onChange={e => setEditFormData({...editFormData, price: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded text-charcoal dark:text-offwhite" />
                       </div>
                       <div>
-                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Original Price (₹) [Discounting]</label>
-                        <input type="number" value={editFormData.originalPrice || 0} onChange={e => setEditFormData({...editFormData, originalPrice: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" />
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Original Price (₹)</label>
+                        <input type="number" value={editFormData.originalPrice || 0} onChange={e => setEditFormData({...editFormData, originalPrice: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded text-charcoal dark:text-offwhite" />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Size & Stock Inventory</label>
-                        <div className="grid grid-cols-4 gap-4 p-4 border border-charcoal/10 dark:border-offwhite/10 rounded bg-charcoal/[0.02]">
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2 font-bold">Size & Stock Inventory</label>
+                        <div className="grid grid-cols-4 gap-4 p-4 border border-charcoal/10 dark:border-offwhite/10 rounded bg-charcoal/[0.02] dark:bg-white/[0.02]">
                           {(editFormData.sizes || []).map((sizeObj, idx) => (
                             <div key={idx} className="flex flex-col gap-1">
                               <span className="text-sm font-bold text-center text-charcoal dark:text-offwhite">{sizeObj.size}</span>
@@ -670,20 +718,20 @@ const AdminDashboard = () => {
                                   newSizes[idx].stock = Number(e.target.value);
                                   setEditFormData({...editFormData, sizes: newSizes, countInStock: newSizes.reduce((a, b) => a + b.stock, 0) });
                                 }} 
-                                className="w-full p-1 text-center border border-charcoal/20 bg-white" 
+                                className="w-full p-1 text-center border border-charcoal/20 bg-white dark:bg-charcoal/50 text-charcoal dark:text-offwhite" 
                               />
                             </div>
                           ))}
                         </div>
-                        <p className="text-[10px] text-charcoal/50 mt-1 uppercase">Total Combined Stock: {editFormData.sizes?.reduce((a, b) => a + b.stock, 0) || editFormData.countInStock}</p>
                       </div>
                     </div>
-                    <div className="border border-charcoal/10 dark:border-offwhite/10 p-4 rounded bg-white dark:bg-charcoal/20">
-                      <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-3 font-bold">Product Media (First image is main)</label>
+
+                    <div className="border border-charcoal/10 dark:border-offwhite/10 p-4 rounded bg-white dark:bg-charcoal/20 text-charcoal dark:text-offwhite">
+                      <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-3 font-bold">Product Media</label>
                       <div className="flex flex-col sm:flex-row gap-4 mb-4">
                         <div className="flex-1 flex gap-2">
-                          <input type="text" value={imageUrlInput} onChange={e => setImageUrlInput(e.target.value)} placeholder="https://example.com/image.jpg" className="flex-1 p-2 text-sm border border-charcoal/20 bg-transparent rounded outline-none focus:border-gold" />
-                          <button type="button" onClick={handleAddImageUrl} className="px-4 py-2 bg-charcoal/5 hover:bg-gold hover:text-white text-xs uppercase tracking-widest font-bold rounded transition-colors">Add URL</button>
+                          <input type="text" value={imageUrlInput} onChange={e => setImageUrlInput(e.target.value)} placeholder="Image URL" className="flex-1 p-2 text-sm border border-charcoal/20 bg-transparent rounded outline-none focus:border-gold text-charcoal dark:text-offwhite" />
+                          <button type="button" onClick={handleAddImageUrl} className="px-4 py-2 bg-charcoal/5 dark:bg-offwhite/5 hover:bg-gold hover:text-white text-xs uppercase tracking-widest font-bold rounded transition-colors text-charcoal dark:text-offwhite">Add URL</button>
                         </div>
                         <div className="relative">
                           <input type="file" multiple accept="image/*" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
@@ -695,25 +743,50 @@ const AdminDashboard = () => {
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {productImages.map((img, idx) => (
                           <div key={idx} className="relative group aspect-[3/4] rounded overflow-hidden border border-charcoal/10">
-                            <img src={img} alt={`Product ${idx}`} className="w-full h-full object-cover bg-gray-50" />
-                            {idx === 0 && <span className="absolute top-2 left-2 bg-gold text-white text-[9px] uppercase tracking-widest px-2 py-0.5 font-bold shadow-md">Main</span>}
+                            <img src={img} alt="" className="w-full h-full object-cover" />
                             <button type="button" onClick={() => handleRemoveImage(idx)} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
                               <X className="w-3 h-3" />
                             </button>
                           </div>
                         ))}
-                        {productImages.length === 0 && (
-                          <div className="col-span-full py-8 text-center text-charcoal/40 text-xs uppercase tracking-widest border-2 border-dashed border-charcoal/10 rounded">
-                            No images found. Please add media.
-                          </div>
-                        )}
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Description</label>
-                      <textarea required value={editFormData.description} onChange={e => setEditFormData({...editFormData, description: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" rows="4"></textarea>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Description</label>
+                        <textarea required value={editFormData.description} onChange={e => setEditFormData({...editFormData, description: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded text-charcoal dark:text-offwhite" rows="3"></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Size & Fit</label>
+                        <textarea value={editFormData.sizeAndFit} onChange={e => setEditFormData({...editFormData, sizeAndFit: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded text-charcoal dark:text-offwhite" rows="3" placeholder="Model info..."></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Material & Care</label>
+                        <textarea value={editFormData.materialAndCare} onChange={e => setEditFormData({...editFormData, materialAndCare: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded text-charcoal dark:text-offwhite" rows="3" placeholder="Fabric info..."></textarea>
+                      </div>
+                      <div className="md:col-span-2 border border-charcoal/10 p-4 rounded bg-gray-50/50 dark:bg-charcoal/10">
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-3 font-bold">Specifications</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                          {editFormData.specifications?.map((spec, sidx) => (
+                            <div key={sidx} className="flex gap-2 items-center">
+                              <span className="text-[10px] w-24 opacity-50 text-charcoal dark:text-offwhite">{spec.label}</span>
+                              <input 
+                                type="text" value={spec.value} 
+                                onChange={(e) => {
+                                  const updatedSpecs = [...editFormData.specifications];
+                                  updatedSpecs[sidx].value = e.target.value;
+                                  setEditFormData({...editFormData, specifications: updatedSpecs});
+                                }}
+                                className="flex-1 p-1.5 text-xs border-b border-charcoal/10 dark:border-offwhite/10 bg-transparent outline-none focus:border-gold text-charcoal dark:text-offwhite"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <button type="submit" disabled={addLoading} className="w-full py-3 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-xs uppercase tracking-widest font-medium rounded hover:bg-black transition-colors disabled:opacity-50 mt-4">
+
+                    <button type="submit" disabled={addLoading} className="w-full py-3 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-xs uppercase tracking-widest font-medium rounded hover:bg-black transition-colors disabled:opacity-50">
                       {addLoading ? 'Applying Changes...' : 'Save Changes'}
                     </button>
                   </form>
@@ -777,7 +850,23 @@ const AdminDashboard = () => {
                                 setProductImages(product.images && product.images.length > 0 ? product.images : [product.image].filter(Boolean));
                                 // Ensure sizes array exists for legacy products
                                 const initSizes = product.sizes?.length > 0 ? product.sizes : [{size: 'S', stock: Math.floor((product.countInStock||0)/4)}, {size: 'M', stock: Math.floor((product.countInStock||0)/4)}, {size: 'L', stock: Math.floor((product.countInStock||0)/4)}, {size: 'XL', stock: Math.floor((product.countInStock||0)/4)}];
-                                setEditFormData({...product, sizes: initSizes, originalPrice: product.originalPrice || 0});
+                                
+                                // Ensure specifications array exists for legacy products
+                                const defaultSpecs = [
+                                  { label: 'Type', value: '' }, { label: 'Length', value: '' },
+                                  { label: 'Hemline', value: '' }, { label: 'Knit or Woven', value: '' },
+                                  { label: 'Closure', value: '' }, { label: 'Transparency', value: '' }
+                                ];
+                                const initSpecs = product.specifications?.length > 0 ? product.specifications : defaultSpecs;
+
+                                setEditFormData({
+                                  ...product, 
+                                  sizes: initSizes, 
+                                  originalPrice: product.originalPrice || 0,
+                                  sizeAndFit: product.sizeAndFit || '',
+                                  materialAndCare: product.materialAndCare || '',
+                                  specifications: initSpecs
+                                });
                               }}
                               className="bg-charcoal/5 dark:bg-offwhite/5 text-charcoal dark:text-offwhite px-4 py-2 rounded text-xs uppercase tracking-widest hover:bg-charcoal hover:text-white transition-colors whitespace-nowrap"
                             >
