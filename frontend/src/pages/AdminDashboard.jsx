@@ -36,6 +36,12 @@ const AdminDashboard = () => {
   // Multi-image for products
   const [productImages, setProductImages] = useState([]);
   const [imageUrlInput, setImageUrlInput] = useState('');
+  // Coupons
+  const [coupons, setCoupons] = useState([]);
+  const [isAddingCoupon, setIsAddingCoupon] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState(null);
+  const [newCoupon, setNewCoupon] = useState({ code: '', discountType: 'percentage', discountAmount: '', minPurchase: 0, expiryDate: '', usageLimit: '' });
+  const [couponLoading, setCouponLoading] = useState(false);
 
   const handleLogout = async () => {
     try {
