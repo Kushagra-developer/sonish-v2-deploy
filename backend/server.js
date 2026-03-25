@@ -121,7 +121,7 @@ app.put('/api/admin/maintenance', protect, admin, (req, res) => {
 });
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), maintenance: isMaintenanceMode });
 });
 
 app.get('/', (_req, res) => {

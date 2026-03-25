@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import API from './utils/api';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import CookieBanner from './components/layout/CookieBanner';
@@ -44,7 +46,30 @@ const AppLayout = () => {
   const isAdminRoute = location.pathname.startsWith('/admin');
   
   // Maintenance Mode Logic
-  const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
+  const envMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
+  const [apiMaintenance, setApiMaintenance] = useState(false);
+  const [isChecking, setIsChecking] = useState(!isAdminRoute);
+
+  useEffect(() => {
+    if (!isAdminRoute) {
+      setIsChecking(true);
+      fetch(`${API}/api/health`)
+        .then(res => res.json())
+        .then(data => {
+          setApiMaintenance(data.maintenance);
+          setIsChecking(false);
+        })
+        .catch(() => setIsChecking(false));
+    } else {
+      setIsChecking(false);
+    }
+  }, [location.pathname, isAdminRoute]);
+
+  const isMaintenanceMode = envMaintenance || apiMaintenance;
+
+  if (isChecking && !isMaintenanceMode) {
+    return <div className="min-h-screen bg-offwhite dark:bg-charcoal transition-colors duration-300 flex items-center justify-center"></div>;
+  }
   
   if (isMaintenanceMode && !isAdminRoute) {
     return <Maintenance />;
