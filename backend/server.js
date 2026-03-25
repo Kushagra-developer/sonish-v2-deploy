@@ -12,6 +12,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import assistantRoutes from './routes/assistantRoutes.js';
 import bannerRoutes from './routes/bannerRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
+import couponRoutes from './routes/couponRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import userRoutes from './routes/userRoutes.js';
 
@@ -109,6 +110,7 @@ app.use('/api/assistant', assistantRoutes);
 app.use('/api/razorpay', razorpayRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/coupons', couponRoutes);
 
 // Maintenance mode toggle API
 import { protect, admin } from './middleware/authMiddleware.js';

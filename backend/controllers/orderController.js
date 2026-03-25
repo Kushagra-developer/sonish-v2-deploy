@@ -1,5 +1,6 @@
 import Order from '../models/orderModel.js';
 import User from '../models/userModel.js';
+import Coupon from '../models/couponModel.js';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
@@ -15,6 +16,8 @@ const addOrderItems = async (req, res) => {
     taxPrice,
     shippingPrice,
     totalPrice,
+    discountPrice,
+    couponCode,
     razorpay_order_id,
     razorpay_payment_id,
     razorpay_signature,
@@ -56,14 +59,25 @@ const addOrderItems = async (req, res) => {
       paymentMethod,
       itemsPrice,
       taxPrice,
+      taxPrice,
       shippingPrice,
       totalPrice,
+      discountPrice,
+      couponCode,
       isPaid: isPaidVerify,
       paidAt: isPaidVerify ? Date.now() : null,
       paymentResult: paymentResultData,
     });
 
     const createdOrder = await order.save();
+
+    // If coupon was used, increment usage count
+    if (couponCode) {
+      await Coupon.findOneAndUpdate(
+        { code: couponCode.toUpperCase() },
+        { $inc: { usageCount: 1 } }
+      );
+    }
     res.status(201).json(createdOrder);
   }
 };

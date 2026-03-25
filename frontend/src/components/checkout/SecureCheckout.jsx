@@ -9,6 +9,15 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState('idle');
 
+    // Coupon states
+    const [couponCode, setCouponCode] = useState('');
+    const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
+    const [couponError, setCouponError] = useState('');
+
+    const discountValue = appliedCoupon ? appliedCoupon.discountValue : 0;
+    const finalTotal = Math.max(0, cartTotal - discountValue);
+
     // Load Razorpay Script dynamically
     useEffect(() => {
         const loadScript = () => {
@@ -23,6 +32,35 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
         loadScript();
     }, []);
 
+    const handleApplyCoupon = async () => {
+        if (!couponCode.trim()) return;
+        setIsApplyingCoupon(true);
+        setCouponError('');
+        try {
+            const res = await fetch(`${API}/api/coupons/validate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: couponCode, cartTotal })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setAppliedCoupon(data);
+                setCouponCode('');
+            } else {
+                setCouponError(data.message || 'Invalid coupon');
+            }
+        } catch (err) {
+            setCouponError('Error validating coupon');
+        } finally {
+            setIsApplyingCoupon(false);
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setAppliedCoupon(null);
+        setCouponError('');
+    };
+
     const handlePayment = async () => {
         if (!scriptLoaded) {
             alert('Payment gateway is still loading. Please try again.');
@@ -35,7 +73,7 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
             // 1. Create a Razorpay Order on the backend
             const orderResponse = await authJsonFetch(`${API}/api/razorpay/create-order`, {
                 method: 'POST',
-                body: JSON.stringify({ totalAmount: cartTotal }),
+                body: JSON.stringify({ totalAmount: finalTotal }),
             });
 
             const orderData = await orderResponse.json();
@@ -84,7 +122,9 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                                         itemsPrice: cartTotal,
                                         taxPrice: 0,
                                         shippingPrice: 0,
-                                        totalPrice: cartTotal,
+                                        totalPrice: finalTotal,
+                                        discountPrice: discountValue,
+                                        couponCode: appliedCoupon?.code,
                                         razorpay_order_id: response.razorpay_order_id,
                                         razorpay_payment_id: response.razorpay_payment_id,
                                         razorpay_signature: response.razorpay_signature,
@@ -180,9 +220,60 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                 </p>
             </div>
 
+            {/* Coupon Section */}
+            <div className="mb-8 p-4 bg-charcoal/5 dark:bg-white/5 rounded-lg border border-charcoal/10">
+                <div className="flex items-center gap-2 mb-3">
+                    <Ticket className="w-4 h-4 text-gold" />
+                    <span className="text-xs uppercase tracking-widest font-bold text-charcoal/70 dark:text-white/70">Have a Coupon?</span>
+                </div>
+                
+                {!appliedCoupon ? (
+                    <div className="flex gap-2">
+                        <input 
+                            type="text"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            placeholder="Enter Code (e.g. SONISH10)"
+                            className="flex-1 bg-white dark:bg-charcoal/20 border border-charcoal/10 px-4 py-2 text-sm rounded focus:border-gold outline-none transition-colors"
+                        />
+                        <button 
+                            onClick={handleApplyCoupon}
+                            disabled={isApplyingCoupon || !couponCode.trim()}
+                            className="px-6 py-2 bg-charcoal text-white text-xs uppercase tracking-widest font-bold rounded hover:bg-gold transition-colors disabled:opacity-50"
+                        >
+                            {isApplyingCoupon ? '...' : 'Apply'}
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-between bg-gold/10 border border-gold/30 p-2 px-4 rounded animate-pulse">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-gold uppercase tracking-widest">{appliedCoupon.code} Applied</span>
+                            <span className="text-[10px] text-gold/80 font-medium">(₹{appliedCoupon.discountValue.toLocaleString()} saved)</span>
+                        </div>
+                        <button onClick={handleRemoveCoupon} className="p-1 hover:bg-gold/20 rounded-full transition-colors">
+                            <X className="w-4 h-4 text-gold" />
+                        </button>
+                    </div>
+                )}
+                {couponError && <p className="text-[10px] text-red-500 mt-2 ml-1 font-bold uppercase tracking-tight">{couponError}</p>}
+            </div>
+
             <p className="text-sm text-charcoal/60 mb-6">
                 All transactions are encrypted and processed through military-grade infrastructure. We support all major UPI Apps, Credit/Debit Cards, and Netbanking.
             </p>
+
+            {discountValue > 0 && (
+                <div className="mb-4 flex flex-col gap-1 border-b border-charcoal/5 pb-4">
+                    <div className="flex justify-between text-xs text-charcoal/50">
+                        <span>Cart Total</span>
+                        <span>₹{cartTotal.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-green-600 font-bold">
+                        <span>Coupon Discount</span>
+                        <span>-₹{discountValue.toLocaleString()}</span>
+                    </div>
+                </div>
+            )}
 
             <button
                 onClick={handlePayment}
@@ -195,7 +286,7 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                     <>
                         <CreditCard className="w-5 h-5 group-hover:text-gold transition-colors" />
                         <span className="font-medium text-sm tracking-wide uppercase">
-                            Pay ₹{cartTotal.toLocaleString()} Securely
+                            Pay ₹{finalTotal.toLocaleString()} Securely
                         </span>
                         <ChevronRight className="w-4 h-4 text-white/50 group-hover:text-gold group-hover:translate-x-1 transition-all" />
                     </>
@@ -204,5 +295,6 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
         </div>
     );
 };
+
 
 export default SecureCheckout;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck, Image, Plus, Trash2, Edit2, ExternalLink, ShieldCheck, Lock, Save, Power, Layers, Upload, X, GripVertical } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck, Image, Plus, Trash2, Edit2, ExternalLink, ShieldCheck, Lock, Save, Power, Layers, Upload, X, GripVertical, Ticket } from 'lucide-react';
 import API from '../utils/api';
 import { authFetch, authJsonFetch } from '../utils/authFetch';
 
@@ -49,41 +49,40 @@ const AdminDashboard = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [prodRes, orderRes, bannersRes, catRes, maintRes] = await Promise.allSettled([
+        const results = await Promise.allSettled([
           authFetch(`${API}/api/products/admin`),
           authFetch(`${API}/api/orders`),
           authFetch(`${API}/api/banners/admin`),
           authFetch(`${API}/api/categories/admin`),
           authFetch(`${API}/api/admin/maintenance`),
+          authFetch(`${API}/api/coupons`),
         ]);
 
-        if (prodRes.status === 'fulfilled') {
-          if (prodRes.value.ok) {
-            setProducts(await prodRes.value.json());
-          } else {
-            console.error('Failed to fetch admin products:', await prodRes.value.text());
-          }
+        const [prodRes, orderRes, bannersRes, catRes, maintRes, couponsRes] = results;
+
+        if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
+          setProducts(await prodRes.value.json());
         }
         
-        if (orderRes.status === 'fulfilled') {
-          if (orderRes.value.ok) {
-            setOrders(await orderRes.value.json());
-          } else {
-            console.error('Failed to fetch orders:', await orderRes.value.text());
-          }
+        if (orderRes.status === 'fulfilled' && orderRes.value.ok) {
+          setOrders(await orderRes.value.json());
         }
 
-        if (bannersRes && bannersRes.status === 'fulfilled') {
-          if (bannersRes.value.ok) {
-            setBanners(await bannersRes.value.json());
-          }
+        if (bannersRes && bannersRes.status === 'fulfilled' && bannersRes.value.ok) {
+          setBanners(await bannersRes.value.json());
         }
+
         if (catRes && catRes.status === 'fulfilled' && catRes.value.ok) {
           setCategories(await catRes.value.json());
         }
+
         if (maintRes && maintRes.status === 'fulfilled' && maintRes.value.ok) {
           const mData = await maintRes.value.json();
           setSiteOnline(!mData.maintenance);
+        }
+
+        if (couponsRes && couponsRes.status === 'fulfilled' && couponsRes.value.ok) {
+          setCoupons(await couponsRes.value.json());
         }
       } catch (err) {
         console.error('Admin fetch error:', err);
@@ -275,6 +274,43 @@ const AdminDashboard = () => {
     e.target.value = '';
   };
 
+  const handleCouponSave = async (e) => {
+    e.preventDefault();
+    setCouponLoading(true);
+    try {
+      const url = editingCoupon ? `${API}/api/coupons/${editingCoupon._id}` : `${API}/api/coupons`;
+      const method = editingCoupon ? 'PUT' : 'POST';
+      const res = await authJsonFetch(url, { method, body: JSON.stringify(newCoupon) });
+      if (res.ok) {
+        const saved = await res.json();
+        if (editingCoupon) {
+          setCoupons(coupons.map(c => c._id === saved._id ? saved : c));
+        } else {
+          setCoupons([saved, ...coupons]);
+        }
+        setIsAddingCoupon(false);
+        setEditingCoupon(null);
+        setNewCoupon({ code: '', discountType: 'percentage', discountAmount: '', minPurchase: 0, expiryDate: '', usageLimit: '' });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || 'Failed to save coupon');
+      }
+    } catch (err) {
+      alert('Error saving coupon');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleCouponDelete = async (id) => {
+    if (window.confirm('Delete this coupon?')) {
+      try {
+        const res = await authFetch(`${API}/api/coupons/${id}`, { method: 'DELETE' });
+        if (res.ok) setCoupons(coupons.filter(c => c._id !== id));
+      } catch (err) { alert('Failed to delete coupon'); }
+    }
+  };
+
   const handleRemoveImage = (idx) => setProductImages(prev => prev.filter((_, i) => i !== idx));
 
   const tabs = [
@@ -282,6 +318,7 @@ const AdminDashboard = () => {
     { id: 'products', label: 'Products', icon: Tag },
     { id: 'orders', label: 'Orders', icon: Truck },
     { id: 'categories', label: 'Categories', icon: Layers },
+    { id: 'coupons', label: 'Coupons', icon: Ticket },
     { id: 'banners', label: 'Banners', icon: Image },
     { id: 'security', label: 'Security', icon: ShieldCheck },
   ];
@@ -843,6 +880,28 @@ const AdminDashboard = () => {
                                 ))}
                               </div>
                             </div>
+                            <div>
+                                <h4 className="text-xs uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-3 font-bold">Financial Summary</h4>
+                                <div className="text-sm text-charcoal/80 dark:text-offwhite/80 space-y-2 bg-charcoal/5 dark:bg-white/5 p-4 rounded">
+                                    <div className="flex justify-between">
+                                        <span className="text-xs">Items Total</span>
+                                        <span>₹{(order.itemsPrice || 0).toLocaleString()}</span>
+                                    </div>
+                                    {order.discountPrice > 0 && (
+                                        <div className="flex justify-between text-green-600 font-bold">
+                                            <span className="text-xs flex flex-col">
+                                                <span>Discount</span>
+                                                <span className="text-[9px] uppercase tracking-tighter opacity-70">Code: {order.couponCode}</span>
+                                            </span>
+                                            <span>-₹{(order.discountPrice || 0).toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between border-t border-charcoal/10 pt-2 font-bold text-base">
+                                        <span>Net Total</span>
+                                        <span className="text-gold">₹{(order.totalPrice || 0).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
                           </div>
 
 
@@ -1143,6 +1202,173 @@ const AdminDashboard = () => {
         )}
 
         {/* Banners Tab */}
+        {/* Coupons Tab */}
+        {activeTab === 'coupons' && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-xl font-serif text-charcoal dark:text-offwhite italic">Coupon Codes</h2>
+                <p className="text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold mt-1">Manage discounts and promotions</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setEditingCoupon(null);
+                  setNewCoupon({ code: '', discountType: 'percentage', discountAmount: '', minPurchase: 0, expiryDate: '', usageLimit: '' });
+                  setIsAddingCoupon(!isAddingCoupon);
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-[10px] uppercase tracking-widest font-bold rounded-full hover:bg-gold hover:text-white transition-all shadow-lg"
+              >
+                {isAddingCoupon ? 'Cancel' : <><Plus className="w-4 h-4" /> Add Coupon</>}
+              </button>
+            </div>
+
+            {isAddingCoupon && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mb-12 overflow-hidden">
+                <div className="bg-white dark:bg-charcoal/30 border border-charcoal/5 dark:border-offwhite/5 p-8 rounded-xl shadow-xl">
+                  <h3 className="text-sm uppercase tracking-[0.2em] font-bold mb-8 text-gold">
+                    {editingCoupon ? 'Edit Coupon' : 'Create New Coupon'}
+                  </h3>
+                  <form onSubmit={handleCouponSave} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Coupon Code</label>
+                        <input 
+                          type="text" required value={newCoupon.code}
+                          onChange={(e) => setNewCoupon({...newCoupon, code: (e.target.value||'').toUpperCase()})}
+                          placeholder="WELCOME10"
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors uppercase font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Discount Type</label>
+                        <select 
+                          value={newCoupon.discountType}
+                          onChange={(e) => setNewCoupon({...newCoupon, discountType: e.target.value})}
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                        >
+                          <option value="percentage">Percentage (%)</option>
+                          <option value="fixed">Fixed Amount (₹)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Discount Value</label>
+                        <input 
+                          type="number" required value={newCoupon.discountAmount}
+                          onChange={(e) => setNewCoupon({...newCoupon, discountAmount: e.target.value})}
+                          placeholder="10"
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Min Purchase Requirement (₹)</label>
+                        <input 
+                          type="number" value={newCoupon.minPurchase}
+                          onChange={(e) => setNewCoupon({...newCoupon, minPurchase: e.target.value})}
+                          placeholder="500"
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Expiry Date (Optional)</label>
+                        <input 
+                          type="date" value={newCoupon.expiryDate ? new Date(newCoupon.expiryDate).toISOString().split('T')[0] : ''}
+                          onChange={(e) => setNewCoupon({...newCoupon, expiryDate: e.target.value})}
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Usage Limit (Optional)</label>
+                        <input 
+                          type="number" value={newCoupon.usageLimit || ''}
+                          onChange={(e) => setNewCoupon({...newCoupon, usageLimit: e.target.value})}
+                          placeholder="100"
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <button 
+                        type="submit" disabled={couponLoading}
+                        className="w-full bg-gold text-white py-4 rounded-lg text-xs uppercase tracking-widest font-bold hover:bg-black transition-colors shadow-lg disabled:opacity-50"
+                      >
+                        {couponLoading ? 'Applying...' : (editingCoupon ? 'Update Coupon' : 'Create Coupon')}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </motion.div>
+            )}
+
+            <div className="bg-white dark:bg-charcoal/30 border border-charcoal/5 dark:border-offwhite/5 rounded-xl shadow-xl overflow-hidden">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-charcoal/5 dark:border-offwhite/5 bg-charcoal/[0.02] dark:bg-offwhite/[0.02]">
+                    <th className="px-6 py-4 text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold">Code</th>
+                    <th className="px-6 py-4 text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold">Discount</th>
+                    <th className="px-6 py-4 text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold">Requirement</th>
+                    <th className="px-6 py-4 text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold">Status</th>
+                    <th className="px-6 py-4 text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-charcoal/5 dark:divide-offwhite/5">
+                  {coupons.map((coupon) => (
+                    <tr key={coupon._id} className="hover:bg-charcoal/[0.01] transition-colors">
+                      <td className="px-6 py-4">
+                        <span className="font-mono font-bold text-sm text-gold">{coupon.code}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-xs font-bold text-charcoal dark:text-offwhite">
+                          {coupon.discountType === 'percentage' ? `${coupon.discountAmount}%` : `₹${coupon.discountAmount}`}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-[10px] text-charcoal/60 dark:text-offwhite/60">Min Order: ₹{coupon.minPurchase}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          <span className={`text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full w-fit ${coupon.isActive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                            {coupon.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                          {coupon.expiryDate && (
+                            <span className="text-[9px] text-charcoal/40">Expires: {new Date(coupon.expiryDate).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button 
+                            onClick={() => {
+                              setEditingCoupon(coupon);
+                              setNewCoupon(coupon);
+                              setIsAddingCoupon(true);
+                            }}
+                            className="p-2 hover:bg-gold/10 text-charcoal/40 hover:text-gold transition-colors rounded-lg"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleCouponDelete(coupon._id)}
+                            className="p-2 hover:bg-red-50 text-charcoal/40 hover:text-red-500 transition-colors rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {coupons.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-12 text-center text-charcoal/30 text-xs uppercase tracking-widest italic">No coupons found</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+
         {activeTab === 'banners' && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <div className="flex justify-between items-center mb-8">

@@ -360,6 +360,20 @@ const Profile = () => {
                                                                               </div>
                                                                           </div>
 
+                                                                          {/* Promos for user */}
+                                                                          {order.discountPrice > 0 && (
+                                                                            <div>
+                                                                              <h4 className="text-xs font-bold uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-4 pb-3 border-b border-charcoal/8 dark:border-offwhite/8">Promotions</h4>
+                                                                              <div className="p-4 bg-green-50 dark:bg-green-900/10 flex justify-between items-center border border-green-200/50">
+                                                                                <div>
+                                                                                  <p className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-widest">Coupon Applied: {order.couponCode}</p>
+                                                                                  <p className="text-[10px] text-green-600/70">Discount subtracted from your total</p>
+                                                                                </div>
+                                                                                <p className="font-bold text-green-700">-₹{(order.discountPrice || 0).toLocaleString()}</p>
+                                                                              </div>
+                                                                            </div>
+                                                                          )}
+
                                                                           {/* Tracking */}
                                                                           {(order.isShipped || order.trackingNumber) && (
                                                                             <div>
