@@ -78,4 +78,19 @@ const getAdminProducts = async (req, res) => {
   res.json(products);
 };
 
-export { getProducts, getProductById, createProduct, updateProduct, getAdminProducts };
+// @desc    Delete a product
+// @route   DELETE /api/products/:id
+// @access  Private/Admin
+const deleteProduct = async (req, res) => {
+  const product = await Product.findById(req.params.id);
+
+  if (product) {
+    await product.deleteOne();
+    res.json({ message: 'Product removed' });
+  } else {
+    res.status(404);
+    throw new Error('Product not found');
+  }
+};
+
+export { getProducts, getProductById, createProduct, updateProduct, deleteProduct, getAdminProducts };

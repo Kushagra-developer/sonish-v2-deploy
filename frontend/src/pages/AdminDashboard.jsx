@@ -241,6 +241,22 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleProductDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      try {
+        const res = await authFetch(`${API}/api/products/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          setProducts(products.filter(p => p._id !== id));
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(err.message || 'Failed to delete product');
+        }
+      } catch (err) {
+        alert('Error deleting product');
+      }
+    }
+  };
+
   const handleAddImageUrl = () => {
     if (imageUrlInput.trim()) {
       setProductImages([...productImages, imageUrlInput.trim()]);
@@ -710,19 +726,28 @@ const AdminDashboard = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <button 
-                            onClick={() => {
-                              setEditingProduct(product);
-                              // Load images array into productImages state
-                              setProductImages(product.images && product.images.length > 0 ? product.images : [product.image].filter(Boolean));
-                              // Ensure sizes array exists for legacy products
-                              const initSizes = product.sizes?.length > 0 ? product.sizes : [{size: 'S', stock: Math.floor((product.countInStock||0)/4)}, {size: 'M', stock: Math.floor((product.countInStock||0)/4)}, {size: 'L', stock: Math.floor((product.countInStock||0)/4)}, {size: 'XL', stock: Math.floor((product.countInStock||0)/4)}];
-                              setEditFormData({...product, sizes: initSizes, originalPrice: product.originalPrice || 0});
-                            }}
-                            className="bg-charcoal/5 dark:bg-offwhite/5 text-charcoal dark:text-offwhite px-4 py-2 rounded text-xs uppercase tracking-widest hover:bg-charcoal hover:text-white transition-colors whitespace-nowrap"
-                          >
-                            Edit
-                          </button>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => {
+                                setEditingProduct(product);
+                                // Load images array into productImages state
+                                setProductImages(product.images && product.images.length > 0 ? product.images : [product.image].filter(Boolean));
+                                // Ensure sizes array exists for legacy products
+                                const initSizes = product.sizes?.length > 0 ? product.sizes : [{size: 'S', stock: Math.floor((product.countInStock||0)/4)}, {size: 'M', stock: Math.floor((product.countInStock||0)/4)}, {size: 'L', stock: Math.floor((product.countInStock||0)/4)}, {size: 'XL', stock: Math.floor((product.countInStock||0)/4)}];
+                                setEditFormData({...product, sizes: initSizes, originalPrice: product.originalPrice || 0});
+                              }}
+                              className="bg-charcoal/5 dark:bg-offwhite/5 text-charcoal dark:text-offwhite px-4 py-2 rounded text-xs uppercase tracking-widest hover:bg-charcoal hover:text-white transition-colors whitespace-nowrap"
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              onClick={() => handleProductDelete(product._id)}
+                              className="bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 p-2 rounded hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+                              title="Delete Product"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
