@@ -223,7 +223,7 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
             {/* Coupon Section */}
             <div className="mb-8 p-4 bg-charcoal/5 dark:bg-white/5 rounded-lg border border-charcoal/10">
                 <div className="flex items-center gap-2 mb-3">
-                    <Ticket className="w-4 h-4 text-gold" />
+                    <Tag className="w-4 h-4 text-gold" />
                     <span className="text-xs uppercase tracking-widest font-bold text-charcoal/70 dark:text-white/70">Have a Coupon?</span>
                 </div>
                 
