@@ -115,8 +115,8 @@ const AppLayout = () => {
         </>
       )}
       
-      {/* Admin Assistant should only show on Admin visually, or globally if desired. Let's keep it global for now as per previous logic */}
-      <AdminAssistant />
+      {/* Admin Assistant should only show on Admin routes */}
+      {isAdminRoute && <AdminAssistant />}
     </div>
   );
 };
