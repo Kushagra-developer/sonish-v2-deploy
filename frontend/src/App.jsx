@@ -49,8 +49,10 @@ const AppLayout = () => {
   const envMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
   const [apiMaintenance, setApiMaintenance] = useState(false);
   const [isChecking, setIsChecking] = useState(!isAdminRoute);
+  const [activeFont, setActiveFont] = useState("'Inter', sans-serif");
 
   useEffect(() => {
+    // 1. Fetch Maintenance Status
     if (!isAdminRoute) {
       setIsChecking(true);
       fetch(`${API}/api/health`)
@@ -63,7 +65,38 @@ const AppLayout = () => {
     } else {
       setIsChecking(false);
     }
+
+    // 2. Fetch System Settings (Font)
+    fetch(`${API}/api/settings`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.activeFont) {
+          setActiveFont(data.activeFont);
+          applyFont(data.activeFont);
+        }
+      })
+      .catch(err => console.error('Error fetching settings:', err));
   }, [location.pathname, isAdminRoute]);
+
+  const applyFont = (fontValue) => {
+    // Extract font name for Google Fonts URL
+    // e.g., "'Playfair Display', serif" -> "Playfair+Display"
+    const fontName = fontValue.split(',')[0].replace(/'/g, '').trim();
+    const googleFontUrl = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@300;400;500;600;700&display=swap`;
+    
+    // Check if link already exists
+    let link = document.getElementById('dynamic-font-link');
+    if (!link) {
+      link = document.createElement('link');
+      link.id = 'dynamic-font-link';
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+    link.href = googleFontUrl;
+
+    // Apply to root
+    document.documentElement.style.setProperty('--font-primary', fontValue);
+  };
 
   const isMaintenanceMode = envMaintenance || apiMaintenance;
 

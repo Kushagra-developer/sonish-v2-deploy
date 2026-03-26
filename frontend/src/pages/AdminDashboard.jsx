@@ -62,6 +62,21 @@ const AdminDashboard = () => {
   const [newCoupon, setNewCoupon] = useState({ code: '', discountType: 'percentage', discountAmount: '', minPurchase: 0, expiryDate: '', usageLimit: '' });
   const [couponLoading, setCouponLoading] = useState(false);
 
+  // Design / Settings States
+  const [settings, setSettings] = useState({ activeFont: "'Inter', sans-serif" });
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  const FONT_OPTIONS = [
+    { name: 'Inter (Default)', value: "'Inter', sans-serif" },
+    { name: 'Playfair Display (Elegant)', value: "'Playfair Display', serif" },
+    { name: 'Bodoni Moda (High-End)', value: "'Bodoni Moda', serif" },
+    { name: 'Montserrat (Modern)', value: "'Montserrat', sans-serif" },
+    { name: 'Cormorant Garamond (Sophisticated)', value: "'Cormorant Garamond', serif" },
+    { name: 'Outfit (Minimalist)', value: "'Outfit', sans-serif" },
+    { name: 'Prata (Editorial)', value: "'Prata', serif" },
+    { name: 'Work Sans (Clean)', value: "'Work Sans', sans-serif" },
+  ];
+
   const handleLogout = async () => {
     try {
       await authFetch(`${API}/api/users/logout`, { method: 'POST' });
@@ -81,9 +96,10 @@ const AdminDashboard = () => {
           authFetch(`${API}/api/categories/admin`),
           authFetch(`${API}/api/admin/maintenance`),
           authFetch(`${API}/api/coupons`),
+          fetch(`${API}/api/settings`),
         ]);
 
-        const [prodRes, orderRes, bannersRes, catRes, maintRes, couponsRes] = results;
+        const [prodRes, orderRes, bannersRes, catRes, maintRes, couponsRes, settingsRes] = results;
 
         if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
           setProducts(await prodRes.value.json());
@@ -109,6 +125,10 @@ const AdminDashboard = () => {
         if (couponsRes && couponsRes.status === 'fulfilled' && couponsRes.value.ok) {
           setCoupons(await couponsRes.value.json());
         }
+
+        if (settingsRes && settingsRes.status === 'fulfilled' && settingsRes.value.ok) {
+          setSettings(await settingsRes.value.json());
+        }
       } catch (err) {
         console.error('Admin fetch error:', err);
       } finally {
@@ -116,19 +136,43 @@ const AdminDashboard = () => {
       }
     };
     fetchData();
-
-    // Poll for new orders every 10 seconds
-    const interval = setInterval(async () => {
-      try {
-        const orderRes = await authFetch(`${API}/api/orders`);
-        if (orderRes.ok) {
-          setOrders(await orderRes.json());
-        }
-      } catch (err) {}
-    }, 10000);
-
-    return () => clearInterval(interval);
   }, []);
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    setIsSavingSettings(true);
+    try {
+      const res = await authJsonFetch(`${API}/api/settings`, {
+        method: 'PUT',
+        body: JSON.stringify(settings)
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setSettings(updated);
+        // Apply immediately to local preview
+        document.documentElement.style.setProperty('--font-primary', updated.activeFont);
+        
+        // Dynamically load font if not already loaded (matching App.jsx logic)
+        const fontName = updated.activeFont.split(',')[0].replace(/'/g, '').trim();
+        const googleFontUrl = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@300;400;500;600;700&display=swap`;
+        let link = document.getElementById('dynamic-font-link');
+        if (!link) {
+          link = document.createElement('link');
+          link.id = 'dynamic-font-link';
+          link.rel = 'stylesheet';
+          document.head.appendChild(link);
+        }
+        link.href = googleFontUrl;
+        
+        alert('Site settings updated successfully!');
+      }
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      alert('Failed to update settings.');
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
 
   const totalRevenue = orders
     .filter(o => o.isPaid)
@@ -345,6 +389,7 @@ const AdminDashboard = () => {
     { id: 'categories', label: 'Categories', icon: Layers },
     { id: 'coupons', label: 'Coupons', icon: Tag },
     { id: 'banners', label: 'Banners', icon: Image },
+    { id: 'design', label: 'Design', icon: Layers },
     { id: 'security', label: 'Security', icon: ShieldCheck },
   ];
 
@@ -1724,7 +1769,53 @@ const AdminDashboard = () => {
               </div>
             </div>
           </motion.div>
+        )}        {/* Design Tab */}
+        {activeTab === 'design' && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="mb-8">
+              <h2 className="text-xl font-serif text-charcoal dark:text-offwhite italic">Website Design</h2>
+              <p className="text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 font-bold mt-1">Configure site-wide typography and aesthetics</p>
+            </div>
+
+            <div className="bg-white dark:bg-charcoal/30 border border-charcoal/5 dark:border-offwhite/5 p-8 rounded-xl shadow-xl max-w-2xl">
+              <form onSubmit={handleSaveSettings}>
+                <div className="mb-8">
+                  <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-4 font-bold">Primary Website Font</label>
+                  <div className="grid grid-cols-1 gap-4">
+                    <select 
+                      value={settings.activeFont}
+                      onChange={(e) => setSettings({ ...settings, activeFont: e.target.value })}
+                      className="w-full bg-transparent border border-charcoal/10 dark:border-offwhite/10 p-4 rounded-lg text-sm focus:border-gold outline-none transition-colors"
+                    >
+                      {FONT_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mb-8 p-8 border border-dashed border-charcoal/10 dark:border-offwhite/10 rounded-lg">
+                  <p className="text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-4 font-bold">Font Preview</p>
+                  <div style={{ fontFamily: settings.activeFont }}>
+                    <h4 className="text-2xl mb-2">The Art of Modern Elegance</h4>
+                    <p className="text-sm opacity-70 leading-relaxed">
+                      Discover our curated collection of premium essentials, designed for those who appreciate the finer details of minimalist luxury and timeless craftsmanship.
+                    </p>
+                  </div>
+                </div>
+
+                <button 
+                  type="submit" 
+                  disabled={isSavingSettings}
+                  className="w-full bg-charcoal dark:bg-offwhite text-white dark:text-charcoal py-4 rounded-lg text-xs uppercase tracking-widest font-bold hover:bg-gold hover:text-white transition-all shadow-lg disabled:opacity-50"
+                >
+                  {isSavingSettings ? 'Saving Changes...' : 'Save Design Settings'}
+                </button>
+              </form>
+            </div>
+          </motion.div>
         )}
+
       </div>
     </motion.div>
   );
