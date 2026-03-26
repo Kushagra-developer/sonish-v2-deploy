@@ -22,6 +22,10 @@ const ProductDetails = () => {
     const [activeTab, setActiveTab] = useState('description');
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [showSizeGuide, setShowSizeGuide] = useState(false);
+    const [showNotifyMe, setShowNotifyMe] = useState(false);
+    const [notifyEmail, setNotifyEmail] = useState('');
+    const [isNotifying, setIsNotifying] = useState(false);
+    const [notifySuccess, setNotifySuccess] = useState(false);
 
     // Zoom Effect States
     const [isZoomed, setIsZoomed] = useState(false);
@@ -40,6 +44,12 @@ const ProductDetails = () => {
                     const wishlist = loadWishlist();
                     if (wishlist.some(item => item._id === data._id)) {
                         setIsWishlisted(true);
+                    }
+
+                    // Pre-fill notify email if user is logged in
+                    const userInfo = localStorage.getItem('userInfo');
+                    if (userInfo) {
+                        setNotifyEmail(JSON.parse(userInfo).email);
                     }
                 }
             } catch (error) {
@@ -108,6 +118,36 @@ const ProductDetails = () => {
         } else {
             navigator.clipboard.writeText(window.location.href);
             alert('Product link copied to clipboard!');
+        }
+    };
+
+    const handleNotifyMe = async (e) => {
+        e.preventDefault();
+        setIsNotifying(true);
+        try {
+            const res = await fetch(`${API}/api/notifications`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productId: product._id,
+                    email: notifyEmail,
+                    size: selectedSize
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setNotifySuccess(true);
+                setTimeout(() => {
+                    setShowNotifyMe(false);
+                    setNotifySuccess(false);
+                }, 3000);
+            } else {
+                alert(data.message || 'Error setting up notification');
+            }
+        } catch (error) {
+            alert('Something went wrong. Please try again.');
+        } finally {
+            setIsNotifying(false);
         }
     };
 
@@ -374,12 +414,21 @@ const ProductDetails = () => {
                                 <button onClick={() => setQuantity(quantity + 1)} className="text-charcoal/50 dark:text-offwhite/50 hover:text-charcoal dark:hover:text-offwhite"><Plus className="w-4 h-4" /></button>
                             </div>
 
-                            <button
-                                onClick={handleAddToCart}
-                                className="flex-1 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal h-16 text-sm uppercase tracking-widest font-bold hover:bg-black dark:hover:bg-white transition-colors flex items-center justify-center gap-2"
-                            >
-                                Add to Cart <span className="text-white/50 dark:text-charcoal/50 text-xs font-normal">- ₹{((product?.price || 0) * quantity).toFixed(2)}</span>
-                            </button>
+                            {displaySizes.find(s => s.size === selectedSize)?.stock > 0 ? (
+                                <button
+                                    onClick={handleAddToCart}
+                                    className="flex-1 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal h-16 text-sm uppercase tracking-widest font-bold hover:bg-black dark:hover:bg-white transition-colors flex items-center justify-center gap-2"
+                                >
+                                    Add to Cart <span className="text-white/50 dark:text-charcoal/50 text-xs font-normal">- ₹{((product?.price || 0) * quantity).toFixed(2)}</span>
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setShowNotifyMe(true)}
+                                    className="flex-1 border-2 border-charcoal dark:border-offwhite text-charcoal dark:text-offwhite h-16 text-sm uppercase tracking-widest font-bold hover:bg-charcoal hover:text-white dark:hover:bg-offwhite dark:hover:text-charcoal transition-all flex items-center justify-center gap-2"
+                                >
+                                    Notify Me
+                                </button>
+                            )}
 
                             <div className="flex gap-2">
                                 <button
@@ -536,7 +585,11 @@ const ProductDetails = () => {
                         <span className="text-sm text-red-600 dark:text-red-400 font-bold">₹{(product?.price || 0).toFixed(2)}</span>
                     </div>
                     <div className="ml-auto flex items-center gap-4">
-                        <button onClick={handleAddToCart} className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-10 h-14 text-sm font-bold uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-colors">Add to Cart</button>
+                        {displaySizes.find(s => s.size === selectedSize)?.stock > 0 ? (
+                            <button onClick={handleAddToCart} className="bg-charcoal dark:bg-offwhite text-white dark:text-charcoal px-10 h-14 text-sm font-bold uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-colors">Add to Cart</button>
+                        ) : (
+                            <button onClick={() => setShowNotifyMe(true)} className="border border-charcoal dark:border-offwhite text-charcoal dark:text-offwhite px-10 h-14 text-sm font-bold uppercase tracking-widest hover:bg-charcoal hover:text-white dark:hover:bg-white dark:hover:text-charcoal transition-all">Notify Me</button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -571,8 +624,61 @@ const ProductDetails = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <AnimatePresence>
+                {showNotifyMe && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/60 backdrop-blur-sm"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white dark:bg-charcoal p-8 max-w-md w-full relative shadow-2xl border border-charcoal/10"
+                        >
+                            <button onClick={() => setShowNotifyMe(false)} className="absolute top-4 right-4 text-charcoal/50 dark:text-offwhite/50 hover:text-charcoal dark:hover:text-offwhite transition-colors"><X className="w-5 h-5" /></button>
+                            
+                            <div className="text-center">
+                                <div className="w-12 h-12 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Truck className="w-6 h-6 text-gold" />
+                                </div>
+                                <h2 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-2">Back in Stock Notification</h2>
+                                <p className="text-xs text-charcoal/60 dark:text-offwhite/60 mb-6 uppercase tracking-widest">Size: {selectedSize}</p>
+                                
+                                {notifySuccess ? (
+                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="py-4">
+                                        <div className="text-green-600 dark:text-green-400 font-medium mb-1">Great choice!</div>
+                                        <p className="text-sm text-charcoal/70 dark:text-offwhite/70">We'll email you at <span className="font-bold">{notifyEmail}</span> as soon as this is back in stock.</p>
+                                    </motion.div>
+                                ) : (
+                                    <form onSubmit={handleNotifyMe} className="space-y-4">
+                                        <p className="text-sm text-charcoal/70 dark:text-offwhite/70 mb-4">Leave your email and we'll let you know the moment {product.name} is available in your size.</p>
+                                        <input 
+                                            type="email" 
+                                            required
+                                            value={notifyEmail}
+                                            onChange={(e) => setNotifyEmail(e.target.value)}
+                                            placeholder="Enter your email"
+                                            className="w-full bg-charcoal/5 dark:bg-white/5 border border-charcoal/10 dark:border-offwhite/10 px-4 py-3 text-sm focus:border-gold outline-none transition-colors dark:text-white"
+                                        />
+                                        <button 
+                                            type="submit"
+                                            disabled={isNotifying}
+                                            className="w-full bg-charcoal dark:bg-offwhite text-white dark:text-charcoal py-4 text-xs uppercase tracking-widest font-bold hover:bg-black dark:hover:bg-white transition-colors disabled:opacity-50"
+                                        >
+                                            {isNotifying ? 'Setting up...' : 'Notify Me When Available'}
+                                        </button>
+                                    </form>
+                                )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 };
 
 export default ProductDetails;
+tDetails;

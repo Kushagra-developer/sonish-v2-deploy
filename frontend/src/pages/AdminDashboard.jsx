@@ -61,6 +61,9 @@ const AdminDashboard = () => {
   const [editingCoupon, setEditingCoupon] = useState(null);
   const [newCoupon, setNewCoupon] = useState({ code: '', discountType: 'percentage', discountAmount: '', minPurchase: 0, expiryDate: '', usageLimit: '' });
   const [couponLoading, setCouponLoading] = useState(false);
+  // Notifications
+  const [notifications, setNotifications] = useState([]);
+  const [notificationLoading, setNotificationLoading] = useState(false);
 
   // Design / Settings States
   const [settings, setSettings] = useState({ activeFont: "'Inter', sans-serif" });
@@ -94,12 +97,13 @@ const AdminDashboard = () => {
           authFetch(`${API}/api/orders`),
           authFetch(`${API}/api/banners/admin`),
           authFetch(`${API}/api/categories/admin`),
-          authFetch(`${API}/api/admin/maintenance`),
+           authFetch(`${API}/api/admin/maintenance`),
           authFetch(`${API}/api/coupons`),
+          authFetch(`${API}/api/notifications`),
           fetch(`${API}/api/settings`),
         ]);
 
-        const [prodRes, orderRes, bannersRes, catRes, maintRes, couponsRes, settingsRes] = results;
+        const [prodRes, orderRes, bannersRes, catRes, maintRes, couponsRes, notifRes, settingsRes] = results;
 
         if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
           setProducts(await prodRes.value.json());
@@ -128,6 +132,10 @@ const AdminDashboard = () => {
 
         if (settingsRes && settingsRes.status === 'fulfilled' && settingsRes.value.ok) {
           setSettings(await settingsRes.value.json());
+        }
+
+        if (notifRes && notifRes.status === 'fulfilled' && notifRes.value.ok) {
+          setNotifications(await notifRes.value.json());
         }
       } catch (err) {
         console.error('Admin fetch error:', err);
@@ -171,6 +179,20 @@ const AdminDashboard = () => {
       alert('Failed to update settings.');
     } finally {
       setIsSavingSettings(false);
+    }
+  };
+
+  const handleUpdateNotificationStatus = async (id, status) => {
+    try {
+      const res = await authJsonFetch(`${API}/api/notifications/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        setNotifications(notifications.map(n => n._id === id ? { ...n, status } : n));
+      }
+    } catch (err) {
+      console.error('Error updating notification:', err);
     }
   };
 
@@ -1341,7 +1363,6 @@ const AdminDashboard = () => {
           </motion.div>
         )}
 
-        {/* Banners Tab */}
         {/* Coupons Tab */}
         {activeTab === 'coupons' && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -1509,6 +1530,72 @@ const AdminDashboard = () => {
           </motion.div>
         )}
 
+        {/* Notifications Tab */}
+        {activeTab === 'notifications' && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-serif text-charcoal">Back in Stock Requests</h2>
+                <div className="bg-gold/10 px-4 py-2 rounded-full border border-gold/20">
+                  <span className="text-xs font-bold text-gold uppercase tracking-widest">
+                    {notifications.filter(n => n.status === 'pending').length} Pending
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-charcoal/5 overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-charcoal/5 border-b border-charcoal/10">
+                    <tr>
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-charcoal/50">Product</th>
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-charcoal/50">Customer Email</th>
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-charcoal/50">Size</th>
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-charcoal/50">Date</th>
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-charcoal/50">Status</th>
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-charcoal/50">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-charcoal/5">
+                    {notifications.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="px-6 py-12 text-center text-charcoal/40 italic">No notification requests yet.</td>
+                      </tr>
+                    ) : (
+                      notifications.map((notif) => (
+                        <tr key={notif._id} className="hover:bg-charcoal/[0.01] transition-colors">
+                          <td className="px-6 py-4 text-sm font-medium text-charcoal">
+                            {notif.product?.name || 'Deleted Product'}
+                            <div className="text-[10px] text-charcoal/40 uppercase">Stock: {notif.product?.countInStock || 0}</div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-charcoal/70">{notif.email}</td>
+                          <td className="px-6 py-4 text-sm font-bold text-gold">{notif.size}</td>
+                          <td className="px-6 py-4 text-sm text-charcoal/50">
+                            {new Date(notif.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${notif.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                              {notif.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {notif.status === 'pending' && (
+                              <button 
+                                onClick={() => handleUpdateNotificationStatus(notif._id, 'notified')}
+                                className="text-gold hover:text-charcoal transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest"
+                              >
+                                <CheckCircle className="w-3 h-3" /> Mark Notified
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </motion.div>
+          )}
+
+        {/* Banners Tab */}
         {activeTab === 'banners' && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <div className="flex justify-between items-center mb-8">
