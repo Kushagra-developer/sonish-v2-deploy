@@ -30,7 +30,8 @@ const AdminDashboard = () => {
       { label: 'Closure', value: '' },
       { label: 'Transparency', value: '' }
     ],
-    sizes: [{size: 'S', stock: 0}, {size: 'M', stock: 0}, {size: 'L', stock: 0}, {size: 'XL', stock: 0}] 
+    sizes: [{size: 'S', stock: 0}, {size: 'M', stock: 0}, {size: 'L', stock: 0}, {size: 'XL', stock: 0}],
+    sizeChart: ''
   });
   const [editFormData, setEditFormData] = useState(null);
   const [addLoading, setAddLoading] = useState(false);
@@ -595,7 +596,8 @@ const AdminDashboard = () => {
                         body: JSON.stringify({
                           ...newProduct,
                           images: productImages.length > 0 ? productImages : [newProduct.image || '/images/sample.webp'],
-                          image: productImages.length > 0 ? productImages[0] : (newProduct.image || '/images/sample.webp')
+                          image: productImages.length > 0 ? productImages[0] : (newProduct.image || '/images/sample.webp'),
+                          sizeChart: newProduct.sizeChart
                         })
                       });
                         if (res.ok) {
@@ -687,6 +689,10 @@ const AdminDashboard = () => {
                         <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Material & Care</label>
                         <textarea value={newProduct.materialAndCare} onChange={e => setNewProduct({...newProduct, materialAndCare: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" rows="3" placeholder="Polyester / Machine-wash"></textarea>
                       </div>
+                      <div>
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Size Chart (Image URL)</label>
+                        <input type="text" value={newProduct.sizeChart} onChange={e => setNewProduct({...newProduct, sizeChart: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded" placeholder="https://example.com/size-guide.jpg" />
+                      </div>
                       <div className="border border-charcoal/5 p-4 rounded bg-gray-50/50">
                         <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 mb-3 font-bold">Specifications</label>
                         <div className="space-y-3">
@@ -727,7 +733,8 @@ const AdminDashboard = () => {
                         body: JSON.stringify({
                           ...editFormData,
                           images: productImages.length > 0 ? productImages : [editFormData.image || '/images/placeholder.jpg'],
-                          image: productImages.length > 0 ? productImages[0] : (editFormData.image || '/images/placeholder.jpg')
+                          image: productImages.length > 0 ? productImages[0] : (editFormData.image || '/images/placeholder.jpg'),
+                          sizeChart: editFormData.sizeChart
                         })
                       });
                         if (res.ok) {
@@ -832,6 +839,10 @@ const AdminDashboard = () => {
                         <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Material & Care</label>
                         <textarea value={editFormData.materialAndCare} onChange={e => setEditFormData({...editFormData, materialAndCare: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded text-charcoal dark:text-offwhite" rows="3" placeholder="Fabric info..."></textarea>
                       </div>
+                      <div>
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-1">Size Chart (Image URL)</label>
+                        <input type="text" value={editFormData.sizeChart} onChange={e => setEditFormData({...editFormData, sizeChart: e.target.value})} className="w-full p-2 border border-charcoal/20 dark:border-offwhite/20 bg-transparent rounded text-charcoal dark:text-offwhite" placeholder="https://example.com/size-guide.jpg" />
+                      </div>
                       <div className="md:col-span-2 border border-charcoal/10 p-4 rounded bg-gray-50/50 dark:bg-charcoal/10">
                         <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-3 font-bold">Specifications</label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
@@ -931,6 +942,7 @@ const AdminDashboard = () => {
                                   sizes: initSizes, 
                                   originalPrice: product.originalPrice || 0,
                                   sizeAndFit: product.sizeAndFit || '',
+                                  sizeChart: product.sizeChart || '',
                                   materialAndCare: product.materialAndCare || '',
                                   specifications: initSpecs
                                 });

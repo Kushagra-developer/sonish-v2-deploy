@@ -39,6 +39,7 @@ const createProduct = async (req, res) => {
     sizes: req.body.sizes || [],
     numReviews: 0,
     description: req.body.description || 'Sample description',
+    sizeChart: req.body.sizeChart || '',
   });
 
   const createdProduct = await product.save();
@@ -49,7 +50,7 @@ const createProduct = async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = async (req, res) => {
-  const { name, price, originalPrice, description, image, images, brand, category, countInStock, sizes } = req.body;
+  const { name, price, originalPrice, description, image, images, brand, category, countInStock, sizes, sizeChart } = req.body;
 
   const product = await Product.findById(req.params.id);
 
@@ -64,6 +65,7 @@ const updateProduct = async (req, res) => {
     product.category = category || product.category;
     product.countInStock = countInStock !== undefined ? countInStock : product.countInStock;
     product.sizes = sizes || product.sizes;
+    product.sizeChart = sizeChart !== undefined ? sizeChart : product.sizeChart;
 
     const updatedProduct = await product.save();
     res.json(updatedProduct);

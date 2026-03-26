@@ -604,21 +604,31 @@ const ProductDetails = () => {
                             <button onClick={() => setShowSizeGuide(false)} className="absolute top-4 right-4 text-charcoal/50 dark:text-offwhite/50 hover:text-charcoal dark:hover:text-offwhite"><X className="w-6 h-6" /></button>
                             <h2 className="text-2xl font-serif text-charcoal dark:text-offwhite mb-6">Size Guide</h2>
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left text-charcoal dark:text-offwhite">
-                                    <thead className="bg-charcoal/5 dark:bg-offwhite/5 border-b border-charcoal/10 dark:border-offwhite/10">
-                                        <tr><th className="p-3">Size</th><th className="p-3">Chest (in)</th><th className="p-3">Waist (in)</th><th className="p-3">Hips (in)</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        {['XS (34)', 'S (36)', 'M (38)', 'L (40)', 'XL (42)'].map((row, i) => (
-                                            <tr key={i} className="border-b border-charcoal/10 dark:border-offwhite/10">
-                                                <td className="p-3 font-medium">{row}</td>
-                                                <td className="p-3">{32 + i * 2}-{34 + i * 2}</td>
-                                                <td className="p-3">{26 + i * 2}-{28 + i * 2}</td>
-                                                <td className="p-3">{36 + i * 2}-{38 + i * 2}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                {product.sizeChart ? (
+                                    <div className="flex justify-center">
+                                        <img 
+                                            src={product.sizeChart} 
+                                            alt="Size Chart" 
+                                            className="max-w-full h-auto rounded shadow-sm border border-charcoal/5 dark:border-offwhite/5" 
+                                        />
+                                    </div>
+                                ) : (
+                                    <table className="w-full text-sm text-left text-charcoal dark:text-offwhite">
+                                        <thead className="bg-charcoal/5 dark:bg-offwhite/5 border-b border-charcoal/10 dark:border-offwhite/10">
+                                            <tr><th className="p-3">Size</th><th className="p-3">Chest (in)</th><th className="p-3">Waist (in)</th><th className="p-3">Hips (in)</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            {['XS (34)', 'S (36)', 'M (38)', 'L (40)', 'XL (42)'].map((row, i) => (
+                                                <tr key={i} className="border-b border-charcoal/10 dark:border-offwhite/10">
+                                                    <td className="p-3 font-medium">{row}</td>
+                                                    <td className="p-3">{32 + i * 2}-{34 + i * 2}</td>
+                                                    <td className="p-3">{26 + i * 2}-{28 + i * 2}</td>
+                                                    <td className="p-3">{36 + i * 2}-{38 + i * 2}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
                             </div>
                         </div>
                     </motion.div>

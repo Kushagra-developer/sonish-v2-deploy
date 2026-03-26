@@ -79,6 +79,9 @@ const productSchema = mongoose.Schema(
     sizeAndFit: {
       type: String,
     },
+    sizeChart: {
+      type: String, // URL or Base64 of the size guide image
+    },
     materialAndCare: {
       type: String,
     },

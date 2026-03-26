@@ -54,8 +54,8 @@ const Hero = () => {
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
             transition={{ duration: 10, ease: 'linear' }}
-            src={slides[currentSlide].image}
-            alt={slides[currentSlide].title}
+            src={slides[currentSlide]?.image}
+            alt={slides[currentSlide]?.title}
             className="w-full h-full object-cover object-top"
           />
         </motion.div>
@@ -73,16 +73,16 @@ const Hero = () => {
             className="flex flex-col items-center"
           >
             <span className="text-white text-sm md:text-md uppercase tracking-[0.4em] font-light mb-6 block border-b border-white/30 pb-2">
-              {slides[currentSlide].subtitle}
+              {slides[currentSlide]?.subtitle}
             </span>
             <h1 className="text-white text-5xl md:text-8xl lg:text-9xl font-serif mb-8 leading-tight tracking-tight drop-shadow-2xl">
-              {slides[currentSlide].title}
+              {slides[currentSlide]?.title}
             </h1>
             <p className="text-white/80 text-lg md:text-xl font-light mb-10 max-w-2xl tracking-wide italic">
-              {slides[currentSlide].description}
+              {slides[currentSlide]?.description}
             </p>
             <Link
-              to={slides[currentSlide].link}
+              to={slides[currentSlide]?.link || '/collections'}
               className="group relative inline-flex items-center justify-center px-12 py-5 text-xs uppercase tracking-[0.3em] text-white overflow-hidden border border-white/50 backdrop-blur-sm transition-all duration-500 hover:border-white w-auto"
             >
               <span className="relative z-10 group-hover:text-charcoal transition-colors duration-500 font-bold">Discover The Edit</span>
