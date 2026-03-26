@@ -4,6 +4,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
+import jwt from 'jsonwebtoken';
+import User from './models/userModel.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import razorpayRoutes from './routes/razorpayRoutes.js';
@@ -86,13 +88,32 @@ app.use(cookieParser());
 // ──────────────────────────────────────────────
 // Maintenance Mode Middleware
 // ──────────────────────────────────────────────
-app.use((req, res, next) => {
-  const isAdminRoute = req.path.startsWith('/api/admin') || 
+app.use(async (req, res, next) => {
+  const isAdminPath = req.path.startsWith('/api/admin') || 
                        req.path.includes('admin') || 
                        req.path.includes('login') || 
                        req.path.includes('logout');
 
-  if (isMaintenanceMode && !isAdminRoute && req.path !== '/api/health' && req.path !== '/') {
+  // If in maintenance mode, check if we should allow the request
+  if (isMaintenanceMode && !isAdminPath && req.path !== '/api/health' && req.path !== '/') {
+    
+    // Check for admin token to allow backend updates during maintenance
+    const token = req.headers.authorization?.startsWith('Bearer') 
+      ? req.headers.authorization.split(' ')[1] 
+      : req.cookies.jwt;
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId).select('isAdmin');
+        if (user && user.isAdmin) {
+          return next(); // Allow admin to bypass maintenance
+        }
+      } catch (err) {
+        // Token invalid or other error, proceed to block
+      }
+    }
+
     return res.status(503).json({
       message: 'Sonish Studio is currently undergoing a curated update. We will be back shortly with more elegance.',
       maintenance: true
