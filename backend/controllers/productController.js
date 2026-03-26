@@ -4,7 +4,7 @@ import Product from '../models/productModel.js';
 // @route   GET /api/products
 // @access  Public
 const getProducts = async (req, res) => {
-  const products = await Product.find({ countInStock: { $gt: 0 } });
+  const products = await Product.find({});
   res.json(products);
 };
 

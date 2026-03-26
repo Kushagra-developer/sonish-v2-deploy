@@ -189,6 +189,15 @@ const ProductCard = ({ product, isFeatured = false }) => {
           </div>
         )}
 
+        {/* Sold Out Overlay */}
+        {product.countInStock <= 0 && (
+          <div className="absolute inset-0 z-20 bg-charcoal/40 backdrop-blur-[2px] flex items-center justify-center p-4">
+            <div className="bg-white/90 dark:bg-charcoal/90 px-6 py-2 shadow-xl border border-gold/20">
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-charcoal dark:text-offwhite">Sold Out</span>
+            </div>
+          </div>
+        )}
+
         {/* Quick Add Overlay */}
         <motion.div
           initial={{ y: "100%" }}
@@ -196,12 +205,21 @@ const ProductCard = ({ product, isFeatured = false }) => {
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="absolute bottom-0 left-0 w-full z-30"
         >
-          <button
-            onClick={handleQuickAdd}
-            className="w-full bg-white/95 dark:bg-charcoal/95 backdrop-blur-md text-charcoal dark:text-offwhite py-5 text-xs uppercase tracking-[0.3em] font-bold hover:bg-gold hover:text-white transition-all duration-300"
-          >
-            Quick Add +
-          </button>
+          {product.countInStock > 0 ? (
+            <button
+              onClick={handleQuickAdd}
+              className="w-full bg-white/95 dark:bg-charcoal/95 backdrop-blur-md text-charcoal dark:text-offwhite py-5 text-xs uppercase tracking-[0.3em] font-bold hover:bg-gold hover:text-white transition-all duration-300"
+            >
+              Quick Add +
+            </button>
+          ) : (
+            <Link
+              to={`/product/${product._id || product.id}`}
+              className="w-full bg-charcoal dark:bg-offwhite text-white dark:text-charcoal py-5 text-xs uppercase tracking-[0.3em] font-bold hover:bg-gold hover:text-white transition-all duration-300 flex items-center justify-center"
+            >
+              Notify Me
+            </Link>
+          )}
         </motion.div>
       </div>
 
