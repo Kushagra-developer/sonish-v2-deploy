@@ -4,32 +4,8 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import API from '../../utils/api';
 
-const defaultSlides = [
-  {
-    image: '/images/hero1.png',
-    title: 'Modern Couture',
-    subtitle: 'Fall / Winter 2026',
-    description: 'An elegant fusion of minimalist design and high-fashion tailoring.',
-    link: '/collections?category=Women'
-  },
-  {
-    image: '/images/hero2.png',
-    title: 'Urban Chic',
-    subtitle: 'The City Edit',
-    description: 'Empowering silhouettes designed for the contemporary woman.',
-    link: '/collections?category=Women'
-  },
-  {
-    image: '/images/hero3.png',
-    title: 'Ethic Elegance',
-    subtitle: 'Luxury Collection',
-    description: 'Exquisite silk textures and ethereal lighting for timeless grace.',
-    link: '/collections?category=Women'
-  }
-];
-
 const Hero = () => {
-  const [slides, setSlides] = useState(defaultSlides);
+  const [slides, setSlides] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -39,9 +15,7 @@ const Hero = () => {
         const res = await fetch(`${API}/api/banners`);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.length > 0) {
-            setSlides(data);
-          }
+          setSlides(data || []);
         }
       } catch (err) {
         console.error('Failed to fetch banners:', err);
@@ -60,6 +34,9 @@ const Hero = () => {
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+
+  if (loading) return <div className="h-[85vh] bg-charcoal animate-pulse" />;
+  if (slides.length === 0) return null; // Or a default banner
 
   return (
     <div className="relative h-[85vh] w-full flex items-center justify-center overflow-hidden bg-charcoal">
