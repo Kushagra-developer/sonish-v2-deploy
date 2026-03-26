@@ -9,6 +9,22 @@ const getCoupons = asyncHandler(async (req, res) => {
   res.json(coupons);
 });
 
+// @desc    Get all active coupons (Public)
+// @route   GET /api/coupons/public
+// @access  Public
+const getPublicCoupons = asyncHandler(async (req, res) => {
+  const coupons = await Coupon.find({ 
+    isActive: true, 
+    $or: [
+      { expiryDate: { $gt: new Date() } }, 
+      { expiryDate: null }
+    ]
+  }).select('code discountType discountAmount minPurchase description usageLimit usageCount')
+    .sort({ createdAt: -1 });
+
+  res.json(coupons);
+});
+
 // @desc    Create a coupon (Admin)
 // @route   POST /api/coupons
 // @access  Private/Admin
@@ -122,4 +138,4 @@ const validateCoupon = asyncHandler(async (req, res) => {
   });
 });
 
-export { getCoupons, createCoupon, updateCoupon, deleteCoupon, validateCoupon };
+export { getCoupons, createCoupon, updateCoupon, deleteCoupon, validateCoupon, getPublicCoupons };

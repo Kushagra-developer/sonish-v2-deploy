@@ -14,6 +14,8 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [couponError, setCouponError] = useState('');
+    const [availableCoupons, setAvailableCoupons] = useState([]);
+    const [showOffers, setShowOffers] = useState(false);
 
     const discountValue = appliedCoupon ? appliedCoupon.discountValue : 0;
     const finalTotal = Math.max(0, cartTotal - discountValue);
@@ -30,6 +32,12 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
         };
         
         loadScript();
+
+        // Fetch Public Coupons
+        fetch(`${API}/api/coupons/public`)
+            .then(res => res.json())
+            .then(data => setAvailableCoupons(data))
+            .catch(err => console.error('Error fetching public coupons:', err));
     }, []);
 
     const handleApplyCoupon = async () => {
@@ -248,11 +256,48 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                     <div className="flex items-center justify-between bg-gold/10 border border-gold/30 p-2 px-4 rounded animate-pulse">
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-gold uppercase tracking-widest">{appliedCoupon.code} Applied</span>
-                            <span className="text-[10px] text-gold/80 font-medium">(₹{appliedCoupon.discountValue.toLocaleString()} saved)</span>
                         </div>
-                        <button onClick={handleRemoveCoupon} className="p-1 hover:bg-gold/20 rounded-full transition-colors">
-                            <X className="w-4 h-4 text-gold" />
+                        <button onClick={handleRemoveCoupon} className="text-gold hover:text-charcoal transition-colors">
+                            <X className="w-4 h-4" />
                         </button>
+                    </div>
+                )}
+
+                {/* Available Coupons List */}
+                {availableCoupons.length > 0 && (
+                    <div className="mt-4">
+                        <button 
+                            onClick={() => setShowOffers(!showOffers)}
+                            className="text-[10px] uppercase tracking-widest font-bold text-gold hover:text-charcoal transition-colors flex items-center gap-1 mb-2"
+                        >
+                            {showOffers ? 'Hide Offers' : 'View Available Offers'}
+                            <ChevronRight className={`w-3 h-3 transition-transform ${showOffers ? 'rotate-90' : ''}`} />
+                        </button>
+                        
+                        {showOffers && (
+                            <div className="space-y-2 mt-2 max-h-40 overflow-y-auto no-scrollbar">
+                                {availableCoupons.map(coupon => (
+                                    <div 
+                                        key={coupon._id}
+                                        onClick={() => {
+                                            setCouponCode(coupon.code);
+                                            setShowOffers(false);
+                                        }}
+                                        className="p-3 bg-white dark:bg-charcoal/20 border border-gold/20 rounded cursor-pointer hover:border-gold transition-all"
+                                    >
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className="text-sm font-bold text-charcoal dark:text-offwhite">{coupon.code}</span>
+                                            <span className="text-[10px] bg-gold text-white px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                                {coupon.discountType === 'percentage' ? `${coupon.discountAmount}% OFF` : `₹${coupon.discountAmount} OFF`}
+                                            </span>
+                                        </div>
+                                        <p className="text-[10px] text-charcoal/60 dark:text-offwhite/60">
+                                            Min. purchase: ₹{coupon.minPurchase}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
                 {couponError && <p className="text-[10px] text-red-500 mt-2 ml-1 font-bold uppercase tracking-tight">{couponError}</p>}
