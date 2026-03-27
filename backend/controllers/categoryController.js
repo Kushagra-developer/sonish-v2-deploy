@@ -34,6 +34,8 @@ const createCategory = asyncHandler(async (req, res) => {
     description: description || '',
     image: image || '',
     order: order || 0,
+    parent: req.body.parent || '',
+    isComingSoon: req.body.isComingSoon || false,
     isActive: req.body.isActive !== undefined ? req.body.isActive : true,
   });
 
@@ -47,12 +49,14 @@ const updateCategory = asyncHandler(async (req, res) => {
   const category = await Category.findById(req.params.id);
 
   if (category) {
-    const { name, description, image, isActive, order } = req.body;
+    const { name, description, image, isActive, order, parent, isComingSoon } = req.body;
     category.name = name !== undefined ? name : category.name;
     category.description = description !== undefined ? description : category.description;
     category.image = image !== undefined ? image : category.image;
     category.isActive = isActive !== undefined ? isActive : category.isActive;
     category.order = order !== undefined ? order : category.order;
+    category.parent = parent !== undefined ? parent : category.parent;
+    category.isComingSoon = isComingSoon !== undefined ? isComingSoon : category.isComingSoon;
 
     const updated = await category.save();
     res.json(updated);

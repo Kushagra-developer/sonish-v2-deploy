@@ -20,6 +20,14 @@ const categorySchema = mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    parent: {
+      type: String,
+      default: '', // 'Women', 'Men', or '' if it's a top-level category
+    },
+    isComingSoon: {
+      type: Boolean,
+      default: false,
+    },
     order: {
       type: Number,
       default: 0,

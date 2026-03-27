@@ -48,7 +48,7 @@ const AdminDashboard = () => {
   const [categories, setCategories] = useState([]);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [newCategory, setNewCategory] = useState({ name: '', description: '', image: '', order: 0 });
+  const [newCategory, setNewCategory] = useState({ name: '', description: '', image: '', order: 0, parent: '', isComingSoon: false });
   const [categoryLoading, setCategoryLoading] = useState(false);
   // Maintenance
   const [siteOnline, setSiteOnline] = useState(true);
@@ -1205,7 +1205,7 @@ const AdminDashboard = () => {
               <button 
                 onClick={() => {
                   setEditingCategory(null);
-                  setNewCategory({ name: '', description: '', image: '', order: categories.length });
+                  setNewCategory({ name: '', description: '', image: '', order: categories.length, parent: '', isComingSoon: false });
                   setIsAddingCategory(!isAddingCategory);
                 }}
                 className="flex items-center gap-2 px-6 py-3 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-[10px] uppercase tracking-widest font-bold rounded-full hover:bg-gold hover:text-white transition-all shadow-lg"
@@ -1241,6 +1241,19 @@ const AdminDashboard = () => {
                           placeholder="A brief description of this category..."
                           className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors h-20 resize-none"
                         />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-2 font-bold">Base Category (Parent)</label>
+                        <select
+                          value={newCategory.parent || ''}
+                          onChange={(e) => setNewCategory({...newCategory, parent: e.target.value})}
+                          className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
+                        >
+                          <option value="" className="text-charcoal bg-white">None (Top Level Category)</option>
+                          <option value="Women" className="text-charcoal bg-white">Women</option>
+                          <option value="Men" className="text-charcoal bg-white">Men</option>
+                        </select>
+                        <p className="text-[9px] text-charcoal/40 dark:text-offwhite/40 mt-1 uppercase tracking-widest">Select a parent if this is a subcategory.</p>
                       </div>
                     </div>
                     <div className="space-y-6">
@@ -1292,7 +1305,8 @@ const AdminDashboard = () => {
                             className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
                           />
                         </div>
-                        <div className="flex items-center gap-3 pt-6">
+                       <div className="flex flex-col gap-4 pt-1">
+                         <div className="flex items-center gap-3">
                            <input 
                              type="checkbox" 
                              id="isActiveCat"
@@ -1301,8 +1315,19 @@ const AdminDashboard = () => {
                              className="w-4 h-4 accent-gold"
                            />
                            <label htmlFor="isActiveCat" className="text-xs uppercase tracking-widest font-bold text-charcoal dark:text-offwhite">Active (Visible)</label>
-                        </div>
-                      </div>
+                         </div>
+                         <div className="flex items-center gap-3">
+                           <input 
+                             type="checkbox" 
+                             id="isComingSoonCat"
+                             checked={newCategory.isComingSoon === true}
+                             onChange={(e) => setNewCategory({...newCategory, isComingSoon: e.target.checked})}
+                             className="w-4 h-4 accent-gold"
+                           />
+                           <label htmlFor="isComingSoonCat" className="text-xs uppercase tracking-widest font-bold text-charcoal dark:text-offwhite">Mark as "Coming Soon"</label>
+                         </div>
+                       </div>
+                     </div>
                       <div className="flex gap-4 pt-4">
                         <button type="submit" disabled={categoryLoading} className="flex-1 px-6 py-4 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-gold hover:text-white transition-all">
                           {categoryLoading ? 'Saving...' : editingCategory ? 'Update Category' : 'Create Category'}
@@ -1335,8 +1360,14 @@ const AdminDashboard = () => {
                   <div className="p-5 flex flex-col justify-between w-full">
                      <div>
                        <div className="flex justify-between items-start mb-1">
-                         <h3 className="font-serif text-lg text-charcoal dark:text-offwhite leading-tight">{cat.name}</h3>
-                         <div className={`w-2 h-2 rounded-full mt-1.5 ${cat.isActive !== false ? 'bg-green-500' : 'bg-red-500'}`} title={cat.isActive !== false ? "Active" : "Inactive"} />
+                         <div>
+                           <h3 className="font-serif text-lg text-charcoal dark:text-offwhite leading-tight">{cat.name}</h3>
+                           {cat.parent && <span className="text-[9px] uppercase tracking-widest font-bold text-gold">Parent: {cat.parent}</span>}
+                         </div>
+                         <div className="flex flex-col gap-1 items-end">
+                           <div className={`w-2 h-2 rounded-full mt-1.5 ${cat.isActive !== false ? 'bg-green-500' : 'bg-red-500'}`} title={cat.isActive !== false ? "Active" : "Inactive"} />
+                           {cat.isComingSoon && <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px] uppercase tracking-widest font-bold rounded">Soon</span>}
+                         </div>
                        </div>
                        <p className="text-[10px] text-charcoal/50 dark:text-offwhite/50 line-clamp-2 leading-relaxed mb-4">{cat.description || 'No description provided.'}</p>
                      </div>
