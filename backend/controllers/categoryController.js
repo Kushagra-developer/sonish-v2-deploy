@@ -27,8 +27,21 @@ const getCategories = asyncHandler(async (req, res) => {
 // @route   GET /api/categories/admin
 // @access  Private/Admin
 const getAdminCategories = asyncHandler(async (req, res) => {
-  const categories = await Category.find({}).sort({ order: 1 });
-  res.json(categories);
+  const categories = await Category.find({}).sort({ order: 1 }).lean();
+
+  const counts = await Product.aggregate([
+    { $group: { _id: "$category", count: { $sum: 1 } } }
+  ]);
+  
+  const countMap = {};
+  counts.forEach(c => { countMap[c._id] = c.count; });
+  
+  const categoriesWithCount = categories.map(cat => ({
+    ...cat,
+    productCount: countMap[cat.name] || 0
+  }));
+
+  res.json(categoriesWithCount);
 });
 
 // @desc    Create a category
