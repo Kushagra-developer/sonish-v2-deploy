@@ -1253,7 +1253,7 @@ const AdminDashboard = () => {
                           <option value="Women" className="text-charcoal bg-white">Women</option>
                           <option value="Men" className="text-charcoal bg-white">Men</option>
                         </select>
-                        <p className="text-[9px] text-charcoal/40 dark:text-offwhite/40 mt-1 uppercase tracking-widest">Select a parent if this is a subcategory.</p>
+                        <p className="text-[9px] text-charcoal/40 dark:text-offwhite/40 mt-1 uppercase tracking-widest">Subcategories with 0 products display as "Coming Soon".</p>
                       </div>
                     </div>
                     <div className="space-y-6">
@@ -1354,6 +1354,7 @@ const AdminDashboard = () => {
                          </div>
                          <div className="flex flex-col gap-1 items-end">
                            <div className={`w-2 h-2 rounded-full mt-1.5 ${cat.isActive !== false ? 'bg-green-500' : 'bg-red-500'}`} title={cat.isActive !== false ? "Active" : "Inactive"} />
+                           {(cat.parent && cat.productCount === 0) && <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px] uppercase tracking-widest font-bold rounded">Soon</span>}
                          </div>
                        </div>
                        <p className="text-[10px] text-charcoal/50 dark:text-offwhite/50 line-clamp-2 leading-relaxed mb-4">{cat.description || 'No description provided.'}</p>
