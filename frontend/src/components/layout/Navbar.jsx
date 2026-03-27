@@ -136,7 +136,7 @@ const Navbar = () => {
                   <div className="bg-white dark:bg-charcoal shadow-xl border border-charcoal/5 dark:border-offwhite/5 py-2">
                     {categories.filter(c => c.parent === 'Women').map(cat => (
                       <div key={cat._id}>
-                        {cat.isComingSoon ? (
+                        {cat.productCount === 0 ? (
                           <button onClick={() => setComingSoonToast(true)} className="w-full text-left px-6 py-3 text-xs uppercase tracking-widest text-charcoal/60 dark:text-offwhite/60 hover:text-gold hover:bg-charcoal/5 dark:hover:bg-offwhite/5 transition-colors">
                             {cat.name} <span className="ml-2 text-[8px] bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded">Soon</span>
                           </button>
@@ -169,7 +169,7 @@ const Navbar = () => {
                   <div className="bg-white dark:bg-charcoal shadow-xl border border-charcoal/5 dark:border-offwhite/5 py-2">
                     {categories.filter(c => c.parent === 'Men').map(cat => (
                       <div key={cat._id}>
-                        {cat.isComingSoon ? (
+                        {cat.productCount === 0 ? (
                           <button onClick={() => setComingSoonToast(true)} className="w-full text-left px-6 py-3 text-xs uppercase tracking-widest text-charcoal/60 dark:text-offwhite/60 hover:text-gold hover:bg-charcoal/5 dark:hover:bg-offwhite/5 transition-colors">
                             {cat.name} <span className="ml-2 text-[8px] bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded">Soon</span>
                           </button>
@@ -277,7 +277,7 @@ const Navbar = () => {
                   <div className="flex flex-col gap-4">
                     {categories.filter(c => c.parent === 'Women').map(cat => (
                       <div key={cat._id} className="text-center">
-                        {cat.isComingSoon ? (
+                        {cat.productCount === 0 ? (
                           <button onClick={() => { setComingSoonToast(true); setIsMobileMenuOpen(false); }} className="text-charcoal/60 dark:text-offwhite/60 text-xs uppercase tracking-widest">
                             {cat.name} <span className="text-[8px] bg-amber-500/10 text-amber-600 px-1 py-0.5 rounded ml-1">Soon</span>
                           </button>
@@ -296,7 +296,7 @@ const Navbar = () => {
                   <div className="flex flex-col gap-4">
                     {categories.filter(c => c.parent === 'Men').map(cat => (
                       <div key={cat._id} className="text-center">
-                        {cat.isComingSoon ? (
+                        {cat.productCount === 0 ? (
                           <button onClick={() => { setComingSoonToast(true); setIsMobileMenuOpen(false); }} className="text-charcoal/60 dark:text-offwhite/60 text-xs uppercase tracking-widest">
                             {cat.name} <span className="text-[8px] bg-amber-500/10 text-amber-600 px-1 py-0.5 rounded ml-1">Soon</span>
                           </button>

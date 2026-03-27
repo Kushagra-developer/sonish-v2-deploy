@@ -1305,8 +1305,7 @@ const AdminDashboard = () => {
                             className="w-full bg-transparent border-b border-charcoal/10 dark:border-offwhite/10 py-3 text-sm focus:border-gold outline-none transition-colors"
                           />
                         </div>
-                       <div className="flex flex-col gap-4 pt-1">
-                         <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 pt-4">
                            <input 
                              type="checkbox" 
                              id="isActiveCat"
@@ -1315,18 +1314,7 @@ const AdminDashboard = () => {
                              className="w-4 h-4 accent-gold"
                            />
                            <label htmlFor="isActiveCat" className="text-xs uppercase tracking-widest font-bold text-charcoal dark:text-offwhite">Active (Visible)</label>
-                         </div>
-                         <div className="flex items-center gap-3">
-                           <input 
-                             type="checkbox" 
-                             id="isComingSoonCat"
-                             checked={newCategory.isComingSoon === true}
-                             onChange={(e) => setNewCategory({...newCategory, isComingSoon: e.target.checked})}
-                             className="w-4 h-4 accent-gold"
-                           />
-                           <label htmlFor="isComingSoonCat" className="text-xs uppercase tracking-widest font-bold text-charcoal dark:text-offwhite">Mark as "Coming Soon"</label>
-                         </div>
-                       </div>
+                        </div>
                      </div>
                       <div className="flex gap-4 pt-4">
                         <button type="submit" disabled={categoryLoading} className="flex-1 px-6 py-4 bg-charcoal dark:bg-offwhite text-white dark:text-charcoal text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-gold hover:text-white transition-all">
@@ -1366,7 +1354,6 @@ const AdminDashboard = () => {
                          </div>
                          <div className="flex flex-col gap-1 items-end">
                            <div className={`w-2 h-2 rounded-full mt-1.5 ${cat.isActive !== false ? 'bg-green-500' : 'bg-red-500'}`} title={cat.isActive !== false ? "Active" : "Inactive"} />
-                           {cat.isComingSoon && <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px] uppercase tracking-widest font-bold rounded">Soon</span>}
                          </div>
                        </div>
                        <p className="text-[10px] text-charcoal/50 dark:text-offwhite/50 line-clamp-2 leading-relaxed mb-4">{cat.description || 'No description provided.'}</p>
