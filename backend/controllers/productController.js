@@ -107,7 +107,7 @@ const getProductQRCode = async (req, res) => {
     throw new Error('Product not found');
   }
 
-  const siteUrl = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',')[0];
+  const siteUrl = process.env.SITE_URL || 'https://sonish.co.in';
   const productUrl = `${siteUrl}/product/${product._id}`;
 
   const qrData = JSON.stringify({

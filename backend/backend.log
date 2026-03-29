@@ -107,3 +107,13 @@ Node.js v20.19.6
 [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
 🚀  Server running on http://localhost:5001
 ✅  MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js`[39m
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+🚀  Server running on http://localhost:5001
+✅  MongoDB connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js`[39m
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🤖 agentic secret storage: https://dotenvx.com/as2
+🚀  Server running on http://localhost:5001
+✅  MongoDB connected

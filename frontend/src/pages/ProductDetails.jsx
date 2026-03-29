@@ -26,7 +26,6 @@ const ProductDetails = () => {
     const [notifyEmail, setNotifyEmail] = useState('');
     const [isNotifying, setIsNotifying] = useState(false);
     const [notifySuccess, setNotifySuccess] = useState(false);
-    const [qrCode, setQrCode] = useState(null);
 
     // Zoom Effect States
     const [isZoomed, setIsZoomed] = useState(false);
@@ -62,16 +61,6 @@ const ProductDetails = () => {
         fetchProduct();
         window.scrollTo(0, 0);
     }, [id]);
-
-    // Fetch QR code
-    useEffect(() => {
-        if (product?._id) {
-            fetch(`${API}/api/products/${product._id}/qrcode`)
-                .then(res => res.ok ? res.json() : null)
-                .then(data => { if (data) setQrCode(data); })
-                .catch(() => {});
-        }
-    }, [product?._id]);
 
     // --- FUNCTIONAL ACTIONS ---
 
@@ -388,15 +377,7 @@ const ProductDetails = () => {
                             </div>
                         </div>
 
-                        <h1 className="text-3xl md:text-4xl font-serif text-charcoal dark:text-offwhite mb-2">{product.name}</h1>
-
-                        {product.sku && (
-                            <div className="flex items-center gap-2 mb-4">
-                                <code className="text-[11px] font-mono text-gold bg-gold/10 px-2.5 py-1 rounded tracking-wider">
-                                    SKU: {product.sku}
-                                </code>
-                            </div>
-                        )}
+                        <h1 className="text-3xl md:text-4xl font-serif text-charcoal dark:text-offwhite mb-4">{product.name}</h1>
 
                         <div className="flex items-center gap-4 mb-8">
                             <span className="text-lg text-charcoal/50 dark:text-offwhite/50 line-through font-serif">₹{((product?.price || 0) * 1.3).toFixed(2)}</span>
@@ -478,20 +459,6 @@ const ProductDetails = () => {
                         <div className="flex items-center gap-2 text-xs text-charcoal/60 dark:text-offwhite/60">
                             <ShieldCheck className="w-4 h-4" /> <span>Guarantee Safe Checkout</span>
                         </div>
-
-                        {/* Product QR Code */}
-                        {qrCode && (
-                            <div className="mt-6 pt-6 border-t border-charcoal/10 dark:border-offwhite/10">
-                                <div className="flex items-center gap-4">
-                                    <img src={qrCode.qrCode} alt="Product QR Code" className="w-20 h-20 rounded border border-charcoal/10 dark:border-offwhite/10" />
-                                    <div>
-                                        <p className="text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-bold mb-1">Scan to Share</p>
-                                        <code className="text-xs font-mono text-gold">{product.sku}</code>
-                                        <p className="text-[10px] text-charcoal/40 dark:text-offwhite/40 mt-1">Scan this QR code to quickly share or save this product.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
 
