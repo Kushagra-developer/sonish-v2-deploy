@@ -159,6 +159,30 @@ const addOrderItems = async (req, res) => {
               <p style="font-size: 11px; color: #aaa; text-align: center; line-height: 1.6;">If you have any questions, simply reply to this email.<br/>© Sonish Studios · Mumbai, India</p>
             </div>`
         });
+
+        // Notify Admin
+        const adminEmail = process.env.ADMIN_EMAIL || 'sachdevak806@gmail.com';
+        await transporter.sendMail({
+          from: `"Sonish Studios System" <${process.env.EMAIL_USER || 'no-reply@sonish.co.in'}>`,
+          to: adminEmail,
+          subject: `[ACTION REQUIRED] New Order Received - #${createdOrder._id.toString().slice(-8)}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+              <h2>New Order Received!</h2>
+              <p>Customer <strong>${req.user.name}</strong> (${req.user.email}) just placed an order for <strong>₹${totalPrice.toFixed(2)}</strong>.</p>
+              <p>Please log in to the admin dashboard to review and fulfill order <strong>#${createdOrder._id.toString().slice(-8)}</strong>.</p>
+              <br/>
+              <h3>Order Details:</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                ${itemsHtml}
+              </table>
+              <br/>
+              <h3>Shipping to:</h3>
+              <p>${shippingAddress.address}, ${shippingAddress.city}, ${shippingAddress.postalCode}, ${shippingAddress.country}</p>
+            </div>
+          `
+        });
+
         if (!process.env.EMAIL_USER) {
           console.log('Preview Order Email URL: %s', nodemailer.getTestMessageUrl(info));
         }
