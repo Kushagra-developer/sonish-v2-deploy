@@ -6,17 +6,23 @@ const CookieBanner = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // In a real app we'd check localStorage
-    // Show banner after a slight delay on initial load
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 1500);
-    return () => clearTimeout(timer);
+    const consent = localStorage.getItem('cookieConsent');
+    if (!consent) {
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   const handleAccept = () => {
     setIsVisible(false);
-    // localStorage.setItem('cookieConsent', 'true');
+    localStorage.setItem('cookieConsent', 'accepted');
+  };
+
+  const handleDecline = () => {
+    setIsVisible(false);
+    localStorage.setItem('cookieConsent', 'declined');
   };
 
   return (
@@ -40,7 +46,7 @@ const CookieBanner = () => {
             
             <div className="flex items-center gap-4 w-full md:w-auto">
               <button 
-                onClick={() => setIsVisible(false)}
+                onClick={handleDecline}
                 className="flex-1 md:flex-none px-6 py-3 text-xs uppercase tracking-widest text-white/50 hover:text-white transition-colors"
               >
                 Decline
