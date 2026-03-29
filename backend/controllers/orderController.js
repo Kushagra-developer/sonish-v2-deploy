@@ -1,5 +1,6 @@
 import Order from '../models/orderModel.js';
 import User from '../models/userModel.js';
+import Product from '../models/productModel.js';
 import Coupon from '../models/couponModel.js';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
@@ -49,16 +50,24 @@ const addOrderItems = async (req, res) => {
         throw new Error('Invalid payment signature');
       }
     }
-    const order = new Order({
-      orderItems: orderItems.map((x) => ({
+    const enrichedOrderItems = await Promise.all(orderItems.map(async (x) => {
+      const productDoc = await Product.findById(x.product || x._id);
+      const baseSku = productDoc && productDoc.sku ? productDoc.sku : 'SNH-GEN-0000';
+      const sizeSuffix = x.selectedSize ? `-${x.selectedSize}` : '';
+      return {
         ...x,
-        product: x.product || x._id, // Handle both formats
-      })),
+        product: x.product || x._id,
+        size: x.selectedSize || 'N/A',
+        sku: `${baseSku}${sizeSuffix}`,
+      };
+    }));
+
+    const order = new Order({
+      orderItems: enrichedOrderItems,
       user: req.user._id,
       shippingAddress,
       paymentMethod,
       itemsPrice,
-      taxPrice,
       taxPrice,
       shippingPrice,
       totalPrice,
@@ -98,7 +107,8 @@ const addOrderItems = async (req, res) => {
         const itemsHtml = createdOrder.orderItems.map(item => `
           <tr>
             <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
-              <span style="font-size: 14px; color: #111;">${item.name}</span><br/>
+              <span style="font-size: 14px; color: #111; font-weight: bold;">${item.name}</span><br/>
+              <span style="font-size: 11px; color: #666; display: inline-block; margin-top: 4px;"><strong>SKU:</strong> ${item.sku} | <strong>Size:</strong> ${item.size}</span><br/>
               <span style="font-size: 11px; color: #999;">Qty: ${item.qty}</span>
             </td>
             <td style="padding: 12px 0; border-bottom: 1px solid #eee; text-align: right; font-size: 14px; color: #c9a84c;">

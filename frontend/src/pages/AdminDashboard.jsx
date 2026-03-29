@@ -6,6 +6,7 @@ import { authFetch, authJsonFetch } from '../utils/authFetch';
 
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
+  const [productSearchTerm, setProductSearchTerm] = useState('');
   const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedOrder, setExpandedOrder] = useState(null);
@@ -572,8 +573,17 @@ const AdminDashboard = () => {
         {activeTab === 'products' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div className="bg-white dark:bg-charcoal/50 border border-charcoal/5 dark:border-offwhite/5 rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-charcoal/5 dark:border-offwhite/5 flex justify-between items-center">
-                <h3 className="font-serif text-lg text-charcoal dark:text-offwhite">All Products ({products.length})</h3>
+              <div className="px-6 py-4 border-b border-charcoal/5 dark:border-offwhite/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <h3 className="font-serif text-lg text-charcoal dark:text-offwhite">All Products ({products.length})</h3>
+                  <input
+                    type="text"
+                    placeholder="Scan or type SKU / Name..."
+                    value={productSearchTerm}
+                    onChange={(e) => setProductSearchTerm(e.target.value)}
+                    className="px-3 py-1.5 text-xs tracking-wider border border-charcoal/10 dark:border-offwhite/10 rounded bg-transparent focus:border-gold outline-none w-full md:w-64 dark:text-offwhite transition-colors"
+                  />
+                </div>
                 <div className="flex gap-3">
                   <button
                     onClick={async () => {
@@ -901,7 +911,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-charcoal/5 dark:divide-offwhite/5">
-                    {products.map((product) => (
+                    {products.filter(p => p.name.toLowerCase().includes(productSearchTerm.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(productSearchTerm.toLowerCase()))).map((product) => (
                       <tr key={product._id} className="hover:bg-charcoal/[0.02] dark:hover:bg-offwhite/[0.02] transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
@@ -1088,8 +1098,9 @@ const AdminDashboard = () => {
                                   <div key={idx} className="flex items-center gap-3">
                                     <img src={item.image} alt={item.name} className="w-10 h-12 object-cover rounded-sm bg-gray-100" />
                                     <div className="flex-1">
-                                      <p className="text-[13px] text-charcoal dark:text-offwhite leading-tight">{item.name}</p>
-                                      <p className="text-[10px] text-charcoal/50 dark:text-offwhite/50">Qty: {item.qty || item.cartQuantity} × ₹{item.price}</p>
+                                      <p className="text-[13px] text-charcoal dark:text-offwhite leading-tight font-medium mb-1">{item.name}</p>
+                                      {item.sku && <code className="text-[9px] bg-gold/10 text-gold px-1.5 py-0.5 rounded tracking-widest block w-max mb-1">SKU: {item.sku}</code>}
+                                      <p className="text-[10px] text-charcoal/50 dark:text-offwhite/50">Size: {item.size || 'N/A'} | Qty: {item.qty || item.cartQuantity} × ₹{item.price}</p>
                                     </div>
                                   </div>
                                 ))}
