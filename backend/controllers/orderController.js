@@ -107,7 +107,7 @@ const addOrderItems = async (req, res) => {
           </tr>
         `).join('');
 
-        await transporter.sendMail({
+        const info = await transporter.sendMail({
           from: `"Sonish Studios" <${process.env.EMAIL_USER || 'no-reply@sonish.co.in'}>`,
           to: req.user.email,
           subject: `Order Confirmation - Receipt #${createdOrder._id.toString().slice(-8)}`,
@@ -159,6 +159,9 @@ const addOrderItems = async (req, res) => {
               <p style="font-size: 11px; color: #aaa; text-align: center; line-height: 1.6;">If you have any questions, simply reply to this email.<br/>© Sonish Studios · Mumbai, India</p>
             </div>`
         });
+        if (!process.env.EMAIL_USER) {
+          console.log('Preview Order Email URL: %s', nodemailer.getTestMessageUrl(info));
+        }
       }
     } catch (emailErr) {
       console.error('Order confirmation email failed:', emailErr.message);
