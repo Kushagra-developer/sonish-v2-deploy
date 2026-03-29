@@ -574,15 +574,33 @@ const AdminDashboard = () => {
             <div className="bg-white dark:bg-charcoal/50 border border-charcoal/5 dark:border-offwhite/5 rounded-lg overflow-hidden">
               <div className="px-6 py-4 border-b border-charcoal/5 dark:border-offwhite/5 flex justify-between items-center">
                 <h3 className="font-serif text-lg text-charcoal dark:text-offwhite">All Products ({products.length})</h3>
-                <button
-                  onClick={() => {
-                    setIsAddingProduct(!isAddingProduct);
-                    setProductImages([]);
-                  }}
-                  className="px-4 py-2 bg-charcoal/5 dark:bg-offwhite/5 hover:bg-charcoal/10 dark:hover:bg-offwhite/10 text-charcoal dark:text-offwhite text-xs uppercase tracking-widest font-medium rounded transition-colors"
-                >
-                  {isAddingProduct ? 'Cancel' : '+ Add Product'}
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={async () => {
+                      if (!window.confirm('Generate SKUs for all products missing them?')) return;
+                      try {
+                        const res = await authJsonFetch(`${API}/api/products/backfill-skus`, { method: 'POST' });
+                        if (res.ok) {
+                          const data = await res.json();
+                          alert(data.message);
+                          window.location.reload();
+                        }
+                      } catch (err) { alert('Failed: ' + err.message); }
+                    }}
+                    className="px-4 py-2 bg-gold/10 text-gold text-xs uppercase tracking-widest font-medium rounded hover:bg-gold hover:text-white transition-colors"
+                  >
+                    Generate SKUs
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAddingProduct(!isAddingProduct);
+                      setProductImages([]);
+                    }}
+                    className="px-4 py-2 bg-charcoal/5 dark:bg-offwhite/5 hover:bg-charcoal/10 dark:hover:bg-offwhite/10 text-charcoal dark:text-offwhite text-xs uppercase tracking-widest font-medium rounded transition-colors"
+                  >
+                    {isAddingProduct ? 'Cancel' : '+ Add Product'}
+                  </button>
+                </div>
               </div>
 
               {isAddingProduct ? (
@@ -875,6 +893,7 @@ const AdminDashboard = () => {
                   <thead>
                     <tr className="border-b border-charcoal/5 dark:border-offwhite/5 bg-charcoal/[0.02] dark:bg-offwhite/[0.02]">
                       <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium">Product</th>
+                      <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium">SKU</th>
                       <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium">Category</th>
                       <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium">Price</th>
                       <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium">Stock</th>
@@ -895,6 +914,28 @@ const AdminDashboard = () => {
                               <p className="text-sm text-charcoal dark:text-offwhite font-medium">{product.name}</p>
                               <p className="text-xs text-charcoal/50 dark:text-offwhite/50">{product.brand}</p>
                             </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col gap-1">
+                            <code className="text-[11px] font-mono text-gold bg-gold/10 px-2 py-0.5 rounded inline-block">
+                              {product.sku || '—'}
+                            </code>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch(`${API}/api/products/${product._id}/qrcode`);
+                                  if (res.ok) {
+                                    const data = await res.json();
+                                    const w = window.open('', '_blank', 'width=400,height=500');
+                                    w.document.write(`<html><head><title>QR: ${product.sku}</title></head><body style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:Georgia,serif;margin:0;background:#fafafa;"><h2 style="letter-spacing:3px;margin-bottom:4px;">SONISH</h2><p style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:4px;margin-top:0;">Product QR Code</p><img src="${data.qrCode}" style="width:250px;height:250px;margin:20px 0;"/><code style="background:#f0f0f0;padding:8px 16px;border-radius:4px;font-size:14px;letter-spacing:2px;">${data.sku}</code><p style="font-size:12px;color:#888;margin-top:12px;">${product.name}</p><button onclick="window.print()" style="margin-top:20px;padding:10px 30px;background:#111;color:#fff;border:none;cursor:pointer;text-transform:uppercase;letter-spacing:2px;font-size:10px;">Print / Save</button></body></html>`);
+                                  }
+                                } catch (err) { alert('QR failed: ' + err.message); }
+                              }}
+                              className="text-[9px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 hover:text-gold transition-colors text-left"
+                            >
+                              View QR ↗
+                            </button>
                           </div>
                         </td>
                         <td className="px-6 py-4">

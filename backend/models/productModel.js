@@ -91,11 +91,30 @@ const productSchema = mongoose.Schema(
         value: { type: String },
       }
     ],
+    sku: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Auto-generate SKU before saving if not provided
+productSchema.pre('save', async function (next) {
+  if (!this.sku) {
+    const prefix = (this.category || 'GEN')
+      .toUpperCase()
+      .replace(/[^A-Z]/g, '')
+      .slice(0, 3);
+    const count = await mongoose.model('Product').countDocuments();
+    const seq = String(count + 1).padStart(4, '0');
+    this.sku = `SNH-${prefix}-${seq}`;
+  }
+  next();
+});
 
 const Product = mongoose.model('Product', productSchema);
 
