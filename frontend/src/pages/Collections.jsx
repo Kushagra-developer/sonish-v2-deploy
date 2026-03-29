@@ -50,7 +50,7 @@ const Collections = () => {
                             if (filterLower === 'women') {
                                 return itemCat.includes('women') ||
                                     itemTags.includes('women') ||
-                                    ['dress', 'skirt', 'top', 'co-ord', 'kurti', 'women'].some(kw => itemCat.includes(kw) || itemName.includes(kw));
+                                    ['dress', 'skirt', 'top', 'co-ord', 'kurti', 'women', 'shirt', 'cordset'].some(kw => itemCat.includes(kw) || itemName.includes(kw));
                             }
 
                             // Default strict matching for Accessories, Outerwear, etc.

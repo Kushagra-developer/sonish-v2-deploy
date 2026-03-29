@@ -125,7 +125,7 @@ const Navbar = () => {
               <div className="relative group py-4">
                 <Link 
                   to="/collections?category=Women" 
-                  className={`text-[12px] uppercase tracking-[0.3em] font-medium hover:text-gold transition-all duration-300 relative ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}`}
+                  className={`text-[12px] uppercase tracking-[0.3em] font-medium hover:text-gold transition-all duration-300 relative text-charcoal dark:text-offwhite`}
                 >
                   Women
                   <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-gold transition-all duration-300 group-hover:w-full"></span>
@@ -158,7 +158,7 @@ const Navbar = () => {
               <div className="relative group py-4">
                 <Link 
                   to="/collections?category=Men" 
-                  className={`text-[12px] uppercase tracking-[0.3em] font-medium hover:text-gold transition-all duration-300 relative ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}`}
+                  className={`text-[12px] uppercase tracking-[0.3em] font-medium hover:text-gold transition-all duration-300 relative text-charcoal dark:text-offwhite`}
                 >
                   Men
                   <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-gold transition-all duration-300 group-hover:w-full"></span>
@@ -190,7 +190,7 @@ const Navbar = () => {
               <div className="py-4">
                 <Link 
                   to="/collections" 
-                  className={`text-[12px] uppercase tracking-[0.3em] font-medium hover:text-gold transition-all duration-300 relative group ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}`}
+                  className={`text-[12px] uppercase tracking-[0.3em] font-medium hover:text-gold transition-all duration-300 relative group text-charcoal dark:text-offwhite`}
                 >
                   New Arrivals
                   <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-gold transition-all duration-300 group-hover:w-full"></span>
@@ -200,22 +200,22 @@ const Navbar = () => {
 
             {/* Center Logo */}
             <div className="flex-shrink-0 text-center">
-              <Link to="/" className={`font-serif text-3xl md:text-5xl font-bold tracking-[0.25em] transition-all duration-500 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}`}>
+              <Link to="/" className={`font-serif text-3xl md:text-5xl font-bold tracking-[0.25em] transition-all duration-500 text-charcoal dark:text-offwhite`}>
                 SONISH
               </Link>
             </div>
 
             {/* Right Icons */}
             <div className="hidden md:flex flex-1 justify-end items-center space-x-8">
-              <button onClick={() => setIsDarkMode(!isDarkMode)} className={`transition-colors duration-300 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
+              <button onClick={() => setIsDarkMode(!isDarkMode)} className={`transition-colors duration-300 text-charcoal dark:text-offwhite hover:text-gold`}>
                 {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
 
-              <Link to="/search" className={`transition-colors duration-300 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
+              <Link to="/search" className={`transition-colors duration-300 text-charcoal dark:text-offwhite hover:text-gold`}>
                 <Search className="h-5 w-5" />
               </Link>
 
-              <Link to="/wishlist" className={`relative transition-colors duration-300 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
+              <Link to="/wishlist" className={`relative transition-colors duration-300 text-charcoal dark:text-offwhite hover:text-gold`}>
                 <Heart className="h-5 w-5" />
                 {wishlistCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-lg">
@@ -224,7 +224,7 @@ const Navbar = () => {
                 )}
               </Link>
 
-              <button onClick={() => setIsCartOpen(true)} className={`relative transition-colors duration-300 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
+              <button onClick={() => setIsCartOpen(true)} className={`relative transition-colors duration-300 text-charcoal dark:text-offwhite hover:text-gold`}>
                 <ShoppingBag className="h-5 w-5" />
                 {cartCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-charcoal dark:bg-gold text-white dark:text-charcoal text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-lg">
@@ -238,7 +238,7 @@ const Navbar = () => {
                   <User className="w-3.5 h-3.5" /> Account
                 </Link>
               ) : (
-                <Link to="/login" className={`text-[11px] uppercase tracking-[0.25em] font-bold transition-colors duration-300 ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'} hover:text-gold`}>
+                <Link to="/login" className={`text-[11px] uppercase tracking-[0.25em] font-bold transition-colors duration-300 text-charcoal dark:text-offwhite hover:text-gold`}>
                   Login
                 </Link>
               )}
@@ -246,14 +246,14 @@ const Navbar = () => {
 
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center space-x-4">
-              <button onClick={() => setIsDarkMode(!isDarkMode)} className={isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}>
+              <button onClick={() => setIsDarkMode(!isDarkMode)} className={'text-charcoal dark:text-offwhite'}>
                 {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
-              <button onClick={() => setIsCartOpen(true)} className={`relative ${isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}`}>
+              <button onClick={() => setIsCartOpen(true)} className={`relative text-charcoal dark:text-offwhite`}>
                 <ShoppingBag className="h-6 w-6" />
                 <span className="absolute -top-1 -right-2 bg-gold text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">{cartCount}</span>
               </button>
-              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className={isSolid ? 'text-charcoal dark:text-offwhite' : 'text-white'}>
+              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className={'text-charcoal dark:text-offwhite'}>
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
             </div>

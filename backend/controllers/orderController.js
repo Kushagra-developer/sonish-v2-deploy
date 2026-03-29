@@ -78,6 +78,93 @@ const addOrderItems = async (req, res) => {
         { $inc: { usageCount: 1 } }
       );
     }
+    // --- SEND ORDER CONFIRMATION EMAIL ---
+    try {
+      if (req.user && req.user.email) {
+        let transporter;
+        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+          transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+          });
+        } else {
+          const testAccount = await nodemailer.createTestAccount();
+          transporter = nodemailer.createTransport({
+            host: 'smtp.ethereal.email', port: 587,
+            auth: { user: testAccount.user, pass: testAccount.pass },
+          });
+        }
+
+        const itemsHtml = createdOrder.orderItems.map(item => `
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
+              <span style="font-size: 14px; color: #111;">${item.name}</span><br/>
+              <span style="font-size: 11px; color: #999;">Qty: ${item.qty}</span>
+            </td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #eee; text-align: right; font-size: 14px; color: #c9a84c;">
+              ₹${item.price.toFixed(2)}
+            </td>
+          </tr>
+        `).join('');
+
+        await transporter.sendMail({
+          from: `"Sonish Studios" <${process.env.EMAIL_USER || 'no-reply@sonish.co.in'}>`,
+          to: req.user.email,
+          subject: `Order Confirmation - Receipt #${createdOrder._id.toString().slice(-8)}`,
+          html: `
+            <div style="font-family: Georgia, serif; max-width: 600px; margin: auto; background: #fff; border: 1px solid #eee; padding: 40px;">
+              <h1 style="font-size: 28px; letter-spacing: 3px; margin-bottom: 4px; text-align: center;">SONISH</h1>
+              <p style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 4px; margin-top: 0; text-align: center;">Modern Elegance</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
+              
+              <h2 style="font-size: 20px; color: #111; margin-bottom: 6px;">Thank you for your order, ${req.user.name || 'valued customer'}.</h2>
+              <p style="color: #555; font-size: 14px; line-height: 1.8;">We've received your order and are preparing it for shipment. Here are your order details:</p>
+              
+              <div style="background: #f9f9f9; padding: 24px; margin: 24px 0; border: 1px solid #eee;">
+                <p style="margin: 0 0 16px 0; font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 2px;">Order Summary (#${createdOrder._id.toString().slice(-8)})</p>
+                <table style="width: 100%; border-collapse: collapse;">
+                  ${itemsHtml}
+                  <tr>
+                    <td style="padding: 16px 0 8px; font-size: 12px; color: #999; text-transform: uppercase;">Subtotal</td>
+                    <td style="padding: 16px 0 8px; text-align: right; font-size: 14px; color: #111;">₹${itemsPrice.toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 12px; color: #999; text-transform: uppercase;">Shipping</td>
+                    <td style="padding: 8px 0; text-align: right; font-size: 14px; color: #111;">₹${shippingPrice.toFixed(2)}</td>
+                  </tr>
+                  ${discountPrice > 0 ? `
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 12px; color: #999; text-transform: uppercase;">Discount ${couponCode ? '(' + couponCode + ')' : ''}</td>
+                    <td style="padding: 8px 0; text-align: right; font-size: 14px; color: #c9a84c;">-₹${discountPrice.toFixed(2)}</td>
+                  </tr>` : ''}
+                  <tr>
+                    <td style="padding: 16px 0 0; font-size: 14px; font-weight: bold; color: #111; text-transform: uppercase; border-top: 1px solid #ddd;">Total</td>
+                    <td style="padding: 16px 0 0; text-align: right; font-size: 18px; font-weight: bold; color: #111; border-top: 1px solid #ddd;">₹${totalPrice.toFixed(2)}</td>
+                  </tr>
+                </table>
+              </div>
+              
+              <div style="margin-top: 32px;">
+                <p style="margin: 0 0 8px 0; font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 2px;">Shipping Address</p>
+                <p style="margin: 0; color: #111; font-size: 14px; line-height: 1.6;">
+                  ${shippingAddress.address}<br/>
+                  ${shippingAddress.city}, ${shippingAddress.postalCode}<br/>
+                  ${shippingAddress.country}
+                </p>
+              </div>
+
+              <a href="${process.env.CORS_ORIGIN?.split(',')[0]}/profile" style="display: block; text-align: center; background: #111; color: #fff; text-decoration: none; padding: 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 3px; margin-top: 40px;">View Order History</a>
+              
+              <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
+              <p style="font-size: 11px; color: #aaa; text-align: center; line-height: 1.6;">If you have any questions, simply reply to this email.<br/>© Sonish Studios · Mumbai, India</p>
+            </div>`
+        });
+      }
+    } catch (emailErr) {
+      console.error('Order confirmation email failed:', emailErr.message);
+    }
+    // --- END EMAIL LOGIC ---
+
     res.status(201).json(createdOrder);
   }
 };
