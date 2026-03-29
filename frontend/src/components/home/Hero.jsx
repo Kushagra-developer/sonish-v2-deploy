@@ -35,11 +35,11 @@ const Hero = () => {
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
 
-  if (loading) return <div className="h-[85vh] bg-charcoal animate-pulse" />;
+  if (loading) return <div className="h-[85vh] lg:h-screen bg-charcoal animate-pulse" />;
   if (slides.length === 0) return null; // Or a default banner
 
   return (
-    <div className="relative h-[85vh] w-full flex items-center justify-center overflow-hidden bg-charcoal">
+    <div className="relative h-[85vh] lg:h-screen w-full flex items-center justify-center overflow-hidden bg-charcoal">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
