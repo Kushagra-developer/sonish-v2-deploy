@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import API from '../utils/api';
-import MojoAuth from 'mojoauth-web-sdk';
 
 const Login = () => {
     // Auth Modes: 'login', 'register', 'otp'
@@ -148,57 +147,11 @@ const Login = () => {
         }
     };
 
-    const [mojoauth, setMojoauth] = useState(null);
-
-    useEffect(() => {
-        if (authMode === 'otp' && !mojoauth) {
-            const apiKey = "2fb8a130-b384-4a2f-9685-5f296613dddd"; 
-            const config = {
-                language: "en",
-                redirect_url: window.location.origin + '/login',
-                source: [{ type: "email", feature: "magiclink" }] 
-            };
-            
-            const ma = new MojoAuth(import.meta.env.VITE_MOJOAUTH_API_KEY || apiKey, config);
-            ma.signIn().then(payload => {
-                if (payload && payload.oauth && payload.oauth.access_token) {
-                    handleMojoAuthSuccess(payload.oauth.access_token);
-                }
-            });
-            setMojoauth(ma);
-        }
-    }, [authMode, mojoauth]);
-
-    const handleMojoAuthSuccess = async (jwtToken) => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const res = await fetch(`${API}/api/users/verify-otp`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ jwtToken }),
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                handleSuccessLogin(data);
-            } else {
-                setError(data.message || 'MojoAuth verification failed');
-            }
-        } catch (err) {
-            setError('Connection error during verification.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const toggleMode = (mode) => {
         setAuthMode(mode);
         setError(null);
         setSuccessMsg(null);
-        setOtpSent(false); 
-        if (mode !== 'otp') setMojoauth(null); // Reset mojoauth instance if leaving
+        setOtpSent(false); // Reset OTP state if switching around
     };
 
     return (
@@ -214,7 +167,7 @@ const Login = () => {
                 {/* Left Side: Login/Register Form */}
                 <div className="flex-1">
                     <h2 className="text-3xl font-serif text-charcoal dark:text-offwhite mb-8 transition-colors">
-                        {authMode === 'login' ? 'Login' : authMode === 'register' ? 'Create Account' : 'Secure Email Login'}
+                        {authMode === 'login' ? 'Login' : authMode === 'register' ? 'Create Account' : 'Passwordless Login'}
                     </h2>
                     
                     {error && (
@@ -229,22 +182,54 @@ const Login = () => {
                     )}
 
                     {authMode === 'otp' ? (
-                        <div className="space-y-6">
-                            <div id="mojoauth-passwordless-form" className="min-h-[300px]">
-                                {/* MojoAuth Widget Renders Here */}
-                                {!import.meta.env.VITE_MOJOAUTH_API_KEY && !mojoauth && (
-                                    <p className="text-sm text-charcoal/50 italic">Initializing MojoAuth Secure Gateway...</p>
-                                )}
+                        <form className="space-y-6" onSubmit={otpSent ? handleVerifyOtp : handleSendOtp}>
+                            <div>
+                                <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2">Email Address *</label>
+                                <input 
+                                    type="email" 
+                                    value={otpEmail} 
+                                    onChange={(e) => setOtpEmail(e.target.value)} 
+                                    disabled={otpSent}
+                                    required 
+                                    placeholder="hello@example.com"
+                                    className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite transition-colors text-charcoal dark:text-offwhite disabled:opacity-50" 
+                                />
                             </div>
+
+                            {otpSent && (
+                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                                    <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2 mt-6">6-Digit Code *</label>
+                                    <input 
+                                        type="text" 
+                                        value={otp} 
+                                        onChange={(e) => setOtp(e.target.value)} 
+                                        required 
+                                        maxLength="6"
+                                        placeholder="••••••"
+                                        className="w-full bg-transparent border-b border-charcoal/20 dark:border-offwhite/20 py-2 outline-none focus:border-charcoal dark:focus:border-offwhite transition-colors text-charcoal dark:text-offwhite tracking-[0.5em] font-medium" 
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={handleSendOtp} 
+                                        className="text-[10px] text-charcoal/50 dark:text-offwhite/50 mt-3 underline uppercase tracking-wider hover:text-gold"
+                                    >
+                                        Resend Code
+                                    </button>
+                                </motion.div>
+                            )}
+
+                            <button disabled={isLoading} type="submit" className="w-full bg-charcoal dark:bg-offwhite text-white dark:text-charcoal py-4 text-xs uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-colors disabled:opacity-50">
+                                {isLoading ? 'Processing...' : (otpSent ? 'Verify Code' : 'Email Me A Code')}
+                            </button>
                             
                             <button 
                                 type="button" 
                                 onClick={() => toggleMode('login')} 
-                                className="w-full text-xs text-charcoal/60 dark:text-offwhite/60 hover:text-charcoal dark:hover:text-offwhite tracking-widest uppercase transition-colors pt-4 border-t border-charcoal/10"
+                                className="w-full text-xs text-charcoal/60 dark:text-offwhite/60 hover:text-charcoal dark:hover:text-offwhite tracking-widest uppercase transition-colors"
                             >
-                                Back to Password Login
+                                Use Password Instead
                             </button>
-                        </div>
+                        </form>
                     ) : (
                         <form className="space-y-6" onSubmit={submitStandardAuth}>
                             {authMode === 'register' && (
