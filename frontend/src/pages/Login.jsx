@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import API from '../utils/api';
+import MojoAuth from 'mojoauth-web-sdk';
 
 const Login = () => {
     // Auth Modes: 'login', 'register', 'otp'
@@ -158,16 +159,13 @@ const Login = () => {
                 source: [{ type: "email", feature: "magiclink" }] 
             };
             
-            import('mojoauth-web-sdk').then((MojoAuthModule) => {
-                const MojoAuth = MojoAuthModule.default;
-                const ma = new MojoAuth(import.meta.env.VITE_MOJOAUTH_API_KEY || apiKey, config);
-                ma.signIn().then(payload => {
-                    if (payload && payload.oauth && payload.oauth.access_token) {
-                        handleMojoAuthSuccess(payload.oauth.access_token);
-                    }
-                });
-                setMojoauth(ma);
+            const ma = new MojoAuth(import.meta.env.VITE_MOJOAUTH_API_KEY || apiKey, config);
+            ma.signIn().then(payload => {
+                if (payload && payload.oauth && payload.oauth.access_token) {
+                    handleMojoAuthSuccess(payload.oauth.access_token);
+                }
             });
+            setMojoauth(ma);
         }
     }, [authMode, mojoauth]);
 
