@@ -1329,9 +1329,22 @@ const AdminDashboard = () => {
                                       body: JSON.stringify({ trackingNumber: awb, carrier: 'Delhivery' })
                                     });
                                     if (res.ok) {
-                                      const updatedOrder = await res.json();
-                                      alert('Tracking Information Saved');
-                                      setOrders(orders.map(o => o._id === order._id ? { ...o, trackingNumber: awb, trackingStatus: 'Shipped', isShipped: true, shippedAt: updatedOrder.shippedAt } : o));
+                                        const updatedOrderData = await res.json();
+                                        // --- EmailJS Shipping Notification ---
+                                        try {
+                                          await emailjs.send('service_hsgqo7b', 'template_fux05vt', {
+                                            to_email: order.user?.email,
+                                            customer_name: order.user?.name || 'Customer',
+                                            order_id: order._id.toString().slice(-8).toUpperCase(),
+                                            order_status: 'SHIPPED',
+                                            tracking_number: awb,
+                                            order_items: order.orderItems?.map(i => i.name).join(', ')
+                                          }, 'LZKrldXS6tjD8FAgK');
+                                        } catch (e) { console.error('Shipping email failed', e); }
+                                        // ------------------------------------
+                                        
+                                        alert('Tracking Information Saved & Customer Notified');
+                                        setOrders(orders.map(o => o._id === order._id ? { ...o, trackingNumber: awb, trackingStatus: 'Shipped', isShipped: true, shippedAt: updatedOrderData.shippedAt } : o));
                                     }
                                   } catch (err) {
                                     alert('Failed to save tracking');
@@ -1398,8 +1411,20 @@ const AdminDashboard = () => {
                                           method: 'PUT'
                                         });
                                         if (res.ok) {
+                                          // --- EmailJS Delivery Notification ---
+                                          try {
+                                            await emailjs.send('service_hsgqo7b', 'template_fux05vt', {
+                                              to_email: order.user?.email,
+                                              customer_name: order.user?.name || 'Customer',
+                                              order_id: order._id.toString().slice(-8).toUpperCase(),
+                                              order_status: 'DELIVERED',
+                                              order_items: order.orderItems?.map(i => i.name).join(', ')
+                                            }, 'LZKrldXS6tjD8FAgK');
+                                          } catch (e) { console.error('Delivery email failed', e); }
+                                          // ------------------------------------
+
                                           setOrders(orders.map(o => o._id === order._id ? { ...o, isDelivered: true } : o));
-                                          alert('Order marked as DELIVERED');
+                                          alert('Order marked as DELIVERED & Customer Notified');
                                         }
                                       } catch (err) {}
                                     }
