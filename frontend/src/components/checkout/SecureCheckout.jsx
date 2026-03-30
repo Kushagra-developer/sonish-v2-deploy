@@ -8,6 +8,7 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
     const [isLoading, setIsLoading] = useState(false);
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState('idle');
+    const [orderId, setOrderId] = useState(null);
 
     // Coupon states
     const [couponCode, setCouponCode] = useState('');
@@ -144,6 +145,8 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                                     throw new Error(errorData.message || 'Failed to save order to database');
                                 }
 
+                                const orderResult = await orderCreateRes.json();
+                                setOrderId(orderResult._id);
                                 setPaymentStatus('success');
                                 if (onPaymentSuccess) onPaymentSuccess(response)
                             } catch (e) {
@@ -154,15 +157,29 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
 
                             setTimeout(() => {
                                 try {
-                                    const uid = JSON.parse(localStorage.getItem('userInfo'))?._id;
+                                    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+                                    const uid = userInfo?._id;
+                                    
+                                    // 1. Clear Guest Cart if applicable
+                                    localStorage.removeItem('sonish_cart');
+                                    
+                                    // 2. Clear User-specific Cart
                                     if (uid) {
                                         localStorage.removeItem(`sonish_cart_${uid}`);
-                                        window.dispatchEvent(new Event('cartUpdated'));
                                     }
-                                } catch (e) {}
+
+                                    // 3. Notify all components to refresh
+                                    window.dispatchEvent(new Event('cartUpdated'));
+                                    
+                                } catch (e) {
+                                    console.error('Error clearing cart:', e);
+                                }
+                                
                                 if (onCloseDrawer) onCloseDrawer();
+                                // Optional: Keep them on success screen longer if they want to read the ID
+                                // Or redirect to profile
                                 window.location.href = '/profile?tab=orders';
-                            }, 3000);
+                            }, 5000);
 
                         } else {
                             setPaymentStatus('failed');
@@ -206,14 +223,25 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
     if (paymentStatus === 'success') {
         return (
             <motion.div 
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className="p-8 text-center bg-green-500/10 rounded-lg mt-8 border border-green-500/20"
+                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                className="p-10 text-center bg-offwhite dark:bg-charcoal/50 rounded-xl mt-8 border-2 border-green-500/30 shadow-2xl"
             >
-                <div className="w-16 h-16 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-4 text-white">
-                    <CheckCircle className="w-8 h-8" />
+                <div className="w-20 h-20 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-6 text-white shadow-lg shadow-green-500/20">
+                    <CheckCircle className="w-10 h-10" />
                 </div>
-                <h3 className="font-serif text-2xl text-charcoal mb-2">Payment Successful!</h3>
-                <p className="text-sm text-charcoal/60">Thank you for your premium order. Your transaction has been securely processed.</p>
+                <h3 className="font-serif text-3xl text-charcoal dark:text-offwhite mb-3">Order Placed!</h3>
+                <p className="text-sm text-charcoal/60 dark:text-offwhite/60 mb-6 leading-relaxed">
+                    Thank you for shopping with SONISH. Your order has been placed successfully and is being processed.
+                </p>
+                {orderId && (
+                    <div className="bg-charcoal/5 dark:bg-white/5 p-4 rounded-lg mb-6 border border-charcoal/10">
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-charcoal/40 dark:text-offwhite/40 mb-1 font-bold">Order Reference</p>
+                        <p className="font-mono text-lg text-gold font-bold">#{orderId.toString().slice(-8).toUpperCase()}</p>
+                    </div>
+                )}
+                <p className="text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 animate-pulse">
+                    Redirecting to your orders...
+                </p>
             </motion.div>
         );
     }

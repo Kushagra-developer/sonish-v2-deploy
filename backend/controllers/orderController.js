@@ -80,6 +80,9 @@ const addOrderItems = async (req, res) => {
 
     const createdOrder = await order.save();
 
+    // Clear the user's cart after successful order creation
+    await User.findByIdAndUpdate(req.user._id, { cart: [] });
+
     // If coupon was used, increment usage count
     if (couponCode) {
       await Coupon.findOneAndUpdate(
