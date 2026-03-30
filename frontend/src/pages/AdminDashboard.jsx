@@ -1339,6 +1339,27 @@ const AdminDashboard = () => {
                                   Mark as Paid
                                 </button>
                               )}
+                              {!order.isShipped && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if(window.confirm('Mark this order as SHIPPED?')) {
+                                      try {
+                                        const res = await authJsonFetch(`${API}/api/orders/${order._id}/shipped`, {
+                                          method: 'PUT'
+                                        });
+                                        if (res.ok) {
+                                          setOrders(orders.map(o => o._id === order._id ? { ...o, isShipped: true } : o));
+                                          alert('Order marked as SHIPPED');
+                                        }
+                                      } catch (err) {}
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-amber-600 text-white text-[10px] uppercase tracking-widest font-bold rounded hover:bg-amber-700 transition-colors"
+                                >
+                                  Mark as Shipped
+                                </button>
+                              )}
                               {!order.isDelivered && order.isShipped && (
                                 <button
                                   onClick={async (e) => {
