@@ -106,90 +106,87 @@ const addOrderItems = async (req, res) => {
 
     const sendEmailsAsync = async (data) => {
       const orderRef = data.orderId.toString().slice(-8);
-      console.log(`[Email] START: background dispatch for Order #${orderRef}`);
+      console.log(`[Email] START: Order #${orderRef} dispatch task`);
       
       try {
-        if (!data.customerEmail) {
-          console.warn(`[Email] SKIP: No customer email for Order #${orderRef}`);
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+          console.error(`[Email] ABORT: Missing SMTP credentials for #${orderRef}`);
           return;
         }
 
-        // 1. Prepare Transporter
-        const smtpConfig = {
-          service: 'gmail',
+        // 1. Setup Transporter with detailed logging
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
           auth: { 
             user: process.env.EMAIL_USER, 
             pass: process.env.EMAIL_PASS 
           },
-          connectTimeout: 10000,
-          greetingTimeout: 10000,
-        };
+          // Enable debug logging to see the SMTP handshake in Render logs
+          debug: true,
+          logger: true,
+          connectionTimeout: 10000, // 10s
+        });
 
-        const transporter = nodemailer.createTransport(smtpConfig);
-        
-        // 2. Prepare HTML Templates
+        // 2. Prepare Items Table
         const itemsHtml = data.items.map(item => `
           <tr>
-            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
-              <span style="font-size: 14px; color: #111; font-weight: bold;">${item.name}</span><br/>
-              <span style="font-size: 11px; color: #666;">SKU: ${item.sku} | Size: ${item.size}</span>
+            <td style="padding:10px; border-bottom:1px solid #eee;">
+              <strong>${item.name}</strong><br/><small>SKU: ${item.sku} | Size: ${item.size}</small>
             </td>
-            <td style="padding: 12px 0; border-bottom: 1px solid #eee; text-align: right; font-size: 14px; color: #c9a84c;">
-              ₹${item.price.toFixed(2)}
-            </td>
+            <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">₹${item.price.toFixed(2)}</td>
           </tr>
         `).join('');
 
-        // 3. Define Tasks
-        const customerTask = async () => {
-          console.log(`[Email] ATTEMPT: Dispatching receipt to Customer (${data.customerEmail})`);
+        // 3. Sequential Dispatch (Safer for Gmail)
+        
+        // --- Customer Task ---
+        if (data.customerEmail) {
+          console.log(`[Email] LOG: Preparing Customer Receipt for ${data.customerEmail}`);
           try {
-            const info = await transporter.sendMail({
+            await transporter.sendMail({
               from: `"Sonish Studios" <${process.env.EMAIL_USER}>`,
               to: data.customerEmail,
-              subject: `Order Confirmation - Receipt #${orderRef}`,
-              html: `<div style="font-family: Georgia, serif; max-width: 600px; margin: auto; padding: 40px; border: 1px solid #eee;">
-                <h1 style="text-align:center; letter-spacing:4px;">SONISH</h1>
-                <p>Hi ${data.customerName}, your order <strong>#${orderRef}</strong> is confirmed!</p>
-                <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">${itemsHtml}</table>
-                <p style="margin-top:20px; font-weight:bold;">Total: ₹${data.total.toFixed(2)}</p>
-                <p style="font-size:12px; color:#999; margin-top:40px;">Thank you for shopping with Sonish.</p>
+              subject: `Order Confirmation - #${orderRef}`,
+              html: `<div style="font-family:sans-serif; max-width:600px; margin:auto; border:1px solid #ddd; padding:30px;">
+                <h1 style="text-align:center;">SONISH</h1>
+                <p>Hello ${data.customerName}, your order <strong>#${orderRef}</strong> is confirmed!</p>
+                <table style="width:100%; border-collapse:collapse;">${itemsHtml}</table>
+                <h3 style="text-align:right; border-top:2px solid #eee; padding-top:10px;">Total: ₹${data.total.toFixed(2)}</h3>
               </div>`
             });
-            console.log(`[Email] SUCCESS: Customer receipt sent for #${orderRef} (${info.messageId})`);
+            console.log(`[Email] SUCCESS: Customer receipt dispatched for #${orderRef}`);
           } catch (err) {
-            console.error(`[Email] ERROR (Customer): Failed to send to ${data.customerEmail} - ${err.message}`);
+            console.error(`[Email] FAIL (Customer): #${orderRef} -> ${err.message}`);
           }
-        };
+        }
 
-        const adminTask = async () => {
-          const adminEmail = process.env.ADMIN_EMAIL || 'sonishfashion@gmail.com';
-          console.log(`[Email] ATTEMPT: Dispatching alert to Admin (${adminEmail})`);
-          try {
-            const info = await transporter.sendMail({
-              from: `"Sonish Studios System" <${process.env.EMAIL_USER}>`,
-              to: adminEmail,
-              subject: `[ACTION REQUIRED] New Order - #${orderRef}`,
-              html: `<div style="font-family: sans-serif; padding: 20px;">
-                <h2 style="color:#c9a84c;">New Order Received!</h2>
-                <p>Order #${orderRef} from <strong>${data.customerName}</strong> (${data.customerEmail}) for <strong>₹${data.total.toFixed(2)}</strong>.</p>
-                <table style="width: 100%; border-collapse: collapse; margin-top:20px;">${itemsHtml}</table>
-                <p style="margin-top:20px;">Shipping: ${data.address.address}, ${data.address.city}, ${data.address.postalCode}</p>
-                <p><a href="https://sonish.co.in/admin/orders" style="color:#c9a84c;">View in Dashboard</a></p>
-              </div>`
-            });
-            console.log(`[Email] SUCCESS: Admin alert sent for #${orderRef} (${info.messageId})`);
-          } catch (err) {
-            console.error(`[Email] ERROR (Admin): Failed to send to ${adminEmail} - ${err.message}`);
-          }
-        };
+        // --- Admin Task ---
+        const adminEmail = process.env.ADMIN_EMAIL || 'sonishfashion@gmail.com';
+        console.log(`[Email] LOG: Preparing Admin Alert for ${adminEmail}`);
+        try {
+          await transporter.sendMail({
+            from: `"Sonish System" <${process.env.EMAIL_USER}>`,
+            to: adminEmail,
+            subject: `[NEW ORDER] Order #${orderRef}`,
+            html: `<div style="font-family:sans-serif; padding:20px;">
+              <h2 style="color:#c9a84c;">New Order: #${orderRef}</h2>
+              <p>Customer: ${data.customerName} (${data.customerEmail})</p>
+              <table style="width:100%; border-collapse:collapse;">${itemsHtml}</table>
+              <p><strong>Total: ₹${data.total.toFixed(2)}</strong></p>
+              <p>Shipping Address: ${data.address.address}, ${data.address.city}</p>
+            </div>`
+          });
+          console.log(`[Email] SUCCESS: Admin alert dispatched for #${orderRef}`);
+        } catch (err) {
+          console.error(`[Email] FAIL (Admin): #${orderRef} -> ${err.message}`);
+        }
 
-        // 4. Run in parallel
-        await Promise.all([customerTask(), adminTask()]);
-        console.log(`[Email] COMPLETE: background dispatch for Order #${orderRef}`);
+        console.log(`[Email] FINISH: Order #${orderRef} task complete`);
 
       } catch (globalErr) {
-        console.error(`[Email] GLOBAL FAILURE for #${orderRef}:`, globalErr.message);
+        console.error(`[Email] FATAL: Order #${orderRef} background failure:`, globalErr.message);
       }
     };
 
