@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import API from '../utils/api';
+import emailjs from '@emailjs/browser';
 
 const Login = () => {
     // Auth Modes: 'login', 'register', 'otp'
@@ -100,11 +101,22 @@ const Login = () => {
             const data = await res.json();
 
             if (res.ok) {
-                setOtpSent(true);
-                if (data.mockOtp) {
-                    setSuccessMsg(`OTP Sent! (Mock Code for Testing: ${data.mockOtp})`);
-                } else {
+                // Send the actual OTP email via EmailJS (bypassing Render backend)
+                try {
+                    await emailjs.send(
+                        'service_hsgqo7b',      // Service ID
+                        'template_zr4qygo',     // OTP Template ID
+                        {
+                            to_email: otpEmail,
+                            otp: data.otpCode   // The code returned from backend
+                        },
+                        'LZKrldXS6tjD8FAgK'     // Public Key
+                    );
+                    setOtpSent(true);
                     setSuccessMsg('OTP Sent! Please check your inbox (and spam folder).');
+                } catch (emailErr) {
+                    console.error('EmailJS Error:', emailErr);
+                    setError('Failed to dispatch email. Please try again.');
                 }
             } else {
                 setError(data.message || 'Failed to send OTP');

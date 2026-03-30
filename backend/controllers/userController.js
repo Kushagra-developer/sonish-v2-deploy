@@ -193,71 +193,22 @@ const sendOtp = async (req, res) => {
 
   if (otpEntry) {
     try {
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.error('[SMTP] Attempted OTP dispatch without EMAIL_USER/EMAIL_PASS');
-        return res.status(503).json({
-          message: 'Email service is not configured. Please contact the administrator.',
-        });
-      }
-
-      // Exact pattern requested by user
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-
-      const otpTemplate = `
-        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a; background-color: #ffffff; border: 1px solid #f0f0f0;">
-          <div style="text-align: center; margin-bottom: 40px;">
-            <h1 style="font-size: 24px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; margin: 0; color: #000000;">SONISH</h1>
-            <p style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-top: 5px; color: #999;">Secure Authentication</p>
-          </div>
-          
-          <div style="margin-bottom: 40px;">
-            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">Verification Code</p>
-            <div style="background-color: #f9f9f9; padding: 30px; text-align: center; border-radius: 4px;">
-              <span style="font-size: 42px; font-weight: 700; letter-spacing: 12px; color: #000000;">${otpCode}</span>
-            </div>
-          </div>
-          
-          <div style="font-size: 14px; line-height: 1.6; color: #666; margin-bottom: 40px;">
-            <p>This code will expire in 5 minutes. For your security, do not share this code with anyone.</p>
-            <p>If you didn't request this code, you can safely ignore this email.</p>
-          </div>
-          
-          <div style="border-top: 1px solid #f0f0f0; padding-top: 30px; text-align: center; font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 1px;">
-            <p>&copy; ${new Date().getFullYear()} Sonish Studios. All rights reserved.</p>
-            <p>Connect with us at connect@sonish.co.in</p>
-          </div>
-        </div>
-      `;
-
-      const info = await transporter.sendMail({
-        from: `"Sonish Studios" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: `${otpCode} is your Sonish verification code`,
-        html: otpTemplate,
-      });
-
-      console.log(`[SMTP] ✅ OTP dispatched to ${email} — Message ID: ${info.messageId}`);
-
+      // Since we are using EmailJS on the frontend, the backend's only job is to generate and save the OTP.
+      // We return the otpCode to the React frontend, and EmailJS will dispatch the actual email.
       res.status(200).json({
-        message: 'OTP sent securely to your inbox',
-        mockOtp: process.env.NODE_ENV === 'production' ? null : otpCode,
+        message: 'OTP generated',
+        otpCode: otpCode,
       });
 
     } catch (err) {
-      console.error('[SMTP] ❌ OTP Gateway Error:', err.message);
+      console.error('[OTP Generation] Error:', err.message);
       res.status(500).json({
-        message: 'Email gateway connection failed. Please try again later.',
+        message: 'Failed to generate OTP. Please try again later.',
       });
     }
   } else {
     res.status(500);
-    throw new Error('Failed to generate OTP');
+    throw new Error('Failed to create OTP record in database');
   }
 };
 
