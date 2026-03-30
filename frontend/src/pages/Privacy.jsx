@@ -33,7 +33,7 @@ const Privacy = () => {
 
                     <h2 className="text-xl font-serif text-charcoal mt-8 mb-4">Contact & Updates</h2>
                     <p>
-                        To exercise these rights or for any privacy-related questions, contact our Grievance Officer at <strong>support@sonish.co.in</strong> or via WhatsApp. This Privacy Policy may be updated periodically to reflect changes in our practices, technology, or legal requirements. This Policy is governed by the laws of India.
+                        To exercise these rights or for any privacy-related questions, contact our Grievance Officer at <strong>connect@sonish.co.in</strong> or via WhatsApp. This Privacy Policy may be updated periodically to reflect changes in our practices, technology, or legal requirements. This Policy is governed by the laws of India.
                     </p>
                 </div>
             </div>

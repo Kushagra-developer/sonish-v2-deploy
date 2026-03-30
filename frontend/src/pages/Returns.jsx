@@ -20,7 +20,7 @@ const Returns = () => {
 
                     <h2 className="text-xl font-serif text-charcoal mt-8 mb-4">How to Initiate a Return or Exchange</h2>
                     <ol className="list-decimal pl-5 space-y-3">
-                        <li>Contact our customer support team within 7 days of delivery via email at <strong>support@sonish.co.in</strong> or WhatsApp. Provide your order number, product details, and reason for return/exchange.</li>
+                        <li>Contact our customer support team within 7 days of delivery via email at <strong>connect@sonish.co.in</strong> or WhatsApp. Provide your order number, product details, and reason for return/exchange.</li>
                         <li>We will review your request and provide a Return Merchandise Authorization (RMA) number along with instructions for pickup or drop-off.</li>
                         <li>Pack the item securely in its original packaging and include the invoice copy.</li>
                         <li>Our logistics partner will collect the item from your provided address (free pickup in most cases).</li>

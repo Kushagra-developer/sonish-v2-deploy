@@ -31,7 +31,7 @@ const Shipping = () => {
                     </ul>
 
                     <p className="mt-8">
-                        These timelines are approximate and may vary slightly due to external factors. In the rare case of a lost, damaged, or undelivered package, we will investigate promptly and offer a full refund or reshipment at our discretion. For any questions, contact our support team at <strong>support@sonish.co.in</strong>.
+                        These timelines are approximate and may vary slightly due to external factors. In the rare case of a lost, damaged, or undelivered package, we will investigate promptly and offer a full refund or reshipment at our discretion. For any questions, contact our support team at <strong>connect@sonish.co.in</strong>.
                     </p>
                 </div>
             </div>
