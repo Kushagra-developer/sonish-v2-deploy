@@ -107,17 +107,10 @@ const addOrderItems = async (req, res) => {
 
     const sendEmailsAsync = async (data) => {
       const orderRef = data.orderId.toString().slice(-8);
-      console.log(`[Resend] START: Order #${orderRef} dispatch task`);
+      console.log(`[Email] START: Order #${orderRef} dispatch task`);
       
       try {
-        if (!process.env.RESEND_API_KEY) {
-          console.error(`[Resend] ABORT: Missing RESEND_API_KEY for #${orderRef}`);
-          return;
-        }
-
-        const resend = new Resend(process.env.RESEND_API_KEY);
-
-        // Prepare Items Table
+        // Prepare Items Table (shared by both emails)
         const itemsHtml = data.items.map(item => `
           <tr>
             <td style="padding:10px; border-bottom:1px solid #eee;">
@@ -127,10 +120,13 @@ const addOrderItems = async (req, res) => {
           </tr>
         `).join('');
 
-        // --- Customer Email ---
-        if (data.customerEmail) {
+        // ═══════════════════════════════════════════════════════════
+        // 1. CUSTOMER EMAIL — via Resend (HTTP, bypasses SMTP block)
+        // ═══════════════════════════════════════════════════════════
+        if (data.customerEmail && process.env.RESEND_API_KEY) {
           console.log(`[Resend] Sending Customer Receipt to ${data.customerEmail}`);
           try {
+            const resend = new Resend(process.env.RESEND_API_KEY);
             const { data: result, error } = await resend.emails.send({
               from: 'Sonish Studios <onboarding@resend.dev>',
               to: [data.customerEmail],
@@ -158,35 +154,135 @@ const addOrderItems = async (req, res) => {
           }
         }
 
-        // --- Admin Email ---
+        // ═══════════════════════════════════════════════════════════
+        // 2. ADMIN EMAIL — via Gmail SMTP (service: "gmail")
+        //    Pattern from user's Firebase function
+        // ═══════════════════════════════════════════════════════════
         const adminEmail = process.env.ADMIN_EMAIL || 'sonishfashion@gmail.com';
-        console.log(`[Resend] Sending Admin Alert to ${adminEmail}`);
-        try {
-          const { data: result, error } = await resend.emails.send({
-            from: 'Sonish System <onboarding@resend.dev>',
-            to: [adminEmail],
-            subject: `[NEW ORDER] Order #${orderRef}`,
-            html: `<div style="font-family:'Helvetica Neue',sans-serif; padding:30px;">
-              <h2 style="color:#c9a84c; letter-spacing:2px;">🛍️ New Order: #${orderRef}</h2>
-              <p><strong>Customer:</strong> ${data.customerName} (${data.customerEmail})</p>
-              <table style="width:100%; border-collapse:collapse; margin:20px 0;">${itemsHtml}</table>
-              <p style="font-size:18px;"><strong>Total: ₹${data.total.toFixed(2)}</strong></p>
-              <p><strong>Shipping:</strong> ${data.address.address}, ${data.address.city}, ${data.address.postalCode || ''}</p>
-            </div>`
-          });
-          if (error) {
-            console.error(`[Resend] FAIL (Admin): #${orderRef} ->`, error);
-          } else {
-            console.log(`[Resend] SUCCESS: Admin alert sent for #${orderRef}`, result);
+        console.log(`[SMTP] Preparing Admin Alert for ${adminEmail}`);
+
+        const adminHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;padding:30px;color:#111827}
+.card{background:#fff;border-radius:14px;max-width:580px;margin:auto;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.08)}
+.header{background:linear-gradient(135deg,#1a1a1a,#333);padding:26px;color:#fff}
+.header h1{font-size:20px;font-weight:700;letter-spacing:3px}
+.header p{font-size:13px;opacity:.9;margin-top:4px}
+.body{padding:26px}
+.section-title{font-size:12px;font-weight:700;text-transform:uppercase;color:#64748b;margin:20px 0 10px}
+table{width:100%;border-collapse:collapse}
+td{padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:14px}
+td:first-child{font-weight:600;color:#374151;width:40%}
+tr:nth-child(even){background:#f9fafb}
+.total-box{margin:18px 0;padding:22px;text-align:center;border-radius:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px dashed #c9a84c}
+.total-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#92400e;margin-bottom:10px}
+.total{font-family:'Courier New',monospace;font-size:36px;font-weight:900;letter-spacing:4px;color:#78350f}
+.footer{background:#f8fafc;border-top:1px solid #e5e7eb;text-align:center;font-size:12px;padding:12px;color:#6b7280}
+</style></head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>SONISH</h1>
+    <p>🛍️ New Order Received — #${orderRef}</p>
+  </div>
+  <div class="body">
+    <div class="section-title">Customer Information</div>
+    <table>
+      <tr><td>Customer Name</td><td>${data.customerName}</td></tr>
+      <tr><td>Email</td><td>${data.customerEmail}</td></tr>
+    </table>
+    <div class="section-title">Order Items</div>
+    <table>${itemsHtml}</table>
+    <div class="total-box">
+      <div class="total-title">Order Total</div>
+      <div class="total">₹${data.total.toFixed(2)}</div>
+    </div>
+    <div class="section-title">Shipping Address</div>
+    <table>
+      <tr><td>Address</td><td>${data.address.address}</td></tr>
+      <tr><td>City</td><td>${data.address.city}</td></tr>
+      <tr><td>Postal Code</td><td>${data.address.postalCode || 'N/A'}</td></tr>
+      <tr><td>Country</td><td>${data.address.country || 'India'}</td></tr>
+    </table>
+  </div>
+  <div class="footer">
+    Automated notification from <strong>Sonish Order System</strong> · Do not reply
+  </div>
+</div>
+</body></html>`;
+
+        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+          try {
+            const transporter = nodemailer.createTransport({
+              service: "gmail",
+              auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+              },
+            });
+
+            const info = await transporter.sendMail({
+              from: `"Sonish System" <${process.env.EMAIL_USER}>`,
+              to: adminEmail,
+              subject: `[NEW ORDER] #${orderRef} — ₹${data.total.toFixed(2)}`,
+              html: adminHtml,
+            });
+
+            console.log(`[SMTP] ✅ Admin alert sent for #${orderRef} — Message ID: ${info.messageId}`);
+          } catch (smtpErr) {
+            console.error(`[SMTP] ❌ Admin SMTP failed for #${orderRef}:`, smtpErr.message);
+            
+            // Fallback: try Resend if SMTP fails
+            if (process.env.RESEND_API_KEY) {
+              console.log(`[Resend] Attempting fallback for Admin #${orderRef}...`);
+              try {
+                const resend = new Resend(process.env.RESEND_API_KEY);
+                const { error } = await resend.emails.send({
+                  from: 'Sonish System <onboarding@resend.dev>',
+                  to: [adminEmail],
+                  subject: `[NEW ORDER] #${orderRef} — ₹${data.total.toFixed(2)}`,
+                  html: adminHtml,
+                });
+                if (error) {
+                  console.error(`[Resend] Fallback also failed:`, error);
+                } else {
+                  console.log(`[Resend] ✅ Fallback Admin alert sent for #${orderRef}`);
+                }
+              } catch (fallbackErr) {
+                console.error(`[Resend] Fallback error:`, fallbackErr.message);
+              }
+            }
           }
-        } catch (err) {
-          console.error(`[Resend] FAIL (Admin): #${orderRef} ->`, err.message);
+        } else if (process.env.RESEND_API_KEY) {
+          // No SMTP creds, use Resend directly
+          try {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            const { error } = await resend.emails.send({
+              from: 'Sonish System <onboarding@resend.dev>',
+              to: [adminEmail],
+              subject: `[NEW ORDER] #${orderRef} — ₹${data.total.toFixed(2)}`,
+              html: adminHtml,
+            });
+            if (error) {
+              console.error(`[Resend] FAIL (Admin): #${orderRef} ->`, error);
+            } else {
+              console.log(`[Resend] ✅ Admin alert sent for #${orderRef}`);
+            }
+          } catch (err) {
+            console.error(`[Resend] FAIL (Admin): #${orderRef} ->`, err.message);
+          }
+        } else {
+          console.error(`[Email] ABORT: No EMAIL_USER/EMAIL_PASS or RESEND_API_KEY for Admin #${orderRef}`);
         }
 
-        console.log(`[Resend] FINISH: Order #${orderRef} task complete`);
+        console.log(`[Email] FINISH: Order #${orderRef} task complete`);
 
       } catch (globalErr) {
-        console.error(`[Resend] FATAL: Order #${orderRef} background failure:`, globalErr.message);
+        console.error(`[Email] FATAL: Order #${orderRef} background failure:`, globalErr.message);
       }
     };
 
