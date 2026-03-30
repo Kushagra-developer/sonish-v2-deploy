@@ -210,7 +210,7 @@ const Login = () => {
 
                             {otpSent && (
                                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                                    <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2 mt-6">6-Digit Code *</label>
+                                    <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2 mt-6">4-Digit Code *</label>
                                     <input 
                                         type="text" 
                                         value={otp} 
