@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Twitter, Facebook, ShieldCheck, Lock, CreditCard } from 'lucide-react';
+import { Instagram, Facebook, ShieldCheck, Lock, CreditCard } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -14,9 +14,8 @@ const Footer = () => {
               Redefining modern elegance through timeless silhouettes and uncompromising craftsmanship.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="hover:text-gold transition-colors"><Instagram className="h-5 w-5" /></a>
-              <a href="#" className="hover:text-gold transition-colors"><Twitter className="h-5 w-5" /></a>
-              <a href="#" className="hover:text-gold transition-colors"><Facebook className="h-5 w-5" /></a>
+              <a href="https://www.instagram.com/sonish.co.in?igsh=ODd1eWc2N2EybDRn" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors"><Instagram className="h-5 w-5" /></a>
+              <a href="https://www.facebook.com/share/18dY5KhKKm/" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors"><Facebook className="h-5 w-5" /></a>
             </div>
           </div>
 
