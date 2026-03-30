@@ -85,7 +85,7 @@ const Hero = () => {
               to={slides[currentSlide]?.link || '/collections'}
               className="group relative inline-flex items-center justify-center px-12 py-5 text-xs uppercase tracking-[0.3em] text-white overflow-hidden border border-white/50 backdrop-blur-sm transition-all duration-500 hover:border-white w-auto"
             >
-              <span className="relative z-10 group-hover:text-charcoal transition-colors duration-500 font-bold">Discover The Edit</span>
+              <span className="relative z-10 group-hover:text-charcoal transition-colors duration-500 font-bold">Shop Now</span>
               <div className="absolute inset-0 h-full w-full bg-white transform scale-x-0 origin-left transition-transform duration-500 ease-out group-hover:scale-x-100 z-0"></div>
             </Link>
           </motion.div>
