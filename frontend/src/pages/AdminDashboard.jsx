@@ -70,7 +70,7 @@ const AdminDashboard = () => {
   const [notificationLoading, setNotificationLoading] = useState(false);
 
   // Design / Settings States
-  const [settings, setSettings] = useState({ activeFont: "'Inter', sans-serif" });
+  const [settings, setSettings] = useState({ activeFont: "'Inter', sans-serif", editorialImage: '' });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const FONT_OPTIONS = [
@@ -2170,6 +2170,46 @@ const AdminDashboard = () => {
                         <option key={opt.value} value={opt.value}>{opt.name}</option>
                       ))}
                     </select>
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <label className="block text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 mb-4 font-bold">Studio Philosophy Image</label>
+                  <div className="flex flex-col gap-4">
+                    <input 
+                      type="text" 
+                      value={settings.editorialImage || ''}
+                      onChange={(e) => setSettings({ ...settings, editorialImage: e.target.value })}
+                      placeholder="Add via URL (https://...)"
+                      className="w-full bg-transparent border border-charcoal/10 dark:border-offwhite/10 p-4 rounded-lg text-sm focus:border-gold outline-none transition-colors font-mono"
+                    />
+                    <div className="relative">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          if (file.size > 50 * 1024 * 1024) { alert('Image must be under 50MB'); return; }
+                          const reader = new FileReader();
+                          reader.onloadend = () => setSettings({ ...settings, editorialImage: reader.result });
+                          reader.readAsDataURL(file);
+                          e.target.value = '';
+                        }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="flex items-center justify-center gap-2 w-full px-4 py-4 border-2 border-dashed border-charcoal/20 dark:border-offwhite/20 rounded-lg hover:border-gold hover:text-gold transition-colors text-[10px] uppercase tracking-widest font-bold text-charcoal/60 dark:text-offwhite/60">
+                        <Upload className="w-4 h-4" /> Upload Custom Image
+                      </div>
+                    </div>
+                    {settings.editorialImage && (
+                      <div className="mt-4 relative group w-full h-48 rounded-lg overflow-hidden border border-charcoal/10 shadow-inner bg-charcoal/5">
+                         <img src={settings.editorialImage} alt="Philosophy Preview" className="w-full h-full object-cover" />
+                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                           <button type="button" onClick={() => setSettings({ ...settings, editorialImage: '' })} className="p-2 bg-white/90 rounded-full text-red-500 drop-shadow-lg transform hover:scale-110 transition-transform"><Trash2 className="w-4 h-4" /></button>
+                         </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
