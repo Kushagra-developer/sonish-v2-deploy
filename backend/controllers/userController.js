@@ -203,17 +203,22 @@ const sendOtp = async (req, res) => {
 
       const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
+        port: 587,
+        secure: false, // Use STARTTLS
+        pool: true,
+        maxConnections: 1,
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS,
         },
-        // Add safety timeouts and debug logging
+        tls: {
+          rejectUnauthorized: false, // Safety for some build environments
+        },
         debug: true,
         logger: true,
-        connectTimeout: 10000, 
-        greetingTimeout: 10000,
+        connectTimeout: 15000, 
+        greetingTimeout: 15000,
+        socketTimeout: 15000,
       });
 
       const mailOptions = {
