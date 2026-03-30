@@ -306,6 +306,14 @@ const verifyOtp = async (req, res) => {
   }
 };
 
+// @desc    Get all users (excluding passwords) for Admin
+// @route   GET /api/users
+// @access  Private/Admin
+const getUsers = async (req, res) => {
+  const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+  res.json(users);
+};
+
 export {
   authUser,
   registerUser,
@@ -315,4 +323,5 @@ export {
   syncUserCartAndWishlist,
   sendOtp,
   verifyOtp,
+  getUsers
 };

@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck, Image, Plus, Trash2, Edit2, ExternalLink, ShieldCheck, Lock, Save, Power, Layers, Upload, X, GripVertical } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, TrendingUp, Eye, CheckCircle, Clock, ChevronDown, ChevronUp, LayoutDashboard, Tag, Truck, Image, Plus, Trash2, Edit2, ExternalLink, ShieldCheck, Lock, Save, Power, Layers, Upload, X, GripVertical, Users } from 'lucide-react';
 import API from '../utils/api';
 import { authFetch, authJsonFetch } from '../utils/authFetch';
 
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
+  const [users, setUsers] = useState([]);
   const [productSearchTerm, setProductSearchTerm] = useState('');
   const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [expandedUser, setExpandedUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -103,9 +105,10 @@ const AdminDashboard = () => {
           authFetch(`${API}/api/coupons`),
           authFetch(`${API}/api/notifications`),
           fetch(`${API}/api/settings`),
+          authFetch(`${API}/api/users`),
         ]);
 
-        const [prodRes, orderRes, bannersRes, catRes, maintRes, couponsRes, notifRes, settingsRes] = results;
+        const [prodRes, orderRes, bannersRes, catRes, maintRes, couponsRes, notifRes, settingsRes, usersRes] = results;
 
         if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
           setProducts(await prodRes.value.json());
@@ -138,6 +141,10 @@ const AdminDashboard = () => {
 
         if (notifRes && notifRes.status === 'fulfilled' && notifRes.value.ok) {
           setNotifications(await notifRes.value.json());
+        }
+
+        if (usersRes && usersRes.status === 'fulfilled' && usersRes.value.ok) {
+          setUsers(await usersRes.value.json());
         }
       } catch (err) {
         console.error('Admin fetch error:', err);
@@ -408,6 +415,7 @@ const AdminDashboard = () => {
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'customers', label: 'Customers', icon: Users },
     { id: 'products', label: 'Products', icon: Tag },
     { id: 'orders', label: 'Orders', icon: Truck },
     { id: 'categories', label: 'Categories', icon: Layers },
@@ -563,6 +571,133 @@ const AdminDashboard = () => {
               ) : (
                 <div className="px-6 py-12 text-center text-charcoal/50 dark:text-offwhite/50 text-sm">
                   No orders yet
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Customers Tab */}
+        {activeTab === 'customers' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <div className="bg-white dark:bg-charcoal/50 border border-charcoal/5 dark:border-offwhite/5 rounded-lg overflow-hidden">
+              <div className="px-6 py-4 border-b border-charcoal/5 dark:border-offwhite/5 flex justify-between items-center">
+                <h3 className="font-serif text-lg text-charcoal dark:text-offwhite">Registered Customers ({users.length})</h3>
+              </div>
+              {users.length === 0 ? (
+                <div className="p-12 text-center text-charcoal/40 dark:text-offwhite/40">
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No customers registered yet</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-charcoal/5 dark:border-offwhite/5 bg-charcoal/[0.02] dark:bg-offwhite/[0.02]">
+                        <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium whitespace-nowrap">Customer Info</th>
+                        <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium">Joined Date</th>
+                        <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium text-center">Cart Items</th>
+                        <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium text-center">Wishlist Items</th>
+                        <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-charcoal/5 dark:divide-offwhite/5">
+                      {users.map((user) => {
+                        const cartTotal = user.cart?.reduce((acc, c) => acc + (c.price * (c.cartQuantity || 1)), 0) || 0;
+                        return (
+                        <React.Fragment key={user._id}>
+                          <tr className={`hover:bg-charcoal/[0.02] dark:hover:bg-offwhite/[0.02] transition-colors ${expandedUser === user._id ? 'bg-charcoal/[0.02] dark:bg-offwhite/[0.02]' : ''}`}>
+                            <td className="px-6 py-4">
+                              <p className="text-sm font-medium text-charcoal dark:text-offwhite">{user.name || 'Guest'}</p>
+                              <p className="text-xs text-charcoal/50 dark:text-offwhite/50">{user.email || user.phone}</p>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-charcoal/70 dark:text-offwhite/70">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-charcoal/5 dark:bg-offwhite/5 text-xs font-bold text-charcoal dark:text-offwhite">
+                                {user.cart?.length || 0}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gold/10 text-xs font-bold text-gold">
+                                {user.wishlist?.length || 0}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button
+                                onClick={() => setExpandedUser(expandedUser === user._id ? null : user._id)}
+                                className="p-2 hover:bg-charcoal/5 dark:hover:bg-offwhite/5 rounded-full transition-colors"
+                              >
+                                {expandedUser === user._id ? <ChevronUp className="w-4 h-4 text-charcoal/50 dark:text-offwhite/50" /> : <ChevronDown className="w-4 h-4 text-charcoal/50 dark:text-offwhite/50" />}
+                              </button>
+                            </td>
+                          </tr>
+                          {expandedUser === user._id && (
+                            <tr className="bg-charcoal/[0.01] dark:bg-offwhite/[0.01]">
+                              <td colSpan="5" className="p-0">
+                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="px-8 py-6 border-b border-charcoal/5 dark:border-offwhite/5">
+                                  <div className="grid md:grid-cols-2 gap-8">
+                                    {/* Cart Section */}
+                                    <div>
+                                      <h4 className="text-xs uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-4 font-bold flex items-center gap-2">
+                                        <ShoppingCart className="w-3 h-3" /> Current Cart
+                                      </h4>
+                                      {(!user.cart || user.cart.length === 0) ? (
+                                        <p className="text-xs text-charcoal/40 dark:text-offwhite/40 italic">Cart is empty</p>
+                                      ) : (
+                                        <div className="space-y-3">
+                                          {user.cart.map((item, idx) => (
+                                            <div key={idx} className="flex items-center gap-3 bg-white dark:bg-charcoal/40 p-2 rounded shadow-sm border border-charcoal/5 dark:border-offwhite/5">
+                                              <img src={item.image} alt={item.name} className="w-12 h-14 object-cover rounded bg-gray-100" />
+                                              <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-medium text-charcoal dark:text-offwhite truncate">{item.name}</p>
+                                                <p className="text-[10px] text-charcoal/50 mt-0.5">Size: {item.selectedSize || 'N/A'}</p>
+                                                <div className="flex justify-between items-center mt-1">
+                                                  <span className="text-[10px] font-bold text-charcoal/50">Qty: {item.cartQuantity || 1}</span>
+                                                  <span className="text-xs font-medium text-gold">₹{(item.price * (item.cartQuantity || 1)).toLocaleString()}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
+                                          <div className="pt-2 mt-2 border-t border-charcoal/10 flex justify-between items-center px-1">
+                                            <span className="text-xs uppercase tracking-widest font-bold">Cart Value</span>
+                                            <span className="text-sm font-bold text-charcoal dark:text-offwhite">₹{cartTotal.toLocaleString()}</span>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                    {/* Wishlist Section */}
+                                    <div>
+                                      <h4 className="text-xs uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 mb-4 font-bold flex items-center gap-2">
+                                        <Tag className="w-3 h-3" /> Wishlist
+                                      </h4>
+                                      {(!user.wishlist || user.wishlist.length === 0) ? (
+                                        <p className="text-xs text-charcoal/40 dark:text-offwhite/40 italic">Wishlist is empty</p>
+                                      ) : (
+                                        <div className="space-y-3">
+                                          {user.wishlist.map((item, idx) => (
+                                            <div key={idx} className="flex items-center gap-3 bg-white dark:bg-charcoal/40 p-2 rounded shadow-sm border border-charcoal/5 dark:border-offwhite/5">
+                                              <img src={item.image} alt={item.name} className="w-12 h-14 object-cover rounded bg-gray-100" />
+                                              <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-medium text-charcoal dark:text-offwhite truncate">{item.name}</p>
+                                                <p className="text-[10px] text-charcoal/50 mt-0.5">{item.brand}</p>
+                                                <p className="text-xs font-medium text-charcoal dark:text-offwhite mt-1">₹{item.price?.toLocaleString()}</p>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      )})}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
