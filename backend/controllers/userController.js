@@ -191,13 +191,13 @@ const verifyOtp = async (req, res) => {
 
   try {
     // 1. Guard: Check if MojoAuth is configured
-    const apiKey = process.env.MOJOAUTH_API_KEY || "bf51b5c2-f94e-4f7f-8e2b-f95476a6e5a1"; 
+    const apiKey = process.env.MOJOAUTH_API_KEY || "2fb8a130-b384-4a2f-9685-5f296613dddd"; 
     
-    // In SDK v1.4+, we use the API Key to initialize
-    const mojoauth = new MojoAuth(apiKey);
+    // MojoAuth SDK initialization pattern
+    const mojoauth = MojoAuth({ apiKey });
     
     // 2. Verify the Token
-    const mojoUser = await mojoauth.verifyToken(jwtToken);
+    const mojoUser = await mojoauth.mojoAPI.verifyToken(jwtToken);
     
     if (!mojoUser || !mojoUser.identifier) {
       res.status(401);

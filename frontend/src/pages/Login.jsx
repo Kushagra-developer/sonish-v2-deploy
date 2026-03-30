@@ -151,7 +151,7 @@ const Login = () => {
 
     useEffect(() => {
         if (authMode === 'otp' && !mojoauth) {
-            const apiKey = "bf51b5c2-f94e-4f7f-8e2b-f95476a6e5a1"; // Placeholder - user should set in env
+            const apiKey = "2fb8a130-b384-4a2f-9685-5f296613dddd"; 
             const config = {
                 language: "en",
                 redirect_url: window.location.origin + '/login',
