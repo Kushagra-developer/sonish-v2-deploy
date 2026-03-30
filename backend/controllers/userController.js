@@ -172,6 +172,7 @@ const syncUserCartAndWishlist = async (req, res) => {
 // @access  Public
 const sendOtp = async (req, res) => {
   const { email } = req.body;
+  console.log(`[Auth] OTP request received for: ${email}`);
 
   if (!email) {
     res.status(400);

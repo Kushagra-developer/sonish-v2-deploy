@@ -85,13 +85,18 @@ const Login = () => {
         setError(null);
         setSuccessMsg(null);
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second safety
+
         try {
             const res = await fetch(`${API}/api/users/send-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: otpEmail }),
+                signal: controller.signal
             });
 
+            clearTimeout(timeoutId);
             const data = await res.json();
 
             if (res.ok) {
@@ -105,7 +110,12 @@ const Login = () => {
                 setError(data.message || 'Failed to send OTP');
             }
         } catch (err) {
-            setError('Connection error. Please try again.');
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+                setError('Request timed out. The server might be starting up, please try again in a moment.');
+            } else {
+                setError('Connection error. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }
