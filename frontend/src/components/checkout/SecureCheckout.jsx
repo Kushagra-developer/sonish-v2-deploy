@@ -220,6 +220,47 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
         }
     };
 
+    if (paymentStatus === 'verifying') {
+        return (
+            <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="p-10 text-center bg-offwhite dark:bg-charcoal/50 rounded-xl mt-8 border border-gold/20 shadow-xl"
+            >
+                <div className="w-16 h-16 mx-auto mb-6 relative">
+                    <div className="absolute inset-0 border-4 border-gold/20 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-t-gold rounded-full animate-spin"></div>
+                </div>
+                <h3 className="font-serif text-2xl text-charcoal dark:text-offwhite mb-2">Confirming Payment</h3>
+                <p className="text-xs text-charcoal/60 dark:text-offwhite/60 tracking-widest uppercase animate-pulse">
+                    Please do not refresh or close this window...
+                </p>
+            </motion.div>
+        );
+    }
+
+    if (paymentStatus === 'failed') {
+        return (
+            <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="p-10 text-center bg-red-50 dark:bg-red-900/10 rounded-xl mt-8 border border-red-200"
+            >
+                <div className="w-16 h-16 mx-auto bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6">
+                    <X className="w-8 h-8" />
+                </div>
+                <h3 className="font-serif text-2xl text-red-800 dark:text-red-400 mb-2">Payment Failed</h3>
+                <p className="text-sm text-red-600/80 mb-6">
+                    There was an issue processing your transaction. Please try again or contact support.
+                </p>
+                <button 
+                    onClick={() => setPaymentStatus('idle')}
+                    className="text-xs uppercase tracking-[0.2em] font-bold text-charcoal border-b border-charcoal pb-1 hover:text-gold hover:border-gold transition-colors"
+                >
+                    Try Again
+                </button>
+            </motion.div>
+        );
+    }
+
     if (paymentStatus === 'success') {
         return (
             <motion.div 
@@ -240,7 +281,7 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                     </div>
                 )}
                 <p className="text-[10px] uppercase tracking-widest text-charcoal/40 dark:text-offwhite/40 animate-pulse">
-                    Redirecting to your orders...
+                    Redirecting to your orders in a few seconds...
                 </p>
             </motion.div>
         );
