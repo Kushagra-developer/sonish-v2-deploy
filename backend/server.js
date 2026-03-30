@@ -30,6 +30,9 @@ import userRoutes from './routes/userRoutes.js';
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Trust proxy for Render/Vercel (required for express-rate-limit to see accurate client IPs)
+app.set('trust proxy', 1);
+
 // Runtime maintenance mode state (defaults to env var, toggleable via API)
 let isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
 
