@@ -92,88 +92,109 @@ const addOrderItems = async (req, res) => {
     }
 
     // --- SEND ORDER CONFIRMATION EMAIL (Non-blocking) ---
-    const sendEmails = async () => {
+    const userEmail = req.user?.email;
+    const userName = req.user?.name;
+
+    const emailData = {
+      orderId: createdOrder._id,
+      customerEmail: userEmail,
+      customerName: userName,
+      items: createdOrder.orderItems,
+      total: totalPrice,
+      address: shippingAddress
+    };
+
+    const sendEmailsAsync = async (data) => {
+      console.log(`[Email] Starting background task for Order #${data.orderId.toString().slice(-8)}`);
       try {
-        if (req.user && req.user.email) {
-          let transporter;
-          if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-            transporter = nodemailer.createTransport({
-              service: 'gmail',
-              auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-            });
-          } else {
-            const testAccount = await nodemailer.createTestAccount();
-            transporter = nodemailer.createTransport({
-              host: 'smtp.ethereal.email', port: 587,
-              auth: { user: testAccount.user, pass: testAccount.pass },
-            });
-          }
+        if (!data.customerEmail) {
+          console.warn('[Email] Skipping: No customer email provided');
+          return;
+        }
 
-          const itemsHtml = createdOrder.orderItems.map(item => `
-            <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
-                <span style="font-size: 14px; color: #111; font-weight: bold;">${item.name}</span><br/>
-                <span style="font-size: 11px; color: #666; display: inline-block; margin-top: 4px;"><strong>SKU:</strong> ${item.sku} | <strong>Size:</strong> ${item.size}</span><br/>
-                <span style="font-size: 11px; color: #999;">Qty: ${item.qty}</span>
-              </td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #eee; text-align: right; font-size: 14px; color: #c9a84c;">
-                ₹${item.price.toFixed(2)}
-              </td>
-            </tr>
-          `).join('');
-
-          // 1. Send to Customer
-          await transporter.sendMail({
-            from: `"Sonish Studios" <${process.env.EMAIL_USER || 'no-reply@sonish.co.in'}>`,
-            to: req.user.email,
-            subject: `Order Confirmation - Receipt #${createdOrder._id.toString().slice(-8)}`,
-            html: `
-              <div style="font-family: Georgia, serif; max-width: 600px; margin: auto; background: #fff; border: 1px solid #eee; padding: 40px;">
-                <h1 style="font-size: 28px; letter-spacing: 3px; margin-bottom: 4px; text-align: center;">SONISH</h1>
-                <p style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 4px; margin-top: 0; text-align: center;">Modern Elegance</p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
-                <h2 style="font-size: 20px; color: #111; margin-bottom: 6px;">Thank you for your order, ${req.user.name || 'valued customer'}.</h2>
-                <div style="background: #f9f9f9; padding: 24px; margin: 24px 0; border: 1px solid #eee;">
-                  <p style="margin: 0 0 16px 0; font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 2px;">Order Summary (#${createdOrder._id.toString().slice(-8)})</p>
-                  <table style="width: 100%; border-collapse: collapse;">
-                    ${itemsHtml}
-                    <tr>
-                      <td style="padding: 16px 0 8px; font-size: 12px; color: #999; text-transform: uppercase;">Total amount</td>
-                      <td style="padding: 16px 0 8px; text-align: right; font-size: 20px; color: #111; font-weight: bold;">₹${totalPrice.toFixed(2)}</td>
-                    </tr>
-                  </table>
-                </div>
-                <p style="font-size: 12px; color: #999; margin-top: 40px; text-align: center;">If you have any questions, please reply to this email.</p>
-              </div>`
+        let transporter;
+        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+          console.log(`[Email] Using Gmail SMTP (${process.env.EMAIL_USER})`);
+          transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
           });
+        } else {
+          console.log('[Email] Warning: No official SMTP credentials, falling back to Ethereal');
+          const testAccount = await nodemailer.createTestAccount();
+          transporter = nodemailer.createTransport({
+            host: 'smtp.ethereal.email', port: 587,
+            auth: { user: testAccount.user, pass: testAccount.pass },
+          });
+        }
 
-          // 2. Send to Admin
-          const adminEmail = process.env.ADMIN_EMAIL || 'sonishfashion@gmail.com';
-          await transporter.sendMail({
-            from: `"Sonish Studios System" <${process.env.EMAIL_USER || 'no-reply@sonish.co.in'}>`,
-            to: adminEmail,
-            subject: `[ACTION REQUIRED] New Order - #${createdOrder._id.toString().slice(-8)}`,
-            html: `
-              <div style="font-family: Arial, sans-serif; padding: 20px;">
-                <h2>New Order Received!</h2>
-                <p>Customer <strong>${req.user.name}</strong> (${req.user.email}) just placed an order for <strong>₹${totalPrice.toFixed(2)}</strong>.</p>
-                <br/>
+        const itemsHtml = data.items.map(item => `
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
+              <span style="font-size: 14px; color: #111; font-weight: bold;">${item.name}</span><br/>
+              <span style="font-size: 11px; color: #666; display: inline-block; margin-top: 4px;"><strong>SKU:</strong> ${item.sku} | <strong>Size:</strong> ${item.size}</span><br/>
+              <span style="font-size: 11px; color: #999;">Qty: ${item.qty}</span>
+            </td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #eee; text-align: right; font-size: 14px; color: #c9a84c;">
+              ₹${item.price.toFixed(2)}
+            </td>
+          </tr>
+        `).join('');
+
+        // 1. Send to Customer
+        console.log(`[Email] Dispatching to Customer: ${data.customerEmail}`);
+        const customerInfo = await transporter.sendMail({
+          from: `"Sonish Studios" <${process.env.EMAIL_USER || 'no-reply@sonish.co.in'}>`,
+          to: data.customerEmail,
+          subject: `Order Confirmation - Receipt #${data.orderId.toString().slice(-8)}`,
+          html: `
+            <div style="font-family: Georgia, serif; max-width: 600px; margin: auto; background: #fff; border: 1px solid #eee; padding: 40px;">
+              <h1 style="font-size: 28px; letter-spacing: 3px; margin-bottom: 4px; text-align: center;">SONISH</h1>
+              <p style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 4px; margin-top: 0; text-align: center;">Modern Elegance</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
+              <h2 style="font-size: 20px; color: #111; margin-bottom: 6px;">Thank you for your order, ${data.customerName || 'valued customer'}.</h2>
+              <div style="background: #f9f9f9; padding: 24px; margin: 24px 0; border: 1px solid #eee;">
+                <p style="margin: 0 0 16px 0; font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 2px;">Order Summary (#${data.orderId.toString().slice(-8)})</p>
                 <table style="width: 100%; border-collapse: collapse;">
                   ${itemsHtml}
+                  <tr>
+                    <td style="padding: 16px 0 8px; font-size: 12px; color: #999; text-transform: uppercase;">Total amount</td>
+                    <td style="padding: 16px 0 8px; text-align: right; font-size: 20px; color: #111; font-weight: bold;">₹${data.total.toFixed(2)}</td>
+                  </tr>
                 </table>
-              </div>`
-          });
+              </div>
+              <p style="font-size: 12px; color: #999; margin-top: 40px; text-align: center;">If you have any questions, please reply to this email.</p>
+            </div>`
+        });
+        console.log(`[Email] Customer Receipt Sent: ${customerInfo.messageId}`);
 
-          if (!process.env.EMAIL_USER) {
-            console.log('Preview Order Email URL: %s', nodemailer.getTestMessageUrl(info));
-          }
-        }
+        // 2. Send to Admin
+        const adminEmail = process.env.ADMIN_EMAIL || 'sonishfashion@gmail.com';
+        console.log(`[Email] Dispatching to Admin: ${adminEmail}`);
+        const adminInfo = await transporter.sendMail({
+          from: `"Sonish Studios System" <${process.env.EMAIL_USER || 'no-reply@sonish.co.in'}>`,
+          to: adminEmail,
+          subject: `[ACTION REQUIRED] New Order - #${data.orderId.toString().slice(-8)}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+              <h2>New Order Received!</h2>
+              <p>Customer <strong>${data.customerName}</strong> (${data.customerEmail}) just placed an order for <strong>₹${data.total.toFixed(2)}</strong>.</p>
+              <br/>
+              <table style="width: 100%; border-collapse: collapse;">
+                ${itemsHtml}
+              </table>
+              <p>Shipping Address: ${data.address.address}, ${data.address.city}</p>
+            </div>`
+        });
+        console.log(`[Email] Admin Alert Sent: ${adminInfo.messageId}`);
+
       } catch (emailErr) {
-        console.error('Order confirmation email failed:', emailErr.message);
+        console.error('[Email] CRITICAL FAILURE:', emailErr.message);
       }
     };
 
-    sendEmails();
+    // Trigger emails in background
+    sendEmailsAsync(emailData);
     // --- END EMAIL LOGIC ---
 
     res.status(201).json(createdOrder);
