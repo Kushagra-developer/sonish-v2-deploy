@@ -2,7 +2,6 @@ import Order from '../models/orderModel.js';
 import User from '../models/userModel.js';
 import Product from '../models/productModel.js';
 import Coupon from '../models/couponModel.js';
-import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
@@ -107,10 +106,24 @@ const addOrderItems = async (req, res) => {
 
     const sendEmailsAsync = async (data) => {
       const orderRef = data.orderId.toString().slice(-8);
-      console.log(`[Email] START: Order #${orderRef} dispatch task`);
+      console.log(`[SMTP] START: Order #${orderRef} dispatch task`);
       
       try {
-        // Prepare Items Table (shared by both emails)
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+          console.error(`[SMTP] ABORT: Missing EMAIL_USER or EMAIL_PASS for #${orderRef}`);
+          return;
+        }
+
+        // Exact pattern requested by user
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+
+        // ─── Order Items Table ───
         const itemsHtml = data.items.map(item => `
           <tr>
             <td style="padding:10px; border-bottom:1px solid #eee;">
@@ -121,45 +134,42 @@ const addOrderItems = async (req, res) => {
         `).join('');
 
         // ═══════════════════════════════════════════════════════════
-        // 1. CUSTOMER EMAIL — via Resend (HTTP, bypasses SMTP block)
+        // 1. CUSTOMER EMAIL
         // ═══════════════════════════════════════════════════════════
-        if (data.customerEmail && process.env.RESEND_API_KEY) {
-          console.log(`[Resend] Sending Customer Receipt to ${data.customerEmail}`);
+        if (data.customerEmail) {
+          console.log(`[SMTP] Sending Customer Receipt to ${data.customerEmail}`);
+          const customerHtml = `
+            <div style="font-family:'Helvetica Neue',sans-serif; max-width:600px; margin:auto; border:1px solid #eee; padding:40px;">
+              <div style="text-align:center; margin-bottom:30px;">
+                <h1 style="font-size:24px; font-weight:700; letter-spacing:4px; margin:0;">SONISH</h1>
+                <p style="font-size:10px; letter-spacing:2px; color:#999; margin-top:5px;">ORDER CONFIRMATION</p>
+              </div>
+              <p style="font-size:16px; color:#333;">Hello ${data.customerName}, your order <strong>#${orderRef}</strong> is confirmed!</p>
+              <table style="width:100%; border-collapse:collapse; margin:20px 0;">${itemsHtml}</table>
+              <h3 style="text-align:right; border-top:2px solid #eee; padding-top:15px; color:#000;">Total: ₹${data.total.toFixed(2)}</h3>
+              <div style="border-top:1px solid #eee; padding-top:20px; margin-top:20px; text-align:center; font-size:11px; color:#999;">
+                <p>© ${new Date().getFullYear()} Sonish Studios. All rights reserved.</p>
+              </div>
+            </div>`;
+
           try {
-            const resend = new Resend(process.env.RESEND_API_KEY);
-            const { data: result, error } = await resend.emails.send({
-              from: 'Sonish Studios <onboarding@resend.dev>',
-              to: [data.customerEmail],
+            const info = await transporter.sendMail({
+              from: `"Sonish Studios" <${process.env.EMAIL_USER}>`,
+              to: data.customerEmail,
               subject: `Order Confirmation - #${orderRef}`,
-              html: `<div style="font-family:'Helvetica Neue',sans-serif; max-width:600px; margin:auto; border:1px solid #eee; padding:40px;">
-                <div style="text-align:center; margin-bottom:30px;">
-                  <h1 style="font-size:24px; font-weight:700; letter-spacing:4px; margin:0;">SONISH</h1>
-                  <p style="font-size:10px; letter-spacing:2px; color:#999; margin-top:5px;">ORDER CONFIRMATION</p>
-                </div>
-                <p style="font-size:16px; color:#333;">Hello ${data.customerName}, your order <strong>#${orderRef}</strong> is confirmed!</p>
-                <table style="width:100%; border-collapse:collapse; margin:20px 0;">${itemsHtml}</table>
-                <h3 style="text-align:right; border-top:2px solid #eee; padding-top:15px; color:#000;">Total: ₹${data.total.toFixed(2)}</h3>
-                <div style="border-top:1px solid #eee; padding-top:20px; margin-top:20px; text-align:center; font-size:11px; color:#999;">
-                  <p>© ${new Date().getFullYear()} Sonish Studios. All rights reserved.</p>
-                </div>
-              </div>`
+              html: customerHtml,
             });
-            if (error) {
-              console.error(`[Resend] FAIL (Customer): #${orderRef} ->`, error);
-            } else {
-              console.log(`[Resend] SUCCESS: Customer receipt sent for #${orderRef}`, result);
-            }
+            console.log(`[SMTP] ✅ Customer receipt sent — Message ID: ${info.messageId}`);
           } catch (err) {
-            console.error(`[Resend] FAIL (Customer): #${orderRef} ->`, err.message);
+            console.error(`[SMTP] ❌ Customer receipt failed:`, err.message);
           }
         }
 
         // ═══════════════════════════════════════════════════════════
-        // 2. ADMIN EMAIL — via Gmail SMTP (service: "gmail")
-        //    Pattern from user's Firebase function
+        // 2. ADMIN ALERTS
         // ═══════════════════════════════════════════════════════════
         const adminEmail = process.env.ADMIN_EMAIL || 'sonishfashion@gmail.com';
-        console.log(`[SMTP] Preparing Admin Alert for ${adminEmail}`);
+        console.log(`[SMTP] Sending Admin Alert to ${adminEmail}`);
 
         const adminHtml = `
 <!DOCTYPE html>
@@ -215,74 +225,22 @@ tr:nth-child(even){background:#f9fafb}
 </div>
 </body></html>`;
 
-        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-          try {
-            const transporter = nodemailer.createTransport({
-              service: "gmail",
-              auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-              },
-            });
-
-            const info = await transporter.sendMail({
-              from: `"Sonish System" <${process.env.EMAIL_USER}>`,
-              to: adminEmail,
-              subject: `[NEW ORDER] #${orderRef} — ₹${data.total.toFixed(2)}`,
-              html: adminHtml,
-            });
-
-            console.log(`[SMTP] ✅ Admin alert sent for #${orderRef} — Message ID: ${info.messageId}`);
-          } catch (smtpErr) {
-            console.error(`[SMTP] ❌ Admin SMTP failed for #${orderRef}:`, smtpErr.message);
-            
-            // Fallback: try Resend if SMTP fails
-            if (process.env.RESEND_API_KEY) {
-              console.log(`[Resend] Attempting fallback for Admin #${orderRef}...`);
-              try {
-                const resend = new Resend(process.env.RESEND_API_KEY);
-                const { error } = await resend.emails.send({
-                  from: 'Sonish System <onboarding@resend.dev>',
-                  to: [adminEmail],
-                  subject: `[NEW ORDER] #${orderRef} — ₹${data.total.toFixed(2)}`,
-                  html: adminHtml,
-                });
-                if (error) {
-                  console.error(`[Resend] Fallback also failed:`, error);
-                } else {
-                  console.log(`[Resend] ✅ Fallback Admin alert sent for #${orderRef}`);
-                }
-              } catch (fallbackErr) {
-                console.error(`[Resend] Fallback error:`, fallbackErr.message);
-              }
-            }
-          }
-        } else if (process.env.RESEND_API_KEY) {
-          // No SMTP creds, use Resend directly
-          try {
-            const resend = new Resend(process.env.RESEND_API_KEY);
-            const { error } = await resend.emails.send({
-              from: 'Sonish System <onboarding@resend.dev>',
-              to: [adminEmail],
-              subject: `[NEW ORDER] #${orderRef} — ₹${data.total.toFixed(2)}`,
-              html: adminHtml,
-            });
-            if (error) {
-              console.error(`[Resend] FAIL (Admin): #${orderRef} ->`, error);
-            } else {
-              console.log(`[Resend] ✅ Admin alert sent for #${orderRef}`);
-            }
-          } catch (err) {
-            console.error(`[Resend] FAIL (Admin): #${orderRef} ->`, err.message);
-          }
-        } else {
-          console.error(`[Email] ABORT: No EMAIL_USER/EMAIL_PASS or RESEND_API_KEY for Admin #${orderRef}`);
+        try {
+          const info = await transporter.sendMail({
+            from: `"Sonish System" <${process.env.EMAIL_USER}>`,
+            to: adminEmail,
+            subject: `[NEW ORDER] #${orderRef} — ₹${data.total.toFixed(2)}`,
+            html: adminHtml,
+          });
+          console.log(`[SMTP] ✅ Admin alert sent — Message ID: ${info.messageId}`);
+        } catch (err) {
+          console.error(`[SMTP] ❌ Admin alert failed:`, err.message);
         }
 
-        console.log(`[Email] FINISH: Order #${orderRef} task complete`);
+        console.log(`[SMTP] FINISH: Order #${orderRef} task complete`);
 
       } catch (globalErr) {
-        console.error(`[Email] FATAL: Order #${orderRef} background failure:`, globalErr.message);
+        console.error(`[SMTP] FATAL: Order #${orderRef} background failure:`, globalErr.message);
       }
     };
 
