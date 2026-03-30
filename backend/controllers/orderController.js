@@ -114,19 +114,25 @@ const addOrderItems = async (req, res) => {
           return;
         }
 
-        // 1. Setup Transporter with detailed logging
+        // 1. Setup Transporter with STARTTLS + pooling (same fix as OTP)
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
-          port: 465,
-          secure: true,
+          port: 587,
+          secure: false, // Use STARTTLS
+          pool: true,
+          maxConnections: 1,
           auth: { 
             user: process.env.EMAIL_USER, 
             pass: process.env.EMAIL_PASS 
           },
-          // Enable debug logging to see the SMTP handshake in Render logs
+          tls: {
+            rejectUnauthorized: false,
+          },
           debug: true,
           logger: true,
-          connectionTimeout: 10000, // 10s
+          connectTimeout: 15000,
+          greetingTimeout: 15000,
+          socketTimeout: 15000,
         });
 
         // 2. Prepare Items Table
