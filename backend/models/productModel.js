@@ -96,6 +96,11 @@ const productSchema = mongoose.Schema(
       unique: true,
       sparse: true,
     },
+    isTrending: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
   },
   {
     timestamps: true,
