@@ -51,12 +51,12 @@ const Hero = () => {
         >
           <div className="absolute inset-0 bg-black/40 z-10" />
           <motion.img
-            initial={{ scale: 1.1 }}
+            initial={{ scale: 1.02 }}
             animate={{ scale: 1 }}
             transition={{ duration: 10, ease: 'linear' }}
             src={slides[currentSlide]?.image}
             alt={slides[currentSlide]?.title}
-            className="w-full h-full object-cover object-[center_25%] md:object-top lg:object-[center_20%]"
+            className="w-full h-full object-cover object-top lg:object-[center_10%]"
           />
         </motion.div>
       </AnimatePresence>
