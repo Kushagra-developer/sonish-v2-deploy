@@ -1,5 +1,12 @@
 import dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '.env') });
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -7,8 +14,7 @@ import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import User from './models/userModel.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// (path and fileURLToPath already imported above)
 import razorpayRoutes from './routes/razorpayRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
@@ -31,9 +37,6 @@ if (!process.env.JWT_SECRET) {
   console.error('FATAL ERROR: JWT_SECRET environment variable is not defined.');
   process.exit(1);
 }
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // ──────────────────────────────────────────────
 // Security middleware
