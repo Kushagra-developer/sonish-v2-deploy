@@ -103,7 +103,7 @@ const productSchema = mongoose.Schema(
 );
 
 // Auto-generate SKU before saving if not provided
-productSchema.pre('save', async function (next) {
+productSchema.pre('save', async function () {
   if (!this.sku) {
     const prefix = (this.category || 'GEN')
       .toUpperCase()
@@ -113,7 +113,6 @@ productSchema.pre('save', async function (next) {
     const seq = String(count + 1).padStart(4, '0');
     this.sku = `SNH-${prefix}-${seq}`;
   }
-  next();
 });
 
 const Product = mongoose.model('Product', productSchema);
