@@ -28,41 +28,6 @@ export const createNotificationRequest = asyncHandler(async (req, res) => {
       size
     });
 
-    // Send notification to Admin
-    try {
-      let transporter;
-      if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-        });
-      } else {
-        const testAccount = await nodemailer.createTestAccount();
-        transporter = nodemailer.createTransport({
-          host: 'smtp.ethereal.email', port: 587,
-          auth: { user: testAccount.user, pass: testAccount.pass },
-        });
-      }
-
-      const adminEmail = process.env.ADMIN_EMAIL || 'info@sonish.co.in';
-      await transporter.sendMail({
-        from: `"Sonish Studios" <${process.env.EMAIL_USER || 'no-reply@sonish.co.in'}>`,
-        to: adminEmail,
-        subject: `New Restock Request: ${product.name}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
-            <h2 style="color: #111;">New "Notify Me" Request</h2>
-            <p><strong>Product:</strong> ${product.name}</p>
-            <p><strong>Size Requested:</strong> ${size}</p>
-            <p><strong>Customer Email:</strong> <a href="mailto:${email}">${email}</a></p>
-            <hr style="border: none; border-top: 1px solid #eee;" />
-            <p style="font-size: 12px; color: #666;">View all requests in your <a href="${process.env.CORS_ORIGIN?.split(',')[0]}/admin">Admin Dashboard</a>.</p>
-          </div>`
-      });
-    } catch (emailErr) {
-      console.error('Admin notification email failed:', emailErr.message);
-    }
-
     res.status(201).json(notification);
   } catch (err) {
     if (err.code === 11000) {

@@ -171,7 +171,7 @@ const addOrderItems = async (req, res) => {
         });
 
         // Notify Admin
-        const adminEmail = process.env.ADMIN_EMAIL || 'sachdevak806@gmail.com';
+        const adminEmail = process.env.ADMIN_EMAIL || 'sonishfashion@gmail.com';
         await transporter.sendMail({
           from: `"Sonish Studios System" <${process.env.EMAIL_USER || 'no-reply@sonish.co.in'}>`,
           to: adminEmail,
