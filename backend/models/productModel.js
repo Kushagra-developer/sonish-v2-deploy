@@ -114,9 +114,8 @@ productSchema.pre('save', async function () {
       .toUpperCase()
       .replace(/[^A-Z]/g, '')
       .slice(0, 3);
-    const count = await mongoose.model('Product').countDocuments();
-    const seq = String(count + 1).padStart(4, '0');
-    this.sku = `SNH-${prefix}-${seq}`;
+    const randomHex = Math.random().toString(16).substring(2, 6).toUpperCase();
+    this.sku = `SNH-${prefix}-${randomHex}`;
   }
 });
 
