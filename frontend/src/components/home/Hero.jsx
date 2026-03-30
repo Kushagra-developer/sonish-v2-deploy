@@ -56,7 +56,7 @@ const Hero = () => {
             transition={{ duration: 10, ease: 'linear' }}
             src={slides[currentSlide]?.image}
             alt={slides[currentSlide]?.title}
-            className="w-full h-full object-cover object-top"
+            className="w-full h-full object-cover object-[center_25%] md:object-top lg:object-[center_20%]"
           />
         </motion.div>
       </AnimatePresence>
