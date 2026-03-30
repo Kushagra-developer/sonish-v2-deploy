@@ -192,61 +192,56 @@ const sendOtp = async (req, res) => {
 
   if (otpEntry) {
     try {
-      let transporter;
-      
-      // Attempt to send real email if SMTP credentials are configured in Vercel
-      if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        transporter = nodemailer.createTransport({
-          service: 'gmail', 
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-        });
-      } else {
-        // Fallback: Generate Ethereal test account (Zero configuration testing sandbox)
-        const testAccount = await nodemailer.createTestAccount();
-        transporter = nodemailer.createTransport({
-          host: "smtp.ethereal.email",
-          port: 587,
-          secure: false, // true for 465, false for other ports
-          auth: {
-            user: testAccount.user, // generated ethereal user
-            pass: testAccount.pass, // generated ethereal password
-          },
-        });
-      }
-
-      const info = await transporter.sendMail({
-        from: '"Sonish Boutique" <no-reply@sonish.co.in>',
-        to: email,
-        subject: "Your Sonish Secure Login Code",
-        html: `
-          <div style="font-family: sans-serif; text-align: center; padding: 40px 20px; background-color: #fcfcfc;">
-            <h2 style="color: #2C2C2C; margin-bottom: 5px;">Welcome to Sonish</h2>
-            <p style="color: #666;">Here is your secure verification code:</p>
-            <h1 style="letter-spacing: 8px; color: #000; background: #fff; padding: 20px; border: 1px solid #eee; border-radius: 5px; display: inline-block; margin: 20px 0;">${otpCode}</h1>
-            <p style="color: #999; font-size: 12px;">This code expires in 5 minutes. Do not share it with anyone.</p>
-          </div>
-        `,
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
       });
 
-      console.log(`[EMAIL] OTP dispatched to ${email}`);
-      const previewUrl = nodemailer.getTestMessageUrl(info);
-      if (previewUrl) {
-        console.log(`[TEST EMAIL PREVIEW] ${previewUrl}`);
-      }
+      const mailOptions = {
+        from: `"Sonish Studios" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `${otpCode} is your Sonish verification code`,
+        html: `
+          <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a; background-color: #ffffff; border: 1px solid #f0f0f0;">
+            <div style="text-align: center; margin-bottom: 40px;">
+              <h1 style="font-size: 24px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; margin: 0; color: #000000;">SONISH</h1>
+              <p style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-top: 5px; color: #999;">Secure Authentication</p>
+            </div>
+            
+            <div style="margin-bottom: 40px;">
+              <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">Verification Code</p>
+              <div style="background-color: #f9f9f9; padding: 30px; text-align: center; border-radius: 4px;">
+                <span style="font-size: 42px; font-weight: 700; letter-spacing: 12px; color: #000000;">${otpCode}</span>
+              </div>
+            </div>
+            
+            <div style="font-size: 14px; line-height: 1.6; color: #666; margin-bottom: 40px;">
+              <p>This code will expire in 5 minutes. For your security, do not share this code with anyone.</p>
+              <p>If you didn't request this code, you can safely ignore this email.</p>
+            </div>
+            
+            <div style="border-top: 1px solid #f0f0f0; padding-top: 30px; text-align: center; font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 1px;">
+              <p>&copy; ${new Date().getFullYear()} Sonish Studios. All rights reserved.</p>
+              <p>Connect with us at connect@sonish.co.in</p>
+            </div>
+          </div>
+        `,
+      };
+
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`[Email] OTP dispatched to ${email}: ${info.messageId}`);
 
       res.status(200).json({
         message: 'OTP sent securely to your inbox',
-        // Send it in response ONLY if using test mode (no email credentials set) and explicitly in a non-production environment
-        mockOtp: (process.env.EMAIL_USER || process.env.NODE_ENV === 'production') ? null : otpCode,
-        previewUrl: previewUrl || null
+        // Hide OTP in production/SMTP mode
+        mockOtp: (process.env.EMAIL_USER && process.env.NODE_ENV === 'production') ? null : otpCode,
       });
 
     } catch (err) {
-      console.error('[EMAIL] Gateway Error:', err);
-      // Fallback response for extreme network failure
+      console.error('[Email] OTP Gateway Error:', err);
       res.status(500).json({
         message: 'Email gateway connection failed. Please try again later.',
       });

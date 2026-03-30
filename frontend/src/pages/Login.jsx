@@ -96,8 +96,11 @@ const Login = () => {
 
             if (res.ok) {
                 setOtpSent(true);
-                // For development, show the mock OTP in the UI so the user can copy it
-                setSuccessMsg(`OTP Sent! (Mock Code for Testing: ${data.mockOtp})`);
+                if (data.mockOtp) {
+                    setSuccessMsg(`OTP Sent! (Mock Code for Testing: ${data.mockOtp})`);
+                } else {
+                    setSuccessMsg('OTP Sent! Please check your inbox (and spam folder).');
+                }
             } else {
                 setError(data.message || 'Failed to send OTP');
             }
