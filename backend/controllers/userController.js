@@ -192,12 +192,23 @@ const sendOtp = async (req, res) => {
 
   if (otpEntry) {
     try {
+      // 1. Guard: Check if email service is configured
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error('[Email] Attempted OTP dispatch without SMTP credentials');
+        return res.status(503).json({
+          message: 'Email service is not yet configured. Please contact the administrator.',
+        });
+      }
+
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS,
         },
+        // Add safety timeouts
+        connectTimeout: 10000, 
+        greetingTimeout: 10000,
       });
 
       const mailOptions = {
