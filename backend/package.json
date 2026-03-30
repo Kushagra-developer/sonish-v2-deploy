@@ -1,6 +1,9 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "engines": {
+    "node": "20.x"
+  },
   "type": "module",
   "main": "server.js",
   "scripts": {
@@ -25,7 +28,6 @@
     "express-rate-limit": "^8.3.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
-    "mojoauth-sdk": "^1.4.3",
     "mongoose": "^9.3.1",
     "nodemailer": "^8.0.3",
     "qrcode": "^1.5.4",
