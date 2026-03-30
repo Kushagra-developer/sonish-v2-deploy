@@ -2,6 +2,7 @@ import Order from '../models/orderModel.js';
 import User from '../models/userModel.js';
 import Product from '../models/productModel.js';
 import Coupon from '../models/couponModel.js';
+import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
@@ -91,7 +92,7 @@ const addOrderItems = async (req, res) => {
       );
     }
 
-    // --- SEND ORDER CONFIRMATION EMAIL (Non-blocking) ---
+    // --- SEND ORDER CONFIRMATION EMAIL via Resend (HTTP, no SMTP) ---
     const userEmail = req.user?.email;
     const userName = req.user?.name;
 
@@ -106,36 +107,17 @@ const addOrderItems = async (req, res) => {
 
     const sendEmailsAsync = async (data) => {
       const orderRef = data.orderId.toString().slice(-8);
-      console.log(`[Email] START: Order #${orderRef} dispatch task`);
+      console.log(`[Resend] START: Order #${orderRef} dispatch task`);
       
       try {
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-          console.error(`[Email] ABORT: Missing SMTP credentials for #${orderRef}`);
+        if (!process.env.RESEND_API_KEY) {
+          console.error(`[Resend] ABORT: Missing RESEND_API_KEY for #${orderRef}`);
           return;
         }
 
-        // 1. Setup Transporter with STARTTLS + pooling (same fix as OTP)
-        const transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false, // Use STARTTLS
-          pool: true,
-          maxConnections: 1,
-          auth: { 
-            user: process.env.EMAIL_USER, 
-            pass: process.env.EMAIL_PASS 
-          },
-          tls: {
-            rejectUnauthorized: false,
-          },
-          debug: true,
-          logger: true,
-          connectTimeout: 15000,
-          greetingTimeout: 15000,
-          socketTimeout: 15000,
-        });
+        const resend = new Resend(process.env.RESEND_API_KEY);
 
-        // 2. Prepare Items Table
+        // Prepare Items Table
         const itemsHtml = data.items.map(item => `
           <tr>
             <td style="padding:10px; border-bottom:1px solid #eee;">
@@ -145,54 +127,66 @@ const addOrderItems = async (req, res) => {
           </tr>
         `).join('');
 
-        // 3. Sequential Dispatch (Safer for Gmail)
-        
-        // --- Customer Task ---
+        // --- Customer Email ---
         if (data.customerEmail) {
-          console.log(`[Email] LOG: Preparing Customer Receipt for ${data.customerEmail}`);
+          console.log(`[Resend] Sending Customer Receipt to ${data.customerEmail}`);
           try {
-            await transporter.sendMail({
-              from: `"Sonish Studios" <${process.env.EMAIL_USER}>`,
-              to: data.customerEmail,
+            const { data: result, error } = await resend.emails.send({
+              from: 'Sonish Studios <onboarding@resend.dev>',
+              to: [data.customerEmail],
               subject: `Order Confirmation - #${orderRef}`,
-              html: `<div style="font-family:sans-serif; max-width:600px; margin:auto; border:1px solid #ddd; padding:30px;">
-                <h1 style="text-align:center;">SONISH</h1>
-                <p>Hello ${data.customerName}, your order <strong>#${orderRef}</strong> is confirmed!</p>
-                <table style="width:100%; border-collapse:collapse;">${itemsHtml}</table>
-                <h3 style="text-align:right; border-top:2px solid #eee; padding-top:10px;">Total: ₹${data.total.toFixed(2)}</h3>
+              html: `<div style="font-family:'Helvetica Neue',sans-serif; max-width:600px; margin:auto; border:1px solid #eee; padding:40px;">
+                <div style="text-align:center; margin-bottom:30px;">
+                  <h1 style="font-size:24px; font-weight:700; letter-spacing:4px; margin:0;">SONISH</h1>
+                  <p style="font-size:10px; letter-spacing:2px; color:#999; margin-top:5px;">ORDER CONFIRMATION</p>
+                </div>
+                <p style="font-size:16px; color:#333;">Hello ${data.customerName}, your order <strong>#${orderRef}</strong> is confirmed!</p>
+                <table style="width:100%; border-collapse:collapse; margin:20px 0;">${itemsHtml}</table>
+                <h3 style="text-align:right; border-top:2px solid #eee; padding-top:15px; color:#000;">Total: ₹${data.total.toFixed(2)}</h3>
+                <div style="border-top:1px solid #eee; padding-top:20px; margin-top:20px; text-align:center; font-size:11px; color:#999;">
+                  <p>© ${new Date().getFullYear()} Sonish Studios. All rights reserved.</p>
+                </div>
               </div>`
             });
-            console.log(`[Email] SUCCESS: Customer receipt dispatched for #${orderRef}`);
+            if (error) {
+              console.error(`[Resend] FAIL (Customer): #${orderRef} ->`, error);
+            } else {
+              console.log(`[Resend] SUCCESS: Customer receipt sent for #${orderRef}`, result);
+            }
           } catch (err) {
-            console.error(`[Email] FAIL (Customer): #${orderRef} -> ${err.message}`);
+            console.error(`[Resend] FAIL (Customer): #${orderRef} ->`, err.message);
           }
         }
 
-        // --- Admin Task ---
+        // --- Admin Email ---
         const adminEmail = process.env.ADMIN_EMAIL || 'sonishfashion@gmail.com';
-        console.log(`[Email] LOG: Preparing Admin Alert for ${adminEmail}`);
+        console.log(`[Resend] Sending Admin Alert to ${adminEmail}`);
         try {
-          await transporter.sendMail({
-            from: `"Sonish System" <${process.env.EMAIL_USER}>`,
-            to: adminEmail,
+          const { data: result, error } = await resend.emails.send({
+            from: 'Sonish System <onboarding@resend.dev>',
+            to: [adminEmail],
             subject: `[NEW ORDER] Order #${orderRef}`,
-            html: `<div style="font-family:sans-serif; padding:20px;">
-              <h2 style="color:#c9a84c;">New Order: #${orderRef}</h2>
-              <p>Customer: ${data.customerName} (${data.customerEmail})</p>
-              <table style="width:100%; border-collapse:collapse;">${itemsHtml}</table>
-              <p><strong>Total: ₹${data.total.toFixed(2)}</strong></p>
-              <p>Shipping Address: ${data.address.address}, ${data.address.city}</p>
+            html: `<div style="font-family:'Helvetica Neue',sans-serif; padding:30px;">
+              <h2 style="color:#c9a84c; letter-spacing:2px;">🛍️ New Order: #${orderRef}</h2>
+              <p><strong>Customer:</strong> ${data.customerName} (${data.customerEmail})</p>
+              <table style="width:100%; border-collapse:collapse; margin:20px 0;">${itemsHtml}</table>
+              <p style="font-size:18px;"><strong>Total: ₹${data.total.toFixed(2)}</strong></p>
+              <p><strong>Shipping:</strong> ${data.address.address}, ${data.address.city}, ${data.address.postalCode || ''}</p>
             </div>`
           });
-          console.log(`[Email] SUCCESS: Admin alert dispatched for #${orderRef}`);
+          if (error) {
+            console.error(`[Resend] FAIL (Admin): #${orderRef} ->`, error);
+          } else {
+            console.log(`[Resend] SUCCESS: Admin alert sent for #${orderRef}`, result);
+          }
         } catch (err) {
-          console.error(`[Email] FAIL (Admin): #${orderRef} -> ${err.message}`);
+          console.error(`[Resend] FAIL (Admin): #${orderRef} ->`, err.message);
         }
 
-        console.log(`[Email] FINISH: Order #${orderRef} task complete`);
+        console.log(`[Resend] FINISH: Order #${orderRef} task complete`);
 
       } catch (globalErr) {
-        console.error(`[Email] FATAL: Order #${orderRef} background failure:`, globalErr.message);
+        console.error(`[Resend] FATAL: Order #${orderRef} background failure:`, globalErr.message);
       }
     };
 

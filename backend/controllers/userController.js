@@ -1,7 +1,7 @@
 import User from '../models/userModel.js';
 import Otp from '../models/otpModel.js';
 import generateToken from '../utils/generateToken.js';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 // @desc    Auth user & get token
 // @route   POST /api/users/login
@@ -193,37 +193,19 @@ const sendOtp = async (req, res) => {
 
   if (otpEntry) {
     try {
-      // 1. Guard: Check if email service is configured
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.error('[Email] Attempted OTP dispatch without SMTP credentials');
+      // Guard: Check if Resend is configured
+      if (!process.env.RESEND_API_KEY) {
+        console.error('[Resend] Attempted OTP dispatch without RESEND_API_KEY');
         return res.status(503).json({
           message: 'Email service is not yet configured. Please contact the administrator.',
         });
       }
 
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // Use STARTTLS
-        pool: true,
-        maxConnections: 1,
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-        tls: {
-          rejectUnauthorized: false, // Safety for some build environments
-        },
-        debug: true,
-        logger: true,
-        connectTimeout: 15000, 
-        greetingTimeout: 15000,
-        socketTimeout: 15000,
-      });
+      const resend = new Resend(process.env.RESEND_API_KEY);
 
-      const mailOptions = {
-        from: `"Sonish Studios" <${process.env.EMAIL_USER}>`,
-        to: email,
+      const { data, error } = await resend.emails.send({
+        from: 'Sonish Studios <onboarding@resend.dev>',
+        to: [email],
         subject: `${otpCode} is your Sonish verification code`,
         html: `
           <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a; background-color: #ffffff; border: 1px solid #f0f0f0;">
@@ -250,19 +232,24 @@ const sendOtp = async (req, res) => {
             </div>
           </div>
         `,
-      };
+      });
 
-      const info = await transporter.sendMail(mailOptions);
-      console.log(`[Email] OTP dispatched to ${email}: ${info.messageId}`);
+      if (error) {
+        console.error('[Resend] OTP dispatch error:', error);
+        return res.status(500).json({
+          message: 'Email gateway connection failed. Please try again later.',
+        });
+      }
+
+      console.log(`[Resend] OTP dispatched to ${email}:`, data);
 
       res.status(200).json({
         message: 'OTP sent securely to your inbox',
-        // Hide OTP in production/SMTP mode
-        mockOtp: (process.env.EMAIL_USER && process.env.NODE_ENV === 'production') ? null : otpCode,
+        mockOtp: process.env.NODE_ENV === 'production' ? null : otpCode,
       });
 
     } catch (err) {
-      console.error('[Email] OTP Gateway Error:', err);
+      console.error('[Resend] OTP Gateway Error:', err);
       res.status(500).json({
         message: 'Email gateway connection failed. Please try again later.',
       });
