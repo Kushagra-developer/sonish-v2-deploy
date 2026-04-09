@@ -127,6 +127,8 @@ const ProductCard = ({ product, isFeatured = false }) => {
               src={gallery[currentSlide] || '/images/placeholder.jpg'}
               alt={product.name}
               className="absolute inset-0 w-full h-full object-cover object-top"
+              loading="lazy"
+              decoding="async"
             />
           </AnimatePresence>
 

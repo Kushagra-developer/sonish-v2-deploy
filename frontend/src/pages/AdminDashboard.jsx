@@ -366,7 +366,7 @@ const AdminDashboard = () => {
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach(file => {
-      if (file.size > 3 * 1024 * 1024) { alert(`${file.name} is too large (max 3MB)`); return; }
+      if (file.size > 50 * 1024 * 1024) { alert(`${file.name} is too large (max 50MB)`); return; }
       const reader = new FileReader();
       reader.onloadend = () => setProductImages(prev => [...prev, reader.result]);
       reader.readAsDataURL(file);
@@ -1042,6 +1042,7 @@ const AdminDashboard = () => {
                       <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium">Category</th>
                       <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium">Price</th>
                       <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium">Stock</th>
+                      <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium">Trending</th>
                       <th className="px-6 py-3 text-[10px] uppercase tracking-widest text-charcoal/50 dark:text-offwhite/50 font-medium whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
@@ -1104,6 +1105,33 @@ const AdminDashboard = () => {
                           }`}>
                             {product.countInStock > 0 ? `${product.countInStock} in stock` : 'Out of stock'}
                           </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              className="sr-only peer"
+                              checked={product.isTrending || false}
+                              onChange={async () => {
+                                try {
+                                  // Send the full product with the toggled trending flag
+                                  const res = await authJsonFetch(`${API}/api/products/${product._id}`, {
+                                    method: 'PUT',
+                                    body: JSON.stringify({ ...product, isTrending: !product.isTrending })
+                                  });
+                                  if (res.ok) {
+                                    setProducts(products.map(p => p._id === product._id ? { ...p, isTrending: !product.isTrending } : p));
+                                  } else {
+                                    alert('Failed to update trending status');
+                                  }
+                                } catch (err) {
+                                  console.error(err);
+                                  alert('Error updating trending status');
+                                }
+                              }}
+                            />
+                            <div className="w-9 h-5 bg-charcoal/20 dark:bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gold"></div>
+                          </label>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
@@ -1339,6 +1367,27 @@ const AdminDashboard = () => {
                                   Mark as Paid
                                 </button>
                               )}
+                              {!order.isShipped && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if(window.confirm('Mark this order as SHIPPED?')) {
+                                      try {
+                                        const res = await authJsonFetch(`${API}/api/orders/${order._id}/shipped`, {
+                                          method: 'PUT'
+                                        });
+                                        if (res.ok) {
+                                          setOrders(orders.map(o => o._id === order._id ? { ...o, isShipped: true } : o));
+                                          alert('Order marked as SHIPPED');
+                                        }
+                                      } catch (err) {}
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-amber-600 text-white text-[10px] uppercase tracking-widest font-bold rounded hover:bg-amber-700 transition-colors"
+                                >
+                                  Mark as Shipped
+                                </button>
+                              )}
                               {!order.isDelivered && order.isShipped && (
                                 <button
                                   onClick={async (e) => {
@@ -1461,7 +1510,7 @@ const AdminDashboard = () => {
                               onChange={(e) => {
                                 const file = e.target.files[0];
                                 if (!file) return;
-                                if (file.size > 3 * 1024 * 1024) { alert('Image must be under 3MB'); return; }
+                                if (file.size > 50 * 1024 * 1024) { alert('Image must be under 50MB'); return; }
                                 const reader = new FileReader();
                                 reader.onloadend = () => setNewCategory({...newCategory, image: reader.result});
                                 reader.readAsDataURL(file);
@@ -1895,7 +1944,7 @@ const AdminDashboard = () => {
                               onChange={(e) => {
                                 const file = e.target.files[0];
                                 if (file) {
-                                  if (file.size > 2 * 1024 * 1024) return alert('File too large (max 2MB)');
+                                  if (file.size > 50 * 1024 * 1024) return alert('File too large (max 50MB)');
                                   const reader = new FileReader();
                                   reader.onloadend = () => {
                                     setNewBanner({ ...newBanner, image: reader.result });

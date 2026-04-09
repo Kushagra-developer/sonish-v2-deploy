@@ -16,13 +16,13 @@ const router = express.Router();
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: 20,
   message: { message: 'Too many login attempts from this IP, please try again after 15 minutes' },
 });
 
 const otpLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 3,
+  max: 10,
   message: { message: 'Too many OTP requests from this IP, please try again after 5 minutes' },
 });
 

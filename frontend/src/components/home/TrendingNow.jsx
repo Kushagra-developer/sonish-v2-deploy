@@ -15,9 +15,13 @@ const TrendingNow = () => {
         const res = await fetch(`${API}/api/products`);
         if (res.ok) {
           const data = await res.json();
-          // Sort by newest, limit to 4
-          const sorted = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 4);
-          setProducts(sorted);
+          const trendingProducts = data.filter(p => p.isTrending).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          // Show all trending products, or fallback to the 4 newest if none are selected
+          if (trendingProducts.length > 0) {
+            setProducts(trendingProducts);
+          } else {
+            setProducts(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 4));
+          }
         }
       } catch (error) {
         console.error('Error fetching trending products:', error);

@@ -172,6 +172,7 @@ const syncUserCartAndWishlist = async (req, res) => {
 // @access  Public
 const sendOtp = async (req, res) => {
   const { email } = req.body;
+  console.log(`[Auth] OTP request received for: ${email}`);
 
   if (!email) {
     res.status(400);
@@ -192,68 +193,22 @@ const sendOtp = async (req, res) => {
 
   if (otpEntry) {
     try {
-      let transporter;
-      
-      // Attempt to send real email if SMTP credentials are configured in Vercel
-      if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        transporter = nodemailer.createTransport({
-          service: 'gmail', 
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-        });
-      } else {
-        // Fallback: Generate Ethereal test account (Zero configuration testing sandbox)
-        const testAccount = await nodemailer.createTestAccount();
-        transporter = nodemailer.createTransport({
-          host: "smtp.ethereal.email",
-          port: 587,
-          secure: false, // true for 465, false for other ports
-          auth: {
-            user: testAccount.user, // generated ethereal user
-            pass: testAccount.pass, // generated ethereal password
-          },
-        });
-      }
-
-      const info = await transporter.sendMail({
-        from: '"Sonish Boutique" <no-reply@sonish.co.in>',
-        to: email,
-        subject: "Your Sonish Secure Login Code",
-        html: `
-          <div style="font-family: sans-serif; text-align: center; padding: 40px 20px; background-color: #fcfcfc;">
-            <h2 style="color: #2C2C2C; margin-bottom: 5px;">Welcome to Sonish</h2>
-            <p style="color: #666;">Here is your secure verification code:</p>
-            <h1 style="letter-spacing: 8px; color: #000; background: #fff; padding: 20px; border: 1px solid #eee; border-radius: 5px; display: inline-block; margin: 20px 0;">${otpCode}</h1>
-            <p style="color: #999; font-size: 12px;">This code expires in 5 minutes. Do not share it with anyone.</p>
-          </div>
-        `,
-      });
-
-      console.log(`[EMAIL] OTP dispatched to ${email}`);
-      const previewUrl = nodemailer.getTestMessageUrl(info);
-      if (previewUrl) {
-        console.log(`[TEST EMAIL PREVIEW] ${previewUrl}`);
-      }
-
+      // Since we are using EmailJS on the frontend, the backend's only job is to generate and save the OTP.
+      // We return the otpCode to the React frontend, and EmailJS will dispatch the actual email.
       res.status(200).json({
-        message: 'OTP sent securely to your inbox',
-        // Send it in response ONLY if using test mode (no email credentials set) and explicitly in a non-production environment
-        mockOtp: (process.env.EMAIL_USER || process.env.NODE_ENV === 'production') ? null : otpCode,
-        previewUrl: previewUrl || null
+        message: 'OTP generated',
+        otpCode: otpCode,
       });
 
     } catch (err) {
-      console.error('[EMAIL] Gateway Error:', err);
-      // Fallback response for extreme network failure
+      console.error('[OTP Generation] Error:', err.message);
       res.status(500).json({
-        message: 'Email gateway connection failed. Please try again later.',
+        message: 'Failed to generate OTP. Please try again later.',
       });
     }
   } else {
     res.status(500);
-    throw new Error('Failed to generate OTP');
+    throw new Error('Failed to create OTP record in database');
   }
 };
 
@@ -283,6 +238,7 @@ const verifyOtp = async (req, res) => {
   let user = await User.findOne({ email });
 
   if (!user) {
+    console.log(`[Auth] Creating new user for: ${email}`);
     user = await User.create({
       email,
       name: email.split('@')[0], // Extract first part of email for the placeholder name

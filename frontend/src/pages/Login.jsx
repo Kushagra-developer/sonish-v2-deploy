@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import API from '../utils/api';
+import emailjs from '@emailjs/browser';
 
 const Login = () => {
     // Auth Modes: 'login', 'register', 'otp'
@@ -85,24 +86,48 @@ const Login = () => {
         setError(null);
         setSuccessMsg(null);
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second safety
+
         try {
             const res = await fetch(`${API}/api/users/send-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: otpEmail }),
+                signal: controller.signal
             });
 
+            clearTimeout(timeoutId);
             const data = await res.json();
 
             if (res.ok) {
-                setOtpSent(true);
-                // For development, show the mock OTP in the UI so the user can copy it
-                setSuccessMsg(`OTP Sent! (Mock Code for Testing: ${data.mockOtp})`);
+                // Send the actual OTP email via EmailJS (bypassing Render backend)
+                try {
+                    await emailjs.send(
+                        'service_hsgqo7b',      // Service ID
+                        'template_zr4qygo',     // OTP Template ID
+                        {
+                            to_email: otpEmail,
+                            otp: data.otpCode   // The code returned from backend
+                        },
+                        'LZKrldXS6tjD8FAgK'     // Public Key
+                    );
+                    setOtpSent(true);
+                    setSuccessMsg('OTP Sent! Please check your inbox (and spam folder).');
+                } catch (emailErr) {
+                    console.error('EmailJS Error:', emailErr);
+                    setError('Failed to dispatch email. Please try again.');
+                }
             } else {
                 setError(data.message || 'Failed to send OTP');
             }
         } catch (err) {
-            setError('Connection error. Please try again.');
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+                setError('Request timed out. The server might be starting up, please try again in a moment.');
+            } else {
+                setError('Connection error. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -185,7 +210,7 @@ const Login = () => {
 
                             {otpSent && (
                                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                                    <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2 mt-6">6-Digit Code *</label>
+                                    <label className="block text-xs uppercase tracking-widest text-charcoal/70 dark:text-offwhite/70 mb-2 mt-6">4-Digit Code *</label>
                                     <input 
                                         type="text" 
                                         value={otp} 

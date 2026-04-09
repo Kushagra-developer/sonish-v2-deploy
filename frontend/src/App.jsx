@@ -1,32 +1,38 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import API from './utils/api';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import CookieBanner from './components/layout/CookieBanner';
-// Assuming you have these assistant components built!
 import Assistant from './components/ui/Assistant';
 import AdminAssistant from './components/ui/AdminAssistant';
-import About from './pages/About';
-import Contact from './pages/Contact';
-import Privacy from './pages/Privacy';
-import Returns from './pages/Returns';
-import Shipping from './pages/Shipping';
-import Terms from './pages/Terms';
-// Import your Pages
-import Home from './pages/Home';
-import Collections from './pages/Collections';
-import Login from './pages/Login';
-import FAQ from './pages/FAQ';
-import ProductDetails from './pages/ProductDetails';
-import Search from './pages/Search';
-import Wishlist from './pages/Wishlist';
-import Profile from './pages/Profile';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminLogin from './pages/AdminLogin';
-import Maintenance from './pages/Maintenance';
-import { Navigate } from 'react-router-dom';
+
+// Lazy load pages for performance
+const Home = lazy(() => import('./pages/Home'));
+const Collections = lazy(() => import('./pages/Collections'));
+const About = lazy(() => import('./pages/About'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Returns = lazy(() => import('./pages/Returns'));
+const Shipping = lazy(() => import('./pages/Shipping'));
+const Terms = lazy(() => import('./pages/Terms'));
+const Login = lazy(() => import('./pages/Login'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const ProductDetails = lazy(() => import('./pages/ProductDetails'));
+const Search = lazy(() => import('./pages/Search'));
+const Wishlist = lazy(() => import('./pages/Wishlist'));
+const Profile = lazy(() => import('./pages/Profile'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminLogin = lazy(() => import('./pages/AdminLogin'));
+const Maintenance = lazy(() => import('./pages/Maintenance'));
+
+// Loading component for Suspense
+const PageLoader = () => (
+  <div className="min-h-screen bg-offwhite dark:bg-charcoal transition-colors duration-300 flex items-center justify-center">
+    <div className="w-12 h-12 border-4 border-gold border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
 
 // Protected Admin Route wrapper
 const PrivateAdminRoute = ({ children }) => {
@@ -40,51 +46,47 @@ const PrivateAdminRoute = ({ children }) => {
   return <Navigate to="/admin/login" replace />;
 };
 
-// Inner component to access the router's useLocation hook
 const AppLayout = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
   
-  // Maintenance Mode Logic
   const envMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
   const [apiMaintenance, setApiMaintenance] = useState(false);
-  const [isChecking, setIsChecking] = useState(!isAdminRoute);
-  const [activeFont, setActiveFont] = useState("'Inter', sans-serif");
+  const [isChecking, setIsChecking] = useState(true);
+  const [hasFetchedGlobal, setHasFetchedGlobal] = useState(false);
 
   useEffect(() => {
-    // 1. Fetch Maintenance Status
-    if (!isAdminRoute) {
-      setIsChecking(true);
-      fetch(`${API}/api/health`)
-        .then(res => res.json())
-        .then(data => {
-          setApiMaintenance(data.maintenance);
-          setIsChecking(false);
-        })
-        .catch(() => setIsChecking(false));
-    } else {
-      setIsChecking(false);
-    }
+    // Only fetch global settings and health once to prevent re-fetching on every route change
+    if (hasFetchedGlobal) return;
 
-    // 2. Fetch System Settings (Font)
-    fetch(`${API}/api/settings`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.activeFont) {
-          setActiveFont(data.activeFont);
-          applyFont(data.activeFont);
+    const fetchGlobalData = async () => {
+      try {
+        // 1. Fetch Maintenance Status
+        const healthRes = await fetch(`${API}/api/health`);
+        const healthData = await healthRes.json();
+        setApiMaintenance(healthData.maintenance);
+
+        // 2. Fetch System Settings (Font)
+        const settingsRes = await fetch(`${API}/api/settings`);
+        const settingsData = await settingsRes.json();
+        if (settingsData.activeFont) {
+          applyFont(settingsData.activeFont);
         }
-      })
-      .catch(err => console.error('Error fetching settings:', err));
-  }, [location.pathname, isAdminRoute]);
+      } catch (err) {
+        console.error('Error fetching global data:', err);
+      } finally {
+        setIsChecking(false);
+        setHasFetchedGlobal(true);
+      }
+    };
+
+    fetchGlobalData();
+  }, [hasFetchedGlobal]);
 
   const applyFont = (fontValue) => {
-    // Extract font name for Google Fonts URL
-    // e.g., "'Playfair Display', serif" -> "Playfair+Display"
     const fontName = fontValue.split(',')[0].replace(/'/g, '').trim();
     const googleFontUrl = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@300;400;500;600;700&display=swap`;
     
-    // Check if link already exists
     let link = document.getElementById('dynamic-font-link');
     if (!link) {
       link = document.createElement('link');
@@ -93,19 +95,21 @@ const AppLayout = () => {
       document.head.appendChild(link);
     }
     link.href = googleFontUrl;
-
-    // Apply to root
     document.documentElement.style.setProperty('--font-primary', fontValue);
   };
 
   const isMaintenanceMode = envMaintenance || apiMaintenance;
 
-  if (isChecking && !isMaintenanceMode) {
-    return <div className="min-h-screen bg-offwhite dark:bg-charcoal transition-colors duration-300 flex items-center justify-center"></div>;
+  if (isChecking && !isAdminRoute) {
+    return <PageLoader />;
   }
   
   if (isMaintenanceMode && !isAdminRoute) {
-    return <Maintenance />;
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Maintenance />
+      </Suspense>
+    );
   }
 
   return (
@@ -113,31 +117,32 @@ const AppLayout = () => {
       {!isAdminRoute && <Navbar />}
       
       <main className="flex-grow">
-        <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Home />} />
-        {/* ADDED THE COLLECTIONS ROUTE HERE */}
-        <Route path="/collections" element={<Collections />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/returns" element={<Returns />} />
-        <Route path="/shipping" element={<Shipping />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/search" element={<Search />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/admin" element={
-          <PrivateAdminRoute>
-            <AdminDashboard />
-          </PrivateAdminRoute>
-        } />
-        <Route path="/admin/login" element={<AdminLogin />} />
-      </Routes>
-        </AnimatePresence>
+        <Suspense fallback={<PageLoader />}>
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<Home />} />
+              <Route path="/collections" element={<Collections />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/returns" element={<Returns />} />
+              <Route path="/shipping" element={<Shipping />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/admin" element={
+                <PrivateAdminRoute>
+                  <AdminDashboard />
+                </PrivateAdminRoute>
+              } />
+              <Route path="/admin/login" element={<AdminLogin />} />
+            </Routes>
+          </AnimatePresence>
+        </Suspense>
       </main>
 
       {!isAdminRoute && (
@@ -148,7 +153,6 @@ const AppLayout = () => {
         </>
       )}
       
-      {/* Admin Assistant should only show on Admin routes */}
       {isAdminRoute && <AdminAssistant />}
     </div>
   );

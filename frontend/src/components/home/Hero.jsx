@@ -51,12 +51,12 @@ const Hero = () => {
         >
           <div className="absolute inset-0 bg-black/40 z-10" />
           <motion.img
-            initial={{ scale: 1.1 }}
+            initial={{ scale: 1.02 }}
             animate={{ scale: 1 }}
             transition={{ duration: 10, ease: 'linear' }}
             src={slides[currentSlide]?.image}
             alt={slides[currentSlide]?.title}
-            className="w-full h-full object-cover object-top"
+            className="w-full h-full object-cover object-top lg:object-[center_10%]"
           />
         </motion.div>
       </AnimatePresence>
@@ -85,7 +85,7 @@ const Hero = () => {
               to={slides[currentSlide]?.link || '/collections'}
               className="group relative inline-flex items-center justify-center px-12 py-5 text-xs uppercase tracking-[0.3em] text-white overflow-hidden border border-white/50 backdrop-blur-sm transition-all duration-500 hover:border-white w-auto"
             >
-              <span className="relative z-10 group-hover:text-charcoal transition-colors duration-500 font-bold">Discover The Edit</span>
+              <span className="relative z-10 group-hover:text-charcoal transition-colors duration-500 font-bold">Shop Now</span>
               <div className="absolute inset-0 h-full w-full bg-white transform scale-x-0 origin-left transition-transform duration-500 ease-out group-hover:scale-x-100 z-0"></div>
             </Link>
           </motion.div>

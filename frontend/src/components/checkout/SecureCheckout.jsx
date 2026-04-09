@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle, Shield, CreditCard, ChevronRight, Tag, X } from 'lucide-react';
 import API from '../../utils/api';
 import { authJsonFetch } from '../../utils/authFetch';
+import emailjs from '@emailjs/browser';
 
 const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, onPaymentSuccess }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -148,7 +149,43 @@ const SecureCheckout = ({ cartTotal, cartItems, shippingAddress, onCloseDrawer, 
                                 const orderResult = await orderCreateRes.json();
                                 setOrderId(orderResult._id);
                                 setPaymentStatus('success');
-                                if (onPaymentSuccess) onPaymentSuccess(response)
+                                if (onPaymentSuccess) onPaymentSuccess(response);
+
+                                // --- EmailJS Integration ---
+                                try {
+                                    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+                                    const itemsHtml = cartItems.map(item => `
+                                      <tr>
+                                        <td style="padding:10px; border-bottom:1px solid #eee;">
+                                          <strong>${item.name}</strong><br/><small>Size: ${item.size || 'N/A'}</small>
+                                        </td>
+                                        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">₹${(item.price * (item.qty || item.cartQuantity || 1)).toFixed(2)}</td>
+                                      </tr>
+                                    `).join('');
+
+                                    const emailPayload = {
+                                        customer_name: userInfo?.name || 'Customer',
+                                        order_id: orderResult._id.toString().slice(-8).toUpperCase(),
+                                        order_total: finalTotal.toFixed(2),
+                                        order_items: itemsHtml,
+                                    };
+
+                                    // 1. Send receipt to Customer
+                                    if (userInfo?.email) {
+                                        emailjs.send('service_hsgqo7b', 'template_fux05vt', { 
+                                            ...emailPayload, to_email: userInfo.email 
+                                        }, 'LZKrldXS6tjD8FAgK').catch(e => console.error("Customer Email failed", e));
+                                    }
+
+                                    // 2. Send alert to Admin
+                                    emailjs.send('service_hsgqo7b', 'template_fux05vt', { 
+                                        ...emailPayload, to_email: 'sonishfashion@gmail.com' 
+                                    }, 'LZKrldXS6tjD8FAgK').catch(e => console.error("Admin Email failed", e));
+
+                                } catch (emailErr) {
+                                    console.error('Email dispatch failed silently:', emailErr);
+                                }
+                                // ---------------------------
                             } catch (e) {
                                 console.error('Order creation failed:', e);
                                 alert(`Payment successful but order saving failed: ${e.message}. Please contact support with your Payment ID: ${response.razorpay_payment_id}`);

@@ -1,6 +1,9 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "engines": {
+    "node": "20.x"
+  },
   "type": "module",
   "main": "server.js",
   "scripts": {
@@ -29,6 +32,7 @@
     "nodemailer": "^8.0.3",
     "qrcode": "^1.5.4",
     "razorpay": "^2.9.6",
+    "resend": "^6.10.0",
     "stripe": "^20.4.1"
   },
   "devDependencies": {
