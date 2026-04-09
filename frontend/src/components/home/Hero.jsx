@@ -4,8 +4,18 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import API from '../../utils/api';
 
+const STATIC_FALLBACK = [
+  {
+    image: '/images/hero1.png',
+    title: 'SONISH',
+    subtitle: 'Crafting Elegance',
+    description: 'Bespoke designs for the modern silhouette.',
+    link: '/collections'
+  }
+];
+
 const Hero = () => {
-  const [slides, setSlides] = useState([]);
+  const [slides, setSlides] = useState(STATIC_FALLBACK);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -15,7 +25,9 @@ const Hero = () => {
         const res = await fetch(`${API}/api/banners`);
         if (res.ok) {
           const data = await res.json();
-          setSlides(data || []);
+          if (data && data.length > 0) {
+            setSlides(data);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch banners:', err);
@@ -27,16 +39,24 @@ const Hero = () => {
     fetchBanners();
 
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      // Use length of currently displayed slides (real or fallback)
+      setSlides(prevSlides => {
+        if (prevSlides.length > 0) {
+          setCurrentSlide((prev) => (prev + 1) % prevSlides.length);
+        }
+        return prevSlides;
+      });
     }, 6000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, []); // Only run on mount
+
+  // No more loading pulse block - we show the fallback instead!
+  if (slides.length === 0) return null;
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
 
-  if (loading) return <div className="h-[85vh] lg:h-screen bg-charcoal animate-pulse" />;
-  if (slides.length === 0) return null; // Or a default banner
+  const currentData = slides[currentSlide];
 
   return (
     <div className="relative h-[85vh] lg:h-screen w-full flex items-center justify-center overflow-hidden bg-charcoal">
@@ -54,9 +74,11 @@ const Hero = () => {
             initial={{ scale: 1.02 }}
             animate={{ scale: 1 }}
             transition={{ duration: 10, ease: 'linear' }}
-            src={slides[currentSlide]?.image}
-            alt={slides[currentSlide]?.title}
+            src={currentData?.image}
+            alt={currentData?.title}
             className="w-full h-full object-cover object-top lg:object-[center_10%]"
+            fetchPriority={currentSlide === 0 ? "high" : "auto"}
+            decoding="sync"
           />
         </motion.div>
       </AnimatePresence>
