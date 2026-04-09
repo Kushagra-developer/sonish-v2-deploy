@@ -1,8 +1,20 @@
+import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import API from '../../utils/api';
 
 const Editorial = () => {
   const containerRef = useRef(null);
+  const [editorialImage, setEditorialImage] = useState("https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80\u0026w=1200\u0026auto=format\u0026fit=crop");
+  
+  useEffect(() => {
+    fetch(`${API}/api/settings`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.editorialImage) setEditorialImage(data.editorialImage);
+      })
+      .catch(err => console.error('Error fetching editorial image:', err));
+  }, []);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"]
@@ -16,7 +28,7 @@ const Editorial = () => {
         <div className="relative h-[800px] overflow-hidden group">
           <motion.div style={{ y }} className="absolute -inset-y-20 inset-x-0">
             <img 
-              src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200&auto=format&fit=crop" 
+              src={editorialImage} 
               alt="Editorial Lookbook" 
               className="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-1000"
             />
